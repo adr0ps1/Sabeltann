@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+
+    steps:
+      - uses: googleapis/release-please-action@26ac09b71d91ed1e51506205f7c71073dd9fc43e # v4.1.3
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: .release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  build-install:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: windows-latest
+    env:
+      PRODUCT_VERSION: ${{ needs.release-please.outputs.tag_name }}
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+
+      - uses: actions/setup-dotnet@3e891b0cb619bf60e2c25674b222b8940e2c1c25 # v4.1.0
+        with:
+          dotnet-version: 10.0.x
+
+      - run: dotnet restore
+
+      - run: dotnet publish --configuration Release --runtime win-x64 --self-contained true
+
+      - name: Build WiXSharp Installer
+        run: |
+          dotnet tool install --global WiXSharp.Tool
+          wixsharp build --project Setup\Setup.wixsharp --configuration Release --out installer
+
+      - name: Attest build provenance (exe)
+        uses: actions/attest-build-provenance@c1f0bb8e6e31b001a0b2dc25826dd8b52f451041 # v2.2.2
+        with:
+          subject-path: bin/Release/net10.0/publish/Sabeltann.exe
+
+      - name: Attest build provenance (msi)
+        uses: actions/attest-build-provenance@c1f0bb8e6e31b001a0b2dc25826dd8b52f451041 # v2.2.2
+        with:
+          subject-path: installer/*.msi
+
+      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: Sabeltann-${{ needs.release-please.outputs.tag_name }}
+          path: |
+            bin/Release/net10.0/publish/
+            installer/
+          compression-level: 9
+
+      - uses: softprops/action-gh-release@c95fe4e4e0b7ad57bb3b6c90cb9b2e0bef226c2d # v2.1.0
+        with:
+          tag_name: ${{ needs.release-please.outputs.tag_name }}
+          files: |
+            bin/Release/net10.0/publish/Sabeltann.exe
+            installer/*.msi
+          generate_release_notes: false

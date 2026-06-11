@@ -1,0 +1,292 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Sabeltann.ViewModels"
+        xmlns:ctrl="using:Sabeltann.Controls"
+        xmlns:c="using:Sabeltann.Converters"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+        x:Class="Sabeltann.MainWindow"
+        Title="Sabeltann - IPTV Player"
+        Background="#1e1e2e">
+
+    <Window.Resources>
+        <c:BoolToColorConverter x:Key="StarColorConverter"/>
+    </Window.Resources>
+
+    <Window.Styles>
+        <Style Selector="Button.TransportBtn">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Width" Value="34"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Margin" Value="2"/>
+            <Style Selector="^:pointerover">
+                <Setter Property="Background" Value="#ffffff15"/>
+            </Style>
+            <Style Selector="^:pressed">
+                <Setter Property="Background" Value="#ffffff25"/>
+            </Style>
+        </Style>
+    </Window.Styles>
+
+    <Design.DataContext>
+        <vm:MainViewModel/>
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Background="#181825">
+            <Border Padding="12,0,10,0" Background="#181825">
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock Text="☠" Foreground="#cba6f7" FontSize="16" VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                        <TextBlock Text="SABELTANN" Foreground="#cba6f7" FontSize="11"
+                                   FontWeight="Bold" LetterSpacing="2"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            <Menu x:Name="MainMenu" Grid.Column="1" Background="#181825" Foreground="#cdd6f4"
+                  FontSize="13">
+                <MenuItem Header="_File">
+                    <MenuItem Header="Load M3U URL..." Click="OnLoadM3UUrl"/>
+                    <MenuItem Header="Load M3U File..." Click="OnLoadM3UFile"/>
+                    <Separator/>
+                    <MenuItem Header="Xtream Login..." Click="OnXtreamLogin"/>
+                    <Separator/>
+                    <MenuItem Header="E_xit" Click="OnExit"/>
+                </MenuItem>
+            </Menu>
+        </Grid>
+
+        <Border x:Name="CategoryBar" Grid.Row="1" Padding="10,6" Background="#313244">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="Category" VerticalAlignment="Center"
+                               FontSize="12" FontWeight="SemiBold"
+                               Foreground="#a6adc8" LetterSpacing="1"/>
+                    <ComboBox ItemsSource="{Binding Categories}"
+                              SelectedItem="{Binding SelectedCategory}"
+                              DisplayMemberBinding="{Binding Name}"
+                              MinWidth="160"
+                              FontSize="13"/>
+                </StackPanel>
+                <ToggleButton Grid.Column="1" Content="★" IsChecked="{Binding ShowFavoritesOnly}"
+                              Background="Transparent" BorderThickness="0"
+                              Foreground="#f9e2af" FontSize="14"
+                              Margin="8,0,0,0" Padding="4,0"
+                              VerticalAlignment="Center"/>
+                <TextBox Grid.Column="2" Text="{Binding SearchText}"
+                         PlaceholderText="Search channels..." 
+                         Background="#1e1e2e" Foreground="#cdd6f4"
+                         BorderThickness="1" BorderBrush="#45475a"
+                         FontSize="12" Padding="6,3"
+                         Margin="8,0" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="4" Text="{Binding ChannelCount, StringFormat='{}{0} channels'}"
+                           VerticalAlignment="Center" Margin="8,0"
+                           Foreground="#6c7086" FontSize="12"/>
+            </Grid>
+        </Border>
+
+        <Grid x:Name="ContentGrid" Grid.Row="2" ColumnDefinitions="280,1,*">
+
+            <Border x:Name="SidebarPanel" Grid.Column="0" Background="#181825">
+                <Grid RowDefinitions="Auto,*">
+                    <Border Grid.Row="0" Padding="12,10" BorderThickness="0,0,0,1" BorderBrush="#2a2a3c">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#cdd6f4"
+                                       VerticalAlignment="Center">
+                                <Run Text="Channels"/>
+                                <Run Text="{Binding ChannelCount, StringFormat='({0})'}"
+                                     Foreground="#6c7086" FontSize="12"/>
+                            </TextBlock>
+                        </Grid>
+                    </Border>
+
+                    <ListBox Grid.Row="1" Margin="0"
+                             ItemsSource="{Binding FilteredChannels}"
+                             SelectedItem="{Binding SelectedChannel}"
+                             BorderThickness="0"
+                             Background="Transparent">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="6,6" Margin="4,2"
+                                        Background="#1e1e2e" CornerRadius="6"
+                                        HorizontalAlignment="Stretch">
+                                    <Grid ColumnDefinitions="32,*,Auto">
+                                        <Border Grid.Column="0" Width="28" Height="28"
+                                                CornerRadius="6"
+                                                Background="#313244">
+                                            <TextBlock Text="TV"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="#6c7086" FontSize="9"/>
+                                        </Border>
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}"
+                                                   VerticalAlignment="Center" Margin="8,0"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="#cdd6f4" FontSize="13"/>
+                                        <Button Grid.Column="2" MinWidth="24" Height="24"
+                                                Background="Transparent" BorderThickness="0"
+                                                Command="{Binding $parent[Window].DataContext.ToggleFavoriteCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Padding="2">
+                                            <TextBlock Text="★" FontSize="14"
+                                                       Foreground="{Binding IsFavorite, Converter={StaticResource StarColorConverter}}"
+                                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <GridSplitter x:Name="SidebarSplitter" Grid.Column="1" Width="1" Background="#313244"/>
+
+            <Grid Grid.Column="2">
+                <Border Background="#11111b">
+                    <ctrl:VideoView x:Name="VideoView"/>
+                </Border>
+
+                <Border x:Name="DebugPanel" IsVisible="{Binding ShowDebugOverlay}"
+                        Background="#cc11111b" CornerRadius="8" Padding="10"
+                        HorizontalAlignment="Right" VerticalAlignment="Top"
+                        Margin="8" MinWidth="260">
+                    <StackPanel Spacing="3" DataContext="{Binding DebugStats}">
+                        <TextBlock Text="Debug Stats" Foreground="#cba6f7" FontSize="13" FontWeight="Bold" Margin="0,0,0,4"/>
+                        <Grid ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Text="State" Foreground="#6c7086" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding State}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Text="Connection" Foreground="#6c7086" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding ConnectionUrl}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Text="Input Bitrate" Foreground="#6c7086" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding InputBitrate}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Text="Demux Bitrate" Foreground="#6c7086" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding DemuxBitrate}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Text="Send Bitrate" Foreground="#6c7086" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding SendBitrate}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Text="Sent Packets" Foreground="#6c7086" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding SentPackets}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Text="Displayed" Foreground="#6c7086" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding DisplayedPictures}" Foreground="#a6e3a1" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Text="Lost Pictures" Foreground="#6c7086" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding LostPictures}" Foreground="#f38ba8" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Text="Corrupted" Foreground="#6c7086" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding DemuxCorrupted}" Foreground="#f9e2af" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Text="Discontinuity" Foreground="#6c7086" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding DemuxDiscontinuity}" Foreground="#f9e2af" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Text="Data Read" Foreground="#6c7086" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding ReadBytes}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Panel x:Name="OverlayPanel" Background="Transparent"
+                       IsVisible="{Binding IsPlaying}" Opacity="0"
+                       PointerEntered="OnOverlayEntered"
+                       PointerExited="OnOverlayExited">
+                    <Border Background="#99000000" CornerRadius="14" Padding="6"
+                            HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="20">
+                            <Button Width="44" Height="44" FontSize="20"
+                                    Command="{Binding RewindCommand}"
+                                    Background="Transparent" BorderThickness="0"
+                                    CornerRadius="22">
+                                <TextBlock Text="⏪" Foreground="#cdd6f4" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            </Button>
+                            <Button Width="56" Height="56" FontSize="26"
+                                    Command="{Binding TogglePlayPauseCommand}"
+                                    Background="#cba6f7" BorderThickness="0" CornerRadius="28">
+                                <TextBlock Text="{Binding PlayPauseSymbol}" Foreground="#1e1e2e"
+                                           VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            </Button>
+                            <Button Width="44" Height="44" FontSize="20"
+                                    Command="{Binding ForwardCommand}"
+                                    Background="Transparent" BorderThickness="0"
+                                    CornerRadius="22">
+                                <TextBlock Text="⏩" Foreground="#cdd6f4" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </Panel>
+
+                <Border x:Name="TransportOverlay" Padding="10,6" Background="#99000000"
+                        VerticalAlignment="Bottom" Opacity="1"
+                        PointerEntered="OnTransportEntered"
+                        PointerExited="OnTransportExited">
+                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto" VerticalAlignment="Center">
+
+                        <Button Grid.Column="0" Classes="TransportBtn"
+                                Command="{Binding TogglePlayPauseCommand}">
+                            <TextBlock Text="{Binding PlayPauseSymbol}" Foreground="#cdd6f4" FontSize="13"/>
+                        </Button>
+
+                        <Button Grid.Column="1" Classes="TransportBtn"
+                                Command="{Binding StopCommand}">
+                            <TextBlock Text="⏹" Foreground="#f38ba8" FontSize="12"/>
+                        </Button>
+
+                        <Button Grid.Column="2" Classes="TransportBtn"
+                                Command="{Binding RewindCommand}"
+                                ToolTip.Tip="Rewind 10s">
+                            <TextBlock Text="⏪" Foreground="#a6adc8" FontSize="12"/>
+                        </Button>
+
+                        <Button Grid.Column="3" Classes="TransportBtn"
+                                Command="{Binding ForwardCommand}"
+                                ToolTip.Tip="Forward 10s">
+                            <TextBlock Text="⏩" Foreground="#a6adc8" FontSize="12"/>
+                        </Button>
+
+                        <Slider Grid.Column="4" Minimum="0" Maximum="200"
+                                Value="{Binding Volume}" Margin="16,0"
+                                VerticalAlignment="Center"/>
+
+                        <TextBlock Grid.Column="5" Text="{Binding Volume}"
+                                   VerticalAlignment="Center" Margin="4,0" Width="28"
+                                   Foreground="#a6adc8" FontSize="12"
+                                   HorizontalAlignment="Center"/>
+
+                        <Button Grid.Column="6" Classes="TransportBtn"
+                                Command="{Binding ToggleSubtitlesCommand}"
+                                ToolTip.Tip="Subtitles">
+                            <TextBlock Text="CC" Foreground="#89b4fa" FontSize="11" FontWeight="Bold"/>
+                        </Button>
+
+                        <Button Grid.Column="7" Classes="TransportBtn"
+                                Command="{Binding FullscreenCommand}"
+                                ToolTip.Tip="Fullscreen (F)">
+                            <TextBlock Text="⛶" Foreground="#89b4fa" FontSize="14"/>
+                        </Button>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <TextBlock x:Name="StatusBar" Grid.Row="3" Text="{Binding StatusText}" Margin="10,3"
+                   Foreground="#6c7086" FontSize="11"/>
+    </Grid>
+</Window>

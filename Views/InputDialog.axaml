@@ -1,0 +1,32 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="160"
+        x:Class="Sabeltann.InputDialog"
+        Title="Input"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="#1e1e2e"
+        Foreground="#cdd6f4">
+
+    <StackPanel Margin="20" Spacing="12">
+        <TextBlock x:Name="PromptText" Text="Enter value:" FontSize="14"
+                   Foreground="#cdd6f4"/>
+        <TextBox x:Name="InputBox" PlaceholderText="Type here..."
+                 Background="#313244" Foreground="#cdd6f4"
+                 BorderThickness="1" BorderBrush="#45475a"
+                 Padding="8,6" FontSize="13"/>
+        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+            <Button Grid.Column="0" Content="Cancel" Click="OnCancel"
+                    Background="#313244" Foreground="#cdd6f4"
+                    BorderThickness="0" CornerRadius="6"
+                    Padding="10,6" FontSize="13"/>
+            <Button Grid.Column="1" Content="OK" Click="OnOk" IsDefault="True"
+                    Background="#cba6f7" Foreground="#1e1e2e"
+                    BorderThickness="0" CornerRadius="6"
+                    Padding="10,6" FontSize="13" FontWeight="SemiBold"/>
+        </Grid>
+    </StackPanel>
+</Window>

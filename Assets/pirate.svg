@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Tricorn hat (pirate captain hat) -->
+  <path d="M10 32 Q50 10 90 32 Q85 20 50 10 Q15 20 10 32Z" fill="#2d2d2d"/>
+  <path d="M8 32 Q50 38 92 32 Q94 28 90 26 Q50 32 10 26 Q6 28 8 32Z" fill="#2d2d2d"/>
+  <!-- Hat brim -->
+  <path d="M10 32 Q50 30 90 32" stroke="#1a1a1a" stroke-width="2" fill="none"/>
+  <!-- Skull & crossbones on hat -->
+  <circle cx="50" cy="22" r="4" fill="#cdd6f4"/>
+  <line x1="46" y1="28" x2="54" y2="28" stroke="#cdd6f4" stroke-width="1.5"/>
+  <line x1="44" y1="25" x2="56" y2="25" stroke="#cdd6f4" stroke-width="1"/>
+  <!-- Red bandana -->
+  <path d="M12 36 Q50 28 88 36 Q86 42 50 38 Q14 42 12 36Z" fill="#e64553"/>
+  <path d="M48 38 L44 48 L50 44 L56 48 L52 38" fill="#e64553"/>
+  <!-- Face -->
+  <ellipse cx="50" cy="54" rx="30" ry="26" fill="#f5cba7" stroke="#3b3b3b" stroke-width="1.5"/>
+  <!-- Eyepatch -->
+  <ellipse cx="38" cy="48" rx="8" ry="6" fill="#1a1a1a"/>
+  <line x1="28" y1="46" x2="48" y2="50" stroke="#1a1a1a" stroke-width="2"/>
+  <line x1="30" y1="42" x2="24" y2="36" stroke="#1a1a1a" stroke-width="1.5"/>
+  <!-- Visible eye -->
+  <circle cx="64" cy="46" r="4.5" fill="white"/>
+  <circle cx="64" cy="46" r="2.5" fill="#3b3b3b"/>
+  <circle cx="65" cy="45" r="1" fill="white"/>
+  <!-- Eyebrow -->
+  <path d="M57 38 Q64 35 71 38" stroke="#3b3b3b" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Nose (bulbous) -->
+  <path d="M50 48 Q55 54 50 58 Q47 54 50 48" fill="#e8b88a" stroke="#3b3b3b" stroke-width="1.5"/>
+  <!-- Scar -->
+  <path d="M54 42 Q56 46 60 50" stroke="#e64553" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <!-- Mustache -->
+  <path d="M36 60 Q42 56 50 58 Q58 56 64 60" stroke="#3b3b3b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M36 60 Q32 64 36 62" stroke="#3b3b3b" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M64 60 Q68 64 64 62" stroke="#3b3b3b" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Goatee -->
+  <path d="M45 68 Q50 78 55 68" fill="#3b3b3b"/>
+  <!-- Grin with teeth -->
+  <path d="M38 64 Q50 72 62 64" stroke="#3b3b3b" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <rect x="44" y="63" width="3.5" height="4" rx="1" fill="white" stroke="#3b3b3b" stroke-width="0.8"/>
+  <rect x="49" y="63" width="3.5" height="4" rx="1" fill="white" stroke="#3b3b3b" stroke-width="0.8"/>
+  <rect x="54" y="63" width="3.5" height="3" rx="1" fill="white" stroke="#3b3b3b" stroke-width="0.8"/>
+  <!-- Earring -->
+  <circle cx="80" cy="60" r="3" fill="none" stroke="#f9e2af" stroke-width="2"/>
+  <!-- Ear -->
+  <ellipse cx="79" cy="56" rx="3" ry="5" fill="#f5cba7" stroke="#3b3b3b" stroke-width="1"/>
+</svg>

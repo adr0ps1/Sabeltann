@@ -1,0 +1,55 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="280"
+        x:Class="Sabeltann.LoginWindow"
+        Title="Xtream Login"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="#1e1e2e"
+        Foreground="#cdd6f4">
+
+    <StackPanel Margin="20" Spacing="12">
+        <TextBlock Text="Xtream Codes Login" FontSize="18" FontWeight="Bold"
+                   Foreground="#cdd6f4"/>
+        <TextBlock Text="Enter your IPTV provider details" Foreground="#6c7086"
+                   FontSize="12"/>
+
+        <StackPanel Spacing="4">
+            <TextBlock Text="Server URL:" Foreground="#a6adc8" FontSize="12"/>
+            <TextBox x:Name="ServerUrlBox" PlaceholderText="http://your-iptv-server.com:8080"
+                     Background="#313244" Foreground="#cdd6f4"
+                     BorderThickness="1" BorderBrush="#45475a"
+                     Padding="8,6" FontSize="13"/>
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+            <TextBlock Text="Username:" Foreground="#a6adc8" FontSize="12"/>
+            <TextBox x:Name="UsernameBox" PlaceholderText="username"
+                     Background="#313244" Foreground="#cdd6f4"
+                     BorderThickness="1" BorderBrush="#45475a"
+                     Padding="8,6" FontSize="13"/>
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+            <TextBlock Text="Password:" Foreground="#a6adc8" FontSize="12"/>
+            <TextBox x:Name="PasswordBox" PlaceholderText="password" PasswordChar="*"
+                     Background="#313244" Foreground="#cdd6f4"
+                     BorderThickness="1" BorderBrush="#45475a"
+                     Padding="8,6" FontSize="13"/>
+        </StackPanel>
+
+        <Grid ColumnDefinitions="*,*" ColumnSpacing="8" Margin="0,8,0,0">
+            <Button Grid.Column="0" Content="Cancel" Click="OnCancel"
+                    Background="#313244" Foreground="#cdd6f4"
+                    BorderThickness="0" CornerRadius="6"
+                    Padding="10,6" FontSize="13"/>
+            <Button Grid.Column="1" Content="Login" Click="OnLogin" IsDefault="True"
+                    Background="#cba6f7" Foreground="#1e1e2e"
+                    BorderThickness="0" CornerRadius="6"
+                    Padding="10,6" FontSize="13" FontWeight="SemiBold"/>
+        </Grid>
+    </StackPanel>
+</Window>
