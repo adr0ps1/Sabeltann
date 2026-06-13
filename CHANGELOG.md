@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/adr0ps1/Sabeltann/compare/v0.1.2...v0.1.3) (2026-06-13)
+
+
+### Bug Fixes
+
+* Replace WixSharp with WiX v4 CLI for MSI installer ([8413341](https://github.com/adr0ps1/Sabeltann/commit/8413341e0a12e79cacb772347e48826564489219))
+
 ## [0.1.2](https://github.com/adr0ps1/Sabeltann/compare/v0.1.1...v0.1.2) (2026-06-13)
 
 
