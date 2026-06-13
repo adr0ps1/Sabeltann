@@ -45,7 +45,20 @@ pwsh Setup\build.ps1
 
 ## 🧱 Stack
 
-`.NET 10` · `Avalonia 12` · `LibVLCSharp 3.9.7` · `CommunityToolkit.Mvvm 8.4.2` · `Sentry 5.x` · `Svg.Skia 3.x` · `WiXSharp`
+`.NET 10` · `Avalonia 12` · `LibVLCSharp 3.9.7` · `CommunityToolkit.Mvvm 8.4.2` · `Sentry 5.x` · `Svg.Skia 3.x` · `WiX v4`
+
+## 📜 Code Signing Policy
+
+Windows code signing for Sabeltann is provided free of charge by [SignPath Foundation](https://signpath.org/), with a certificate issued to SignPath Foundation as the publisher. All release builds are signed via [SignPath.io](https://signpath.io/) in the GitHub Actions release pipeline.
+
+**Roles:**
+- **Author** — [@adr0ps1](https://github.com/adr0ps1) — trusted to modify source code
+- **Reviewer** — [@adr0ps1](https://github.com/adr0ps1)
+- **Approver** — [@adr0ps1](https://github.com/adr0ps1) — authorizes each signing request
+
+Signed binaries are built from the `main` branch via the Release workflow. Only tagged releases are signed.
+
+**Privacy:** Sabeltann does not collect or transmit any personal information. Logs are stored locally in the `logs/` folder and never sent externally unless error tracking (Sentry) is explicitly configured. For more details, see [Privacy Policy](PRIVACY.md).
 
 ## 📄 License
 
