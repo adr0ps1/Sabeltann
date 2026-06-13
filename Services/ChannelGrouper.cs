@@ -30,15 +30,17 @@ public static class ChannelGrouper
     private static readonly HashSet<string> VodGroups =
     [
         "movie", "movies", "film", "cinema", "vod",
-        "series", "shows", "season", "episode",
         "action", "adventure", "animation", "anime", "comedy", "crime",
-        "documentar", "drama", "family", "fantasy", "horror", "kids",
-        "martial arts", "music", "musical", "concert", "mystery", "thriller",
-        "reality", "romance", "scifi", "science fiction", "war", "western",
+        "documentar", "drama", "family", "fantasy", "horror",
+        "martial arts", "musical", "concert", "mystery", "thriller",
+        "romance", "scifi", "science fiction", "war", "western",
         "classics", "disney", "x-mas", "christmas",
         "scandinavian reality", "scandinavian series",
-        "adult", "xxx", "2026", "2025", "2024",
+        "adult", "xxx",
     ];
+
+    private static readonly HashSet<string> YearPatterns =
+        ["2026", "2025", "2024", "2023", "2022"];
 
     public static string? ExtractShowName(string channelName)
     {
@@ -56,8 +58,14 @@ public static class ChannelGrouper
         if (groupName is not null)
         {
             var g = groupName.ToLowerInvariant().Trim();
+
+            if (ExactLive.Contains(g)) return false;
+            if (ExactVod.Contains(g)) return true;
+
             if (VodGroups.Any(v => g.Contains(v))) return true;
             if (LiveGroups.Any(l => g.Contains(l))) return false;
+
+            if (YearPatterns.Any(y => g == y)) return true;
         }
 
         var name = channelName.ToLowerInvariant();
@@ -66,6 +74,41 @@ public static class ChannelGrouper
 
         return ExtractShowName(channelName) is not null;
     }
+
+    private static readonly HashSet<string> ExactLive =
+    [
+        "norway", "sweden", "denmark", "finland", "ukraine",
+        "norway sport", "sweden sport", "denmark sport", "finland sport",
+        "uk", "uk sport", "canada/us", "canada/us sports",
+        "germany", "germany sports",
+        "all sport", "sport",
+        "premier league", "ufc/mma/boxing/wwe/sport", "fifa world cup",
+        "live events - ppv",
+        "4k", "4k/uhd",
+        "multi audio", "multi subs",
+        "radio",
+    ];
+
+    private static readonly HashSet<string> ExactVod =
+    [
+        "action", "action & adventure", "adventure",
+        "animation & anime",
+        "classics", "comedy", "crime", "crime & thriller",
+        "disney", "documentaries", "documentary", "drama",
+        "family", "fantasy", "fantasy & sci fi",
+        "horror", "horror & mystery",
+        "kids",
+        "martial arts",
+        "music", "music, musicals & concerts",
+        "mystery & thriller",
+        "reality",
+        "romance",
+        "scandinavian reality & tv shows", "scandinavian series",
+        "science fiction",
+        "war", "western",
+        "x-mas movies",
+        "adult xxx",
+    ];
 
     public static (List<ChannelListItemViewModel> Live, List<ChannelListItemViewModel> Vod)
         SplitByType(IEnumerable<ChannelListItemViewModel> channels)
