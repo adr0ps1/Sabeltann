@@ -3,6 +3,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using Avalonia.Threading;
 using Sabeltann.Models;
 using Sabeltann.Services;
 using Sabeltann.ViewModels;
@@ -14,7 +15,6 @@ public partial class MainWindow : Window
     private readonly MainViewModel _vm;
     private readonly PlaybackService _player;
     private bool _isFullscreen;
-    private readonly DispatcherTimer _transportTimer = new();
 
     public MainWindow()
     {
@@ -29,14 +29,44 @@ public partial class MainWindow : Window
         VideoView.Attach(_player.Player);
         KeyDown += OnKeyDown;
 
-        _transportTimer.Interval = TimeSpan.FromSeconds(3);
-        _transportTimer.Tick += OnTransportTimerTick;
-
-        PointerMoved += OnWindowPointerMoved;
-        TransportOverlay.PointerMoved += OnTransportPointerMoved;
+        var transportTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+        transportTimer.Tick += (_, _) => { TransportPopup.IsOpen = false; transportTimer.Stop(); };
+        PointerMoved += (_, _) =>
+        {
+            if (_vm.IsPlaying)
+            {
+                TransportPopup.IsOpen = true;
+                transportTimer.Stop();
+                transportTimer.Start();
+            }
+        };
 
         LoadPirateIcon();
         _vm.LoadLastSession();
+
+        TransportPopup.PlacementTarget = VideoView;
+
+        _vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainViewModel.IsPlaying))
+            {
+                if (_vm.IsPlaying)
+                {
+                    TransportPopup.IsOpen = true;
+                    transportTimer.Stop();
+                    transportTimer.Start();
+                }
+                if (!_vm.IsPlaying && _isFullscreen)
+                    ToggleFullscreen();
+            }
+        };
+
+        Opened += (_, _) =>
+        {
+            Activate();
+            Topmost = true;
+            Topmost = false;
+        };
 
         ConnectionPage.LoadM3UFileRequested += OnLoadM3UFile;
         ConnectionPage.LoadM3UUrlRequested += OnLoadM3UUrl;
@@ -44,18 +74,16 @@ public partial class MainWindow : Window
 
         ContentPicker.LiveTvSelected += async (_, _) =>
         {
-            if (_vm.HasContent)
-                _vm.ShowLiveChannels();
-            else
+            if (!_vm.HasContent)
                 await _vm.ShowPlaylistContentAsync();
+            _vm.ShowLiveChannels();
             _vm.ShowGroupsList = false;
         };
         ContentPicker.VodSelected += async (_, _) =>
         {
-            if (_vm.HasContent)
-                _vm.ShowVodChannels();
-            else
+            if (!_vm.HasContent)
                 await _vm.ShowPlaylistContentAsync();
+            _vm.ShowVodChannels();
             _vm.ShowGroupsList = false;
         };
         ContentPicker.SearchRequested += async (_, query) =>
@@ -63,6 +91,8 @@ public partial class MainWindow : Window
             if (!_vm.HasContent)
                 await _vm.ShowPlaylistContentAsync();
             _vm.SearchText = query;
+            if (_vm.Categories.Count > 0 && _vm.SelectedCategory is null)
+                _vm.SelectedCategory = _vm.Categories[0];
             _vm.ShowGroupsList = false;
         };
 
@@ -71,6 +101,12 @@ public partial class MainWindow : Window
             Activate();
             Topmost = true;
             Topmost = false;
+        };
+
+        _vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainViewModel.IsPlaying) && !_vm.IsPlaying && _isFullscreen)
+                ToggleFullscreen();
         };
     }
 
@@ -111,29 +147,6 @@ public partial class MainWindow : Window
         catch { }
     }
 
-    private void OnWindowPointerMoved(object? sender, PointerEventArgs e)
-    {
-        ShowTransportTemporarily();
-    }
-
-    private void OnTransportPointerMoved(object? sender, PointerEventArgs e)
-    {
-        ShowTransportTemporarily();
-    }
-
-    private void ShowTransportTemporarily()
-    {
-        TransportOverlay.Opacity = 1;
-        _transportTimer.Stop();
-        _transportTimer.Start();
-    }
-
-    private void OnTransportTimerTick(object? sender, EventArgs e)
-    {
-        _transportTimer.Stop();
-        TransportOverlay.Opacity = 0;
-    }
-
     private void ToggleFullscreen()
     {
         _isFullscreen = WindowState != WindowState.FullScreen;
@@ -148,16 +161,12 @@ public partial class MainWindow : Window
         if (_isFullscreen)
         {
             ContentGrid.ColumnDefinitions[0].Width = new GridLength(0);
-            ContentGrid.ColumnDefinitions[1].Width = new GridLength(0);
-            TransportOverlay.Opacity = 0;
-            _transportTimer.Stop();
+            ContentGrid.ColumnDefinitions[1].Width = new GridLength(1);
         }
         else
         {
             ContentGrid.ColumnDefinitions[0].Width = new GridLength(280);
             ContentGrid.ColumnDefinitions[1].Width = new GridLength(5);
-            TransportOverlay.Opacity = 1;
-            _transportTimer.Stop();
         }
     }
 
@@ -184,16 +193,6 @@ public partial class MainWindow : Window
             _vm.ShowDebugOverlay = !_vm.ShowDebugOverlay;
             e.Handled = true;
         }
-    }
-
-    private void OnTransportEntered(object? sender, PointerEventArgs e)
-    {
-        if (_isFullscreen) _transportTimer.Stop();
-    }
-
-    private void OnTransportExited(object? sender, PointerEventArgs e)
-    {
-        if (_isFullscreen) ShowTransportTemporarily();
     }
 
     private void OnOverlayEntered(object? sender, PointerEventArgs e)
@@ -242,7 +241,6 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
-        _transportTimer.Stop();
         _vm.DebugStats.Stop();
         VideoView.Detach();
         _player.Dispose();
