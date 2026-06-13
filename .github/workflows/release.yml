@@ -18,7 +18,7 @@ jobs:
       tag_name: ${{ steps.release.outputs.tag_name }}
 
     steps:
-      - uses: googleapis/release-please-action@26ac09b71d91ed1e51506205f7c71073dd9fc43e # v4.1.3
+      - uses: googleapis/release-please-action@7987652d64b4581673a76e33ad5e98e3dd56832f # v4.1.3
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -51,12 +51,12 @@ jobs:
           wixsharp build --project Setup\Setup.wixsharp --configuration Release --out installer
 
       - name: Attest build provenance (exe)
-        uses: actions/attest-build-provenance@c1f0bb8e6e31b001a0b2dc25826dd8b52f451041 # v2.2.2
+        uses: actions/attest-build-provenance@bd77c077858b8d561b7a36cbe48ef4cc642ca39d # v2.2.2
         with:
           subject-path: bin/Release/net10.0/publish/Sabeltann.exe
 
       - name: Attest build provenance (msi)
-        uses: actions/attest-build-provenance@c1f0bb8e6e31b001a0b2dc25826dd8b52f451041 # v2.2.2
+        uses: actions/attest-build-provenance@bd77c077858b8d561b7a36cbe48ef4cc642ca39d # v2.2.2
         with:
           subject-path: installer/*.msi
 
@@ -68,7 +68,7 @@ jobs:
             installer/
           compression-level: 9
 
-      - uses: softprops/action-gh-release@c95fe4e4e0b7ad57bb3b6c90cb9b2e0bef226c2d # v2.1.0
+      - uses: softprops/action-gh-release@01570a1f39cb168c169c802c3bceb9e93fb10974 # v2.1.0
         with:
           tag_name: ${{ needs.release-please.outputs.tag_name }}
           files: |
