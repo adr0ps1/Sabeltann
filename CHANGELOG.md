@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/adr0ps1/Sabeltann/compare/v0.1.5...v0.1.6) (2026-06-13)
+
+
+### Bug Fixes
+
+* Replace invalid ICO with proper icon from SVG ([d50cd2c](https://github.com/adr0ps1/Sabeltann/commit/d50cd2c9f88e29d71a594fecfa0250d65100785b))
+
 ## [0.1.5](https://github.com/adr0ps1/Sabeltann/compare/v0.1.4...v0.1.5) (2026-06-13)
 
 
