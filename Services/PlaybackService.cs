@@ -12,12 +12,24 @@ public class PlaybackService : IDisposable
     public MediaPlayer Player => _mediaPlayer;
     public bool IsPlaying => _mediaPlayer.IsPlaying;
     public event EventHandler<string>? Error;
+    public event EventHandler<int>? Buffering;
+    public event EventHandler? PlayingStarted;
+    public event EventHandler? Stopped;
 
     public PlaybackService()
     {
         Core.Initialize();
         _libVlc = new LibVLC("--network-caching=2000", "--no-video-title-show");
         _mediaPlayer = new MediaPlayer(_libVlc);
+        _mediaPlayer.Buffering += OnBuffering;
+        _mediaPlayer.Playing += (_, _) => PlayingStarted?.Invoke(this, EventArgs.Empty);
+        _mediaPlayer.Stopped += (_, _) => Stopped?.Invoke(this, EventArgs.Empty);
+        _mediaPlayer.EncounteredError += (_, _) => Error?.Invoke(this, "Playback failed");
+    }
+
+    private void OnBuffering(object? sender, MediaPlayerBufferingEventArgs e)
+    {
+        Buffering?.Invoke(this, (int)e.Cache);
     }
 
     public void Play(string url)

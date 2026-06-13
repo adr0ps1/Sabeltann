@@ -1,0 +1,86 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sabeltann.ViewModels"
+             x:Class="Sabeltann.Views.CategoryGrid"
+             x:Name="ThisControl">
+    <Grid Background="#11111b" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+        <Grid RowDefinitions="Auto,*" Margin="16,8">
+            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,*,Auto" Margin="0,0,0,8">
+                <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                        Width="28" Height="28" Padding="0" Margin="0,0,8,0"
+                        Command="{Binding GoBackToPickerCommand}">
+                    <TextBlock Text="←" Foreground="#cdd6f4" FontSize="18"
+                               VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </Button>
+                <TextBlock Grid.Column="1" Text="Movies &amp; Shows"
+                           Foreground="#cdd6f4" FontSize="16" FontWeight="Bold"
+                           VerticalAlignment="Center"/>
+                <TextBox Grid.Column="2" Text="{Binding SearchText}"
+                         PlaceholderText="Search channels..." Background="#1e1e2e"
+                         Foreground="#cdd6f4" BorderThickness="1" BorderBrush="#45475a"
+                         FontSize="12" Padding="6,4" Width="200" Margin="8,0"
+                         VerticalAlignment="Center"/>
+                <ComboBox Grid.Column="3" ItemsSource="{Binding Categories}"
+                          SelectedItem="{Binding SelectedCategory}"
+                          DisplayMemberBinding="{Binding Name}"
+                          MinWidth="140" FontSize="12" VerticalAlignment="Center"/>
+            </Grid>
+
+            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{Binding Categories.Count, StringFormat='Categories: {0}'}"
+                               Foreground="#6c7086" FontSize="11"/>
+                    <ItemsControl ItemsSource="{Binding Categories}" BorderThickness="0"
+                              Background="Transparent">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Spacing="6" Margin="0,0,0,16">
+                                <TextBlock Text="{Binding Name}" Foreground="#a6adc8"
+                                           FontSize="13" FontWeight="SemiBold"/>
+                                <ItemsControl ItemsSource="{Binding Channels}"
+                                              BorderThickness="0" Background="Transparent">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Width="150" Height="100" Padding="0" Margin="4"
+                                                    Background="#181825" BorderThickness="1"
+                                                    BorderBrush="#313244" CornerRadius="10"
+                                                    Command="{Binding DataContext.SelectChannelCommand, ElementName=ThisControl}"
+                                                    CommandParameter="{Binding .}">
+                                                <Grid RowDefinitions="Auto,*,Auto" Margin="10,8">
+                                                    <TextBlock Grid.Row="0" Text="{Binding Name}"
+                                                               Foreground="#cdd6f4" FontSize="12"
+                                                               FontWeight="Bold" MaxLines="1"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <Border Grid.Row="1" Width="36" Height="36"
+                                                            CornerRadius="10" Background="#313244"
+                                                            HorizontalAlignment="Center"
+                                                            VerticalAlignment="Center">
+                                                        <TextBlock Text="TV"
+                                                                   Foreground="#a6adc8" FontSize="12"
+                                                                   FontWeight="Bold"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <TextBlock Grid.Row="2" Text="▶ Click to play"
+                                                               Foreground="#6c7086" FontSize="10"
+                                                               HorizontalAlignment="Center"/>
+                                                </Grid>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

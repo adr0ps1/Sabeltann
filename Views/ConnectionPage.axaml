@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Sabeltann.Views.ConnectionPage">
+    <Grid Background="#11111b" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+            <Border Width="56" Height="56" CornerRadius="16" Background="#cba6f7"
+                    HorizontalAlignment="Center" Margin="0,0,0,8">
+                <TextBlock Text="☠" Foreground="#1e1e2e" FontSize="28"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <TextBlock Text="Sabeltann" Foreground="#cdd6f4" FontSize="22" FontWeight="Bold"
+                       HorizontalAlignment="Center"/>
+            <TextBlock Text="IPTV Player for Windows" Foreground="#6c7086" FontSize="13"
+                       HorizontalAlignment="Center" Margin="0,0,0,24"/>
+
+            <StackPanel Spacing="8" HorizontalAlignment="Center" MinWidth="320">
+                <Button x:Name="M3UFileBtn" Padding="16" Background="#181825" BorderThickness="1"
+                        BorderBrush="#313244" CornerRadius="10" HorizontalAlignment="Stretch">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                        <Border Width="40" Height="40" CornerRadius="10" Background="#313244"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="📂" FontSize="18" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Text="Load M3U File" Foreground="#cdd6f4" FontSize="14" FontWeight="SemiBold"/>
+                            <TextBlock Text="Browse for a .m3u or .m3u8 playlist file"
+                                       Foreground="#6c7086" FontSize="11"/>
+                        </StackPanel>
+                    </Grid>
+                </Button>
+
+                <Button x:Name="M3UUrlBtn" Padding="16" Background="#181825" BorderThickness="1"
+                        BorderBrush="#313244" CornerRadius="10" HorizontalAlignment="Stretch">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                        <Border Width="40" Height="40" CornerRadius="10" Background="#313244"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="🔗" FontSize="18" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Text="Load M3U URL" Foreground="#cdd6f4" FontSize="14" FontWeight="SemiBold"/>
+                            <TextBlock Text="Enter a remote playlist URL"
+                                       Foreground="#6c7086" FontSize="11"/>
+                        </StackPanel>
+                    </Grid>
+                </Button>
+
+                <Button x:Name="XtreamBtn" Padding="16" Background="#181825" BorderThickness="1"
+                        BorderBrush="#313244" CornerRadius="10" HorizontalAlignment="Stretch">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                        <Border Width="40" Height="40" CornerRadius="10" Background="#cba6f7"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="🔑" FontSize="18" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Text="Xtream Codes Login" Foreground="#cdd6f4" FontSize="14" FontWeight="SemiBold"/>
+                            <TextBlock Text="Connect to your IPTV provider's API"
+                                       Foreground="#6c7086" FontSize="11"/>
+                        </StackPanel>
+                    </Grid>
+                </Button>
+            </StackPanel>
+
+            <TextBlock Text="Or drag &amp; drop a .m3u file anywhere to load it"
+                       Foreground="#45475a" FontSize="11" HorizontalAlignment="Center" Margin="0,16,0,0"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

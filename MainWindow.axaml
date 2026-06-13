@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Sabeltann.ViewModels"
         xmlns:ctrl="using:Sabeltann.Controls"
+        xmlns:views="using:Sabeltann.Views"
         xmlns:c="using:Sabeltann.Converters"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -97,8 +98,14 @@
             <Border x:Name="SidebarPanel" Grid.Column="0" Background="#181825">
                 <Grid RowDefinitions="40,*">
                     <Border Grid.Row="0" Padding="12,0" BorderThickness="0,0,0,1" BorderBrush="#2a2a3c">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="#cdd6f4"
+                        <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                            <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                                    Width="24" Height="24" Padding="0" Margin="0,0,6,0"
+                                    Command="{Binding GoBackToPickerCommand}">
+                                <TextBlock Text="←" Foreground="#a6adc8" FontSize="14"
+                                           VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            </Button>
+                            <TextBlock Grid.Column="1" FontSize="13" FontWeight="SemiBold" Foreground="#cdd6f4"
                                        VerticalAlignment="Center">
                                 <Run Text="Channels"/>
                                 <Run Text="{Binding ChannelCount, StringFormat='({0})'}"
@@ -150,8 +157,32 @@
             <GridSplitter x:Name="SidebarSplitter" Grid.Column="1" Width="1" Background="#313244"/>
 
             <Grid Grid.Column="2">
-                <Border Background="#11111b">
+                <Border Background="#11111b" IsVisible="{Binding HasContent}">
                     <ctrl:VideoView x:Name="VideoView"/>
+                </Border>
+
+                <views:ConnectionPage x:Name="ConnectionPage" IsVisible="{Binding ShowWelcome}"/>
+
+                <views:ContentPicker x:Name="ContentPicker" IsVisible="{Binding ShowContentPicker}"/>
+
+                <views:CategoryGrid IsVisible="{Binding ShowCategoryGrid}" IsEnabled="{Binding ShowCategoryGrid}"/>
+
+                <Border IsVisible="{Binding ShowConnectionOverlay}"
+                        Background="#cc11111b" CornerRadius="12" Padding="28"
+                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                        MinWidth="280">
+                    <StackPanel Spacing="12" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding ConnectionState}" Foreground="#cdd6f4"
+                                   FontSize="14" HorizontalAlignment="Center"
+                                   TextWrapping="Wrap" TextAlignment="Center"/>
+                        <ProgressBar Value="{Binding ConnectionProgress}" Maximum="100"
+                                     MinWidth="200" Height="4" Foreground="#cba6f7"
+                                     Background="#313244" IsIndeterminate="False"
+                                     HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding ConnectionProgress, StringFormat='{}{0}%'}"
+                                   Foreground="#6c7086" FontSize="11"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
                 </Border>
 
                 <Border x:Name="DebugPanel" IsVisible="{Binding ShowDebugOverlay}"

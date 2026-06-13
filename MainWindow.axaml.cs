@@ -37,6 +37,28 @@ public partial class MainWindow : Window
 
         LoadPirateIcon();
         _vm.LoadLastSession();
+
+        ConnectionPage.LoadM3UFileRequested += OnLoadM3UFile;
+        ConnectionPage.LoadM3UUrlRequested += OnLoadM3UUrl;
+        ConnectionPage.XtreamLoginRequested += OnXtreamLogin;
+
+        ContentPicker.LiveTvSelected += async (_, _) =>
+        {
+            await _vm.ShowPlaylistContentAsync();
+            _vm.ShowCategoryGrid = false;
+        };
+        ContentPicker.VodSelected += async (_, _) =>
+        {
+            await _vm.ShowPlaylistContentAsync();
+            _vm.ShowCategoryGrid = true;
+        };
+
+        Opened += (_, _) =>
+        {
+            Activate();
+            Topmost = true;
+            Topmost = false;
+        };
     }
 
     private void LoadPirateIcon()
@@ -51,16 +73,27 @@ public partial class MainWindow : Window
             var pic = svg.Load(stream);
             if (pic is null) return;
 
-            using var bmp = new SkiaSharp.SKBitmap(64, 64);
+            var size = 64;
+            var srcW = pic.CullRect.Width;
+            var srcH = pic.CullRect.Height;
+            var scale = size / Math.Max(srcW, srcH);
+
+            using var bmp = new SkiaSharp.SKBitmap(size, size);
             using var canvas = new SkiaSharp.SKCanvas(bmp);
             canvas.Clear(SkiaSharp.SKColors.Transparent);
-            var scale = 64f / Math.Max(pic.CullRect.Width, pic.CullRect.Height);
+
+            var tx = (size - srcW * scale) / 2f;
+            var ty = (size - srcH * scale) / 2f;
+            canvas.Save();
+            canvas.Translate(tx, ty);
             canvas.Scale(scale);
             canvas.DrawPicture(pic, SkiaSharp.SKPoint.Empty);
+            canvas.Restore();
+
             using var img = SkiaSharp.SKImage.FromBitmap(bmp);
             using var data = img.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
             using var ms = new MemoryStream(data.ToArray());
-            Icon = new WindowIcon(Avalonia.Media.Imaging.Bitmap.DecodeToWidth(ms, 64));
+            Icon = new WindowIcon(Avalonia.Media.Imaging.Bitmap.DecodeToWidth(ms, size));
         }
         catch { }
     }
@@ -125,6 +158,12 @@ public partial class MainWindow : Window
         else if (e.Key == Key.Escape && _isFullscreen)
         {
             ToggleFullscreen();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape && _vm.ShowContentPicker)
+        {
+            _vm.ShowContentPicker = false;
+            _vm.StatusText = "Ready";
             e.Handled = true;
         }
         else if (e.Key == Key.D)

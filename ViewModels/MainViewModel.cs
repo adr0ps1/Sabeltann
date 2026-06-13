@@ -53,6 +53,30 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _searchText = "";
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowWelcome))]
+    private bool _hasContent;
+
+    public bool ShowWelcome => !HasContent;
+
+    [ObservableProperty]
+    private string _connectionState = "";
+
+    [ObservableProperty]
+    private int _connectionProgress;
+
+    [ObservableProperty]
+    private bool _showConnectionOverlay;
+
+    [ObservableProperty]
+    private bool _showContentPicker;
+
+    [ObservableProperty]
+    private bool _showCategoryGrid;
+
+    private XtreamConnectionInfo? _pendingXtreamInfo;
+    private M3UPlaylist? _pendingPlaylist;
+
     public event Action? ToggleFullscreenRequested;
 
     [ObservableProperty]
@@ -63,7 +87,32 @@ public partial class MainViewModel : ObservableObject
     public void SetPlayer(PlaybackService player)
     {
         _player = player;
-        _player.Error += (_, msg) => StatusText = $"Playback error: {msg}";
+        _player.Error += (_, msg) =>
+        {
+            StatusText = $"Playback error: {msg}";
+            ConnectionState = msg;
+            ConnectionProgress = 0;
+        };
+        _player.Buffering += (_, pct) =>
+        {
+            ConnectionProgress = pct;
+            if (pct < 100)
+                ConnectionState = $"Buffering... {pct}%";
+            else
+                ConnectionState = "Starting playback...";
+        };
+        _player.PlayingStarted += (_, _) =>
+        {
+            ConnectionState = "";
+            ShowConnectionOverlay = false;
+            ConnectionProgress = 0;
+        };
+        _player.Stopped += (_, _) =>
+        {
+            ConnectionState = "";
+            ShowConnectionOverlay = false;
+            ConnectionProgress = 0;
+        };
         DebugStats.SetPlayer(player);
     }
 
@@ -103,6 +152,10 @@ public partial class MainViewModel : ObservableObject
     {
         if (value is not null && _player is not null && !string.IsNullOrEmpty(value.Url))
         {
+            ShowCategoryGrid = false;
+            ShowConnectionOverlay = true;
+            ConnectionState = "Connecting...";
+            ConnectionProgress = 0;
             _player.Play(value.Url);
             DebugStats.SetUrl(value.Url);
             IsPlaying = true;
@@ -158,7 +211,8 @@ public partial class MainViewModel : ObservableObject
             LogService.Info("Loading M3U from URL", new { url });
             StatusText = "Downloading playlist...";
             var playlist = await _parser.LoadFromUrlAsync(url);
-            LoadChannels(playlist);
+            _pendingPlaylist = playlist;
+            ShowContentPicker = true;
             MergeAndSave(s => { s.LastSourceType = "url"; s.LastSourceUrl = url; });
             LogService.Info("M3U loaded from URL", new { channelCount = playlist.Channels.Count });
         }
@@ -176,7 +230,8 @@ public partial class MainViewModel : ObservableObject
             LogService.Info("Loading M3U from file", new { path });
             StatusText = "Loading file...";
             var playlist = await _parser.LoadFromFileAsync(path);
-            LoadChannels(playlist);
+            _pendingPlaylist = playlist;
+            ShowContentPicker = true;
             MergeAndSave(s => { s.LastSourceType = "file"; s.LastSourceFile = path; });
             LogService.Info("M3U loaded from file", new { channelCount = playlist.Channels.Count });
         }
@@ -194,12 +249,9 @@ public partial class MainViewModel : ObservableObject
             LogService.Info("Authenticating Xtream", new { server = info.ServerUrl, user = info.Username });
             StatusText = "Authenticating...";
             await _xtream.ValidateAsync(info);
-            StatusText = "Loading channels...";
-            var channels = await _xtream.GetLiveStreamsAsync(info);
-            _allChannels = channels.Select(ch => new ChannelListItemViewModel(ch)).ToList();
-            ChannelCount = _allChannels.Count;
-            RestoreFavorites();
-            BuildCategories();
+            _pendingXtreamInfo = info;
+            ShowContentPicker = true;
+
             MergeAndSave(s =>
             {
                 s.LastSourceType = "xtream";
@@ -210,13 +262,73 @@ public partial class MainViewModel : ObservableObject
                     Password = info.Password
                 };
             });
-            LogService.Info("Xtream login successful", new { channelCount = channels.Count });
+            LogService.Info("Xtream authentication successful");
         }
         catch (Exception ex)
         {
             LogService.Error("Xtream authentication failed", new { error = ex.Message });
             StatusText = $"Xtream error: {ex.Message}";
         }
+    }
+
+    public async Task LoadXtreamLiveChannelsAsync()
+    {
+        if (_pendingXtreamInfo is null) return;
+        try
+        {
+            StatusText = "Loading channels...";
+            ShowContentPicker = false;
+            var channels = await _xtream.GetLiveStreamsAsync(_pendingXtreamInfo);
+            _allChannels = channels.Select(ch => new ChannelListItemViewModel(ch)).ToList();
+            ChannelCount = _allChannels.Count;
+            HasContent = ChannelCount > 0;
+            RestoreFavorites();
+            BuildCategories();
+        }
+        catch (Exception ex)
+        {
+            LogService.Error("Failed to load Xtream channels", new { error = ex.Message });
+            StatusText = $"Error: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private void GoBackToPicker()
+    {
+        HasContent = false;
+        ShowContentPicker = true;
+        ShowCategoryGrid = false;
+        FilteredChannels.Clear();
+        Categories.Clear();
+        SelectedChannel = null;
+        _player?.Stop();
+        IsPlaying = false;
+        StatusText = "Ready";
+    }
+
+    [RelayCommand]
+    private void SelectChannel(ChannelListItemViewModel? channel)
+    {
+        if (channel is not null)
+            SelectedChannel = channel;
+    }
+
+    public async Task ShowPlaylistContentAsync()
+    {
+        if (_pendingPlaylist is null)
+        {
+            if (_pendingXtreamInfo is not null)
+                await LoadXtreamLiveChannelsAsync();
+            return;
+        }
+
+        ShowContentPicker = false;
+        var playlist = _pendingPlaylist;
+        _allChannels = playlist.Channels.Select(ch => new ChannelListItemViewModel(ch)).ToList();
+        ChannelCount = _allChannels.Count;
+        HasContent = ChannelCount > 0;
+        RestoreFavorites();
+        BuildCategories();
     }
 
     [RelayCommand]
@@ -285,6 +397,7 @@ public partial class MainViewModel : ObservableObject
     {
         _allChannels = playlist.Channels.Select(ch => new ChannelListItemViewModel(ch)).ToList();
         ChannelCount = _allChannels.Count;
+        HasContent = ChannelCount > 0;
         RestoreFavorites();
         BuildCategories();
     }

@@ -1,0 +1,62 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Sabeltann.Views.ContentPicker">
+    <Grid Background="#11111b" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Margin="60,40" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Grid RowDefinitions="Auto,*,Auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+            <TextBlock Grid.Row="0" Text="Choose content type"
+                       Foreground="#cdd6f4" FontSize="20" FontWeight="Bold"
+                       HorizontalAlignment="Center" Margin="0,0,0,32"/>
+
+            <Grid Grid.Row="1" ColumnDefinitions="*,Auto,*" HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch">
+                <Button x:Name="LiveTvBtn" Grid.Column="0" Padding="0"
+                        Background="#181825" BorderThickness="1" BorderBrush="#313244"
+                        CornerRadius="14"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <StackPanel Spacing="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Border Width="72" Height="72" CornerRadius="18" Background="#313244"
+                                HorizontalAlignment="Center">
+                            <TextBlock Text="📺" FontSize="36" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Spacing="4" HorizontalAlignment="Center">
+                            <TextBlock Text="Live TV" Foreground="#cdd6f4" FontSize="22" FontWeight="Bold"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="Watch live channels and streams"
+                                       Foreground="#6c7086" FontSize="12"
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+
+                <Rectangle Grid.Column="1" Width="24" Fill="Transparent"/>
+
+                <Button x:Name="VodBtn" Grid.Column="2" Padding="0"
+                        Background="#181825" BorderThickness="1" BorderBrush="#313244"
+                        CornerRadius="14"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <StackPanel Spacing="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Border Width="72" Height="72" CornerRadius="18" Background="#cba6f7"
+                                HorizontalAlignment="Center">
+                            <TextBlock Text="🎬" FontSize="36" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Spacing="4" HorizontalAlignment="Center">
+                            <TextBlock Text="Movies &amp; Shows" Foreground="#cdd6f4" FontSize="22" FontWeight="Bold"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="Browse VOD and series content"
+                                       Foreground="#6c7086" FontSize="12"
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <TextBlock Grid.Row="2" Text="Press Escape to go back"
+                       Foreground="#45475a" FontSize="11" HorizontalAlignment="Center" Margin="0,24,0,0"/>
+        </Grid>
+        </Border>
+    </Grid>
+</UserControl>
