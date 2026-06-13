@@ -45,15 +45,20 @@ jobs:
 
       - run: dotnet publish --configuration Release --runtime win-x64 --self-contained true
 
-      - name: Build WiXSharp Installer
-        run: dotnet run --project Setup\Setup.csproj --configuration Release
+      - name: Install WiX Toolset
+        run: |
+          dotnet tool install --global wix
+          wix eula accept wix7
+
+      - name: Build MSI Installer
+        run: pwsh -File Setup\build.ps1
         env:
           PRODUCT_VERSION: ${{ needs.release-please.outputs.tag_name }}
 
       - name: Attest build provenance (exe)
         uses: actions/attest-build-provenance@bd77c077858b8d561b7a36cbe48ef4cc642ca39d # v2.2.2
         with:
-          subject-path: bin/Release/net10.0/publish/Sabeltann.exe
+          subject-path: bin/Release/net10.0/win-x64/publish/Sabeltann.exe
 
       - name: Attest build provenance (msi)
         uses: actions/attest-build-provenance@bd77c077858b8d561b7a36cbe48ef4cc642ca39d # v2.2.2
@@ -64,7 +69,7 @@ jobs:
         with:
           name: Sabeltann-${{ needs.release-please.outputs.tag_name }}
           path: |
-            bin/Release/net10.0/publish/
+            bin/Release/net10.0/win-x64/publish/
             installer/
           compression-level: 9
 
@@ -72,6 +77,6 @@ jobs:
         with:
           tag_name: ${{ needs.release-please.outputs.tag_name }}
           files: |
-            bin/Release/net10.0/publish/Sabeltann.exe
+            bin/Release/net10.0/win-x64/publish/Sabeltann.exe
             installer/*.msi
           generate_release_notes: false

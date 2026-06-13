@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="Sabeltann" Manufacturer="Sabeltann" Version="$(var.ProductVersion)"
+           UpgradeCode="A1B2C3D4-E5F6-7890-ABCD-EF1234567890">
+    <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Sabeltann" />
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="Sabeltann" />
+    </StandardDirectory>
+
+    <StandardDirectory Id="DesktopFolder">
+      <Component Id="DesktopShortcut">
+        <Shortcut Id="DesktopAppShortcut" Name="Sabeltann IPTV" Description="IPTV Player"
+                  Target="[INSTALLFOLDER]Sabeltann.exe" />
+        <RegistryValue Root="HKCU" Key="Software\Sabeltann\Desktop" Name="shortcut"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="Shortcuts">
+        <Shortcut Id="AppShortcut" Name="Sabeltann IPTV" Description="IPTV Player"
+                  Target="[INSTALLFOLDER]Sabeltann.exe" />
+        <Shortcut Id="UninstallShortcut" Name="Uninstall Sabeltann"
+                  Target="[System64Folder]msiexec.exe" Arguments="/x [ProductCode]" />
+        <RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\Sabeltann" Name="installed"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <Feature Id="Complete" Title="Sabeltann" Level="1">
+      <ComponentGroupRef Id="SabeltannFiles" />
+      <ComponentRef Id="Shortcuts" />
+      <ComponentRef Id="DesktopShortcut" />
+    </Feature>
+  </Package>
+</Wix>

@@ -27,4 +27,3 @@ jobs:
         with:
           name: Sabeltann-Release
           path: bin/Release/net10.0/
-          compression-level: 9
