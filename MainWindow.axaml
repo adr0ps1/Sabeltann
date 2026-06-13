@@ -35,16 +35,17 @@
         <vm:MainViewModel/>
     </Design.DataContext>
 
-    <Grid RowDefinitions="Auto,Auto,*,Auto">
+    <Grid RowDefinitions="44,Auto,*,28">
 
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Background="#181825">
-            <Border Padding="12,0,10,0" Background="#181825">
-                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                    <TextBlock Text="☠" Foreground="#cba6f7" FontSize="16" VerticalAlignment="Center"/>
-                    <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                        <TextBlock Text="SABELTANN" Foreground="#cba6f7" FontSize="11"
-                                   FontWeight="Bold" LetterSpacing="2"/>
-                    </StackPanel>
+            <Border Padding="14,0,12,0" Background="#181825">
+                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <Border Width="24" Height="24" CornerRadius="6" Background="#cba6f7">
+                        <TextBlock Text="☠" Foreground="#1e1e2e" FontSize="13"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="SABELTANN" Foreground="#cdd6f4" FontSize="12"
+                               FontWeight="Bold" LetterSpacing="2" VerticalAlignment="Center"/>
                 </StackPanel>
             </Border>
             <Menu x:Name="MainMenu" Grid.Column="1" Background="#181825" Foreground="#cdd6f4"
@@ -60,79 +61,81 @@
             </Menu>
         </Grid>
 
-        <Border x:Name="CategoryBar" Grid.Row="1" Padding="10,6" Background="#313244">
+        <Border x:Name="CategoryBar" Grid.Row="1" Padding="10,7" Background="#313244">
             <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
                     <TextBlock Text="Category" VerticalAlignment="Center"
-                               FontSize="12" FontWeight="SemiBold"
+                               FontSize="11" FontWeight="SemiBold"
                                Foreground="#a6adc8" LetterSpacing="1"/>
                     <ComboBox ItemsSource="{Binding Categories}"
                               SelectedItem="{Binding SelectedCategory}"
                               DisplayMemberBinding="{Binding Name}"
-                              MinWidth="160"
-                              FontSize="13"/>
+                              MinWidth="150" FontSize="12"/>
                 </StackPanel>
-                <ToggleButton Grid.Column="1" Content="★" IsChecked="{Binding ShowFavoritesOnly}"
+                <ToggleButton Grid.Column="1" IsChecked="{Binding ShowFavoritesOnly}"
                               Background="Transparent" BorderThickness="0"
-                              Foreground="#f9e2af" FontSize="14"
-                              Margin="8,0,0,0" Padding="4,0"
-                              VerticalAlignment="Center"/>
+                              Margin="6,0,0,0" Padding="4,0"
+                              VerticalAlignment="Center">
+                    <TextBlock Text="★" Foreground="#f9e2af" FontSize="13"/>
+                </ToggleButton>
                 <TextBox Grid.Column="2" Text="{Binding SearchText}"
-                         PlaceholderText="Search channels..." 
+                         PlaceholderText="Search channels..."
                          Background="#1e1e2e" Foreground="#cdd6f4"
                          BorderThickness="1" BorderBrush="#45475a"
-                         FontSize="12" Padding="6,3"
+                         FontSize="12" Padding="6,4"
                          Margin="8,0" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="4" Text="{Binding ChannelCount, StringFormat='{}{0} channels'}"
-                           VerticalAlignment="Center" Margin="8,0"
-                           Foreground="#6c7086" FontSize="12"/>
+                <Border Grid.Column="4" CornerRadius="10" Background="#313244" 
+                        Padding="8,2" Margin="6,0" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding ChannelCount, StringFormat='{}{0} channels'}"
+                               Foreground="#a6adc8" FontSize="11"/>
+                </Border>
             </Grid>
         </Border>
 
         <Grid x:Name="ContentGrid" Grid.Row="2" ColumnDefinitions="280,1,*">
 
             <Border x:Name="SidebarPanel" Grid.Column="0" Background="#181825">
-                <Grid RowDefinitions="Auto,*">
-                    <Border Grid.Row="0" Padding="12,10" BorderThickness="0,0,0,1" BorderBrush="#2a2a3c">
+                <Grid RowDefinitions="40,*">
+                    <Border Grid.Row="0" Padding="12,0" BorderThickness="0,0,0,1" BorderBrush="#2a2a3c">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#cdd6f4"
+                            <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="#cdd6f4"
                                        VerticalAlignment="Center">
                                 <Run Text="Channels"/>
                                 <Run Text="{Binding ChannelCount, StringFormat='({0})'}"
-                                     Foreground="#6c7086" FontSize="12"/>
+                                     Foreground="#6c7086" FontSize="11"/>
                             </TextBlock>
                         </Grid>
                     </Border>
 
-                    <ListBox Grid.Row="1" Margin="0"
+                    <ListBox Grid.Row="1" Margin="0,2,0,0"
                              ItemsSource="{Binding FilteredChannels}"
                              SelectedItem="{Binding SelectedChannel}"
                              BorderThickness="0"
                              Background="Transparent">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Border Padding="6,6" Margin="4,2"
-                                        Background="#1e1e2e" CornerRadius="6"
+                                <Border Classes="ChannelCard"
+                                        Padding="6,5" Margin="4,2"
+                                        Background="#1e1e2e" CornerRadius="8"
                                         HorizontalAlignment="Stretch">
-                                    <Grid ColumnDefinitions="32,*,Auto">
+                                    <Grid ColumnDefinitions="30,*,Auto" ColumnSpacing="8">
                                         <Border Grid.Column="0" Width="28" Height="28"
-                                                CornerRadius="6"
-                                                Background="#313244">
+                                                CornerRadius="7" Background="#45475a">
                                             <TextBlock Text="TV"
                                                        HorizontalAlignment="Center"
                                                        VerticalAlignment="Center"
                                                        Foreground="#6c7086" FontSize="9"/>
                                         </Border>
                                         <TextBlock Grid.Column="1" Text="{Binding Name}"
-                                                   VerticalAlignment="Center" Margin="8,0"
+                                                   VerticalAlignment="Center"
                                                    TextTrimming="CharacterEllipsis"
-                                                   Foreground="#cdd6f4" FontSize="13"/>
-                                        <Button Grid.Column="2" MinWidth="24" Height="24"
+                                                   Foreground="#cdd6f4" FontSize="12"/>
+                                        <Button Grid.Column="2" Width="22" Height="22"
                                                 Background="Transparent" BorderThickness="0"
                                                 Command="{Binding $parent[Window].DataContext.ToggleFavoriteCommand}"
                                                 CommandParameter="{Binding .}"
-                                                Padding="2">
-                                            <TextBlock Text="★" FontSize="14"
+                                                Padding="0">
+                                            <TextBlock Text="★" FontSize="12"
                                                        Foreground="{Binding IsFavorite, Converter={StaticResource StarColorConverter}}"
                                                        VerticalAlignment="Center" HorizontalAlignment="Center"/>
                                         </Button>
@@ -208,78 +211,78 @@
                        IsVisible="{Binding IsPlaying}" Opacity="0"
                        PointerEntered="OnOverlayEntered"
                        PointerExited="OnOverlayExited">
-                    <Border Background="#99000000" CornerRadius="14" Padding="6"
+                    <Border Background="#cc000000" CornerRadius="16" Padding="8"
                             HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Spacing="20">
-                            <Button Width="44" Height="44" FontSize="20"
+                        <StackPanel Orientation="Horizontal" Spacing="16">
+                            <Button Width="42" Height="42" FontSize="18"
                                     Command="{Binding RewindCommand}"
                                     Background="Transparent" BorderThickness="0"
-                                    CornerRadius="22">
+                                    CornerRadius="21">
                                 <TextBlock Text="⏪" Foreground="#cdd6f4" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             </Button>
-                            <Button Width="56" Height="56" FontSize="26"
+                            <Button Width="52" Height="52" FontSize="24"
                                     Command="{Binding TogglePlayPauseCommand}"
-                                    Background="#cba6f7" BorderThickness="0" CornerRadius="28">
+                                    Background="#cba6f7" BorderThickness="0" CornerRadius="26">
                                 <TextBlock Text="{Binding PlayPauseSymbol}" Foreground="#1e1e2e"
                                            VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             </Button>
-                            <Button Width="44" Height="44" FontSize="20"
+                            <Button Width="42" Height="42" FontSize="18"
                                     Command="{Binding ForwardCommand}"
                                     Background="Transparent" BorderThickness="0"
-                                    CornerRadius="22">
+                                    CornerRadius="21">
                                 <TextBlock Text="⏩" Foreground="#cdd6f4" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             </Button>
                         </StackPanel>
                     </Border>
                 </Panel>
 
-                <Border x:Name="TransportOverlay" Padding="10,6" Background="#99000000"
-                        VerticalAlignment="Bottom" Opacity="1"
+                <Border x:Name="TransportOverlay" Padding="8,5" Background="#cc000000"
+                        VerticalAlignment="Bottom"
                         PointerEntered="OnTransportEntered"
                         PointerExited="OnTransportExited">
                     <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto" VerticalAlignment="Center">
 
                         <Button Grid.Column="0" Classes="TransportBtn"
                                 Command="{Binding TogglePlayPauseCommand}">
-                            <TextBlock Text="{Binding PlayPauseSymbol}" Foreground="#cdd6f4" FontSize="13"/>
+                            <TextBlock Text="{Binding PlayPauseSymbol}" Foreground="#cdd6f4" FontSize="12"/>
                         </Button>
 
                         <Button Grid.Column="1" Classes="TransportBtn"
                                 Command="{Binding StopCommand}">
-                            <TextBlock Text="⏹" Foreground="#f38ba8" FontSize="12"/>
+                            <TextBlock Text="⏹" Foreground="#f38ba8" FontSize="11"/>
                         </Button>
 
                         <Button Grid.Column="2" Classes="TransportBtn"
                                 Command="{Binding RewindCommand}"
                                 ToolTip.Tip="Rewind 10s">
-                            <TextBlock Text="⏪" Foreground="#a6adc8" FontSize="12"/>
+                            <TextBlock Text="⏪" Foreground="#a6adc8" FontSize="11"/>
                         </Button>
 
                         <Button Grid.Column="3" Classes="TransportBtn"
                                 Command="{Binding ForwardCommand}"
                                 ToolTip.Tip="Forward 10s">
-                            <TextBlock Text="⏩" Foreground="#a6adc8" FontSize="12"/>
+                            <TextBlock Text="⏩" Foreground="#a6adc8" FontSize="11"/>
                         </Button>
 
                         <Slider Grid.Column="4" Minimum="0" Maximum="200"
-                                Value="{Binding Volume}" Margin="16,0"
+                                Value="{Binding Volume}" Margin="12,0"
                                 VerticalAlignment="Center"/>
 
                         <TextBlock Grid.Column="5" Text="{Binding Volume}"
-                                   VerticalAlignment="Center" Margin="4,0" Width="28"
-                                   Foreground="#a6adc8" FontSize="12"
+                                   VerticalAlignment="Center" Margin="2,0" Width="24"
+                                   Foreground="#a6adc8" FontSize="11"
                                    HorizontalAlignment="Center"/>
 
                         <Button Grid.Column="6" Classes="TransportBtn"
                                 Command="{Binding ToggleSubtitlesCommand}"
                                 ToolTip.Tip="Subtitles">
-                            <TextBlock Text="CC" Foreground="#89b4fa" FontSize="11" FontWeight="Bold"/>
+                            <TextBlock Text="CC" Foreground="#89b4fa" FontSize="10" FontWeight="Bold"/>
                         </Button>
 
                         <Button Grid.Column="7" Classes="TransportBtn"
                                 Command="{Binding FullscreenCommand}"
                                 ToolTip.Tip="Fullscreen (F)">
-                            <TextBlock Text="⛶" Foreground="#89b4fa" FontSize="14"/>
+                            <TextBlock Text="⛶" Foreground="#89b4fa" FontSize="13"/>
                         </Button>
                     </Grid>
                 </Border>

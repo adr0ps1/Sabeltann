@@ -5,5 +5,15 @@
 
     <Application.Styles>
         <FluentTheme />
+
+        <Style Selector="Button:pointerover">
+            <Setter Property="RenderTransform">
+                <ScaleTransform ScaleX="1.04" ScaleY="1.04"/>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border.ChannelCard:pointerover">
+            <Setter Property="Background" Value="#252540"/>
+        </Style>
     </Application.Styles>
 </Application>
