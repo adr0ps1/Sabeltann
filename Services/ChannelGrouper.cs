@@ -15,20 +15,29 @@ public static class ChannelGrouper
 
     private static readonly HashSet<string> LiveGroups =
     [
-        "live", "tv", "news", "sport", "sports", "entertainment", "general",
-        "music", "radio", "kids", "children", "documentary", "education",
-        "local", "regional", "national", "international", "24/7", "hd",
-        "fhd", "4k", "ultra", "premium", "vip", "exclusive", "adult",
-        "religion", "shopping", "weather", "travel", "food", "lifestyle",
-        "reality", "talk", "game", "comedy", "drama", "action", "thriller",
+        "norway", "sweden", "denmark", "finland", "ukraine",
+        "norwegian", "swedish", "danish", "finnish",
+        "uk ", "canada", "germany", "france", "spain", "italy",
+        "sport", "football", "premier league", "ufc", "mma", "boxing", "wwe",
+        "fifa", "world cup", "olympics", "racing", "motorsport",
+        "news", "radio", "24/7",
+        "4k", "uhd", "fhd", "hd",
+        "live events", "ppv",
+        "multi audio", "multi subs",
+        "local", "regional",
     ];
 
     private static readonly HashSet<string> VodGroups =
     [
-        "movie", "movies", "film", "films", "cinema", "vod", "series",
-        "show", "shows", "season", "seasons", "episode", "episodes",
-        "anime", "cartoon", "animation", "docuseries", "miniseries",
-        "tv series", "tv shows", "box set", "collection",
+        "movie", "movies", "film", "cinema", "vod",
+        "series", "shows", "season", "episode",
+        "action", "adventure", "animation", "anime", "comedy", "crime",
+        "documentar", "drama", "family", "fantasy", "horror", "kids",
+        "martial arts", "music", "musical", "concert", "mystery", "thriller",
+        "reality", "romance", "scifi", "science fiction", "war", "western",
+        "classics", "disney", "x-mas", "christmas",
+        "scandinavian reality", "scandinavian series",
+        "adult", "xxx", "2026", "2025", "2024",
     ];
 
     public static string? ExtractShowName(string channelName)

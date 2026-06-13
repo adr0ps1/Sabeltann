@@ -56,7 +56,7 @@ public partial class MainWindow : Window
                 _vm.ShowVodChannels();
             else
                 await _vm.ShowPlaylistContentAsync();
-            _vm.ShowGroupsList = true;
+            _vm.ShowGroupsList = false;
         };
         ContentPicker.SearchRequested += async (_, query) =>
         {

@@ -58,15 +58,19 @@ public partial class MainViewModel : ObservableObject
         var split = ChannelGrouper.SplitByType(_allChannels);
         _liveChannels = split.Live;
         _vodChannels = split.Vod;
+        LogService.Info($"Split: {_liveChannels.Count} live, {_vodChannels.Count} vod out of {_allChannels.Count} total");
     }
 
     public void ShowLiveChannels()
     {
         ShowContentPicker = false;
-        ChannelCount = _allChannels.Count;
-        HasContent = ChannelCount > 0;
-        BuildCategories();
         SelectedChannel = null;
+        ChannelCount = _liveChannels.Count;
+        HasContent = ChannelCount > 0;
+        var saved = _allChannels;
+        _allChannels = _liveChannels;
+        BuildCategories();
+        _allChannels = saved;
         if (Categories.Count > 0)
             SelectedCategory = Categories[0];
     }
@@ -75,10 +79,14 @@ public partial class MainViewModel : ObservableObject
     {
         ShowContentPicker = false;
         SelectedChannel = null;
-        ChannelCount = _allChannels.Count;
+        ChannelCount = _vodChannels.Count;
         HasContent = ChannelCount > 0;
-        SetupShowGroups();
-        ShowGroupsList = true;
+        var saved = _allChannels;
+        _allChannels = _vodChannels;
+        BuildCategories();
+        _allChannels = saved;
+        if (Categories.Count > 0)
+            SelectedCategory = Categories[0];
     }
 
     [ObservableProperty]
@@ -346,6 +354,7 @@ public partial class MainViewModel : ObservableObject
             HasContent = ChannelCount > 0;
             RestoreFavorites();
             BuildCategories();
+            RestoreLastSessionSelection();
         }
         catch (Exception ex)
         {
@@ -464,6 +473,10 @@ public partial class MainViewModel : ObservableObject
         HasContent = ChannelCount > 0;
         RestoreFavorites();
         BuildCategories();
+        RestoreLastSessionSelection();
+
+        var groups = _allChannels.Select(c => c.Group).Where(g => g is not null).Distinct().OrderBy(g => g).ToList();
+        LogService.Info($"Loaded {_allChannels.Count} channels, {groups.Count} unique groups", new { groups });
     }
 
     private void RestoreFavorites()
@@ -491,8 +504,12 @@ public partial class MainViewModel : ObservableObject
             cat.Channels.AddRange(g);
             Categories.Add(cat);
         }
+    }
 
-        RestoreLastSessionSelection();
+    private void SelectFirstCategory()
+    {
+        if (Categories.Count > 0)
+            SelectedCategory = Categories[0];
     }
 
     private void RestoreLastSessionSelection()
