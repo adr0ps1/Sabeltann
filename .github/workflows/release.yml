@@ -55,6 +55,16 @@ jobs:
         env:
           PRODUCT_VERSION: ${{ needs.release-please.outputs.tag_name }}
 
+      - name: Attest build provenance (exe)
+        uses: actions/attest-build-provenance@bd77c077858b8d561b7a36cbe48ef4cc642ca39d # v2.2.2
+        with:
+          subject-path: bin/Release/net10.0/win-x64/publish/Sabeltann.exe
+
+      - name: Attest build provenance (msi)
+        uses: actions/attest-build-provenance@bd77c077858b8d561b7a36cbe48ef4cc642ca39d # v2.2.2
+        with:
+          subject-path: installer/*.msi
+
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
           name: Sabeltann-${{ needs.release-please.outputs.tag_name }}
