@@ -44,15 +44,26 @@ public partial class MainWindow : Window
 
         ContentPicker.LiveTvSelected += async (_, _) =>
         {
-            await _vm.ShowPlaylistContentAsync();
-            _vm.ShowLiveChannels();
+            if (_vm.HasContent)
+                _vm.ShowLiveChannels();
+            else
+                await _vm.ShowPlaylistContentAsync();
             _vm.ShowGroupsList = false;
         };
         ContentPicker.VodSelected += async (_, _) =>
         {
-            await _vm.ShowPlaylistContentAsync();
-            _vm.ShowVodChannels();
+            if (_vm.HasContent)
+                _vm.ShowVodChannels();
+            else
+                await _vm.ShowPlaylistContentAsync();
             _vm.ShowGroupsList = true;
+        };
+        ContentPicker.SearchRequested += async (_, query) =>
+        {
+            if (!_vm.HasContent)
+                await _vm.ShowPlaylistContentAsync();
+            _vm.SearchText = query;
+            _vm.ShowGroupsList = false;
         };
 
         Opened += (_, _) =>

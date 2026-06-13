@@ -41,8 +41,8 @@ public partial class MainViewModel : ObservableObject
         FilteredChannels.Clear();
         foreach (var ch in value.Channels)
             FilteredChannels.Add(ch);
-        if (FilteredChannels.Count > 0)
-            SelectedChannel = FilteredChannels[0];
+        ShowGroupsList = false;
+        SelectedChannel = null;
         StatusText = $"{value.Name} — {value.Count} episodes";
     }
 
@@ -62,27 +62,23 @@ public partial class MainViewModel : ObservableObject
 
     public void ShowLiveChannels()
     {
-        FilteredChannels.Clear();
-        Categories.Clear();
         ShowContentPicker = false;
-        _allChannels = [.. _liveChannels];
         ChannelCount = _allChannels.Count;
         HasContent = ChannelCount > 0;
-        RestoreFavorites();
         BuildCategories();
+        SelectedChannel = null;
+        if (Categories.Count > 0)
+            SelectedCategory = Categories[0];
     }
 
     public void ShowVodChannels()
     {
-        FilteredChannels.Clear();
-        Categories.Clear();
         ShowContentPicker = false;
-        _allChannels = [.. _vodChannels];
+        SelectedChannel = null;
         ChannelCount = _allChannels.Count;
         HasContent = ChannelCount > 0;
-        RestoreFavorites();
-        BuildCategories();
         SetupShowGroups();
+        ShowGroupsList = true;
     }
 
     [ObservableProperty]
