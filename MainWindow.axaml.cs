@@ -234,6 +234,15 @@ public partial class MainWindow : Window
             await _vm.LoginXtreamAsync(result);
     }
 
+    private async void OnSettings(object? sender, RoutedEventArgs e)
+    {
+        var settings = _vm.GetSettings();
+        var dialog = new Views.SettingsWindow(settings, _vm.ConnectionServerUrl, _vm.ConnectionUsername, _vm.ChannelCount);
+        var result = await dialog.ShowDialog<SettingsData?>(this);
+        if (result is not null)
+            _vm.ApplySettings(result);
+    }
+
     private void OnExit(object? sender, RoutedEventArgs e)
     {
         Close();

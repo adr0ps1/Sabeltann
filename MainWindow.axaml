@@ -57,6 +57,8 @@
                     <Separator/>
                     <MenuItem Header="Xtream Login..." Click="OnXtreamLogin"/>
                     <Separator/>
+                    <MenuItem Header="_Settings..." Click="OnSettings"/>
+                    <Separator/>
                     <MenuItem Header="E_xit" Click="OnExit"/>
                 </MenuItem>
             </Menu>

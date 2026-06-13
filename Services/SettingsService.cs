@@ -44,6 +44,10 @@ public class SettingsData
     public List<string> FavoriteUrls { get; set; } = [];
     public string? LastChannelUrl { get; set; }
     public string? LastCategoryName { get; set; }
+    public int DefaultVolume { get; set; } = 100;
+    public bool AutoLoadLastSession { get; set; } = true;
+    public string? LastServerUrl { get; set; }
+    public string? LastUsername { get; set; }
 }
 
 public class XtreamSettings

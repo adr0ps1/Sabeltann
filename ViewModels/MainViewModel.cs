@@ -53,6 +53,17 @@ public partial class MainViewModel : ObservableObject
             ShowGroups.Add(g);
     }
 
+    public string ConnectionServerUrl => _pendingXtreamInfo?.ServerUrl ?? _settings.Load().LastXtream?.ServerUrl ?? "";
+    public string ConnectionUsername => _pendingXtreamInfo?.Username ?? _settings.Load().LastXtream?.Username ?? "";
+
+    public SettingsData GetSettings() => _settings.Load();
+
+    public void ApplySettings(SettingsData data)
+    {
+        _settings.Save(data);
+        Volume = data.DefaultVolume;
+    }
+
     private void ApplyChannelSplit()
     {
         var split = ChannelGrouper.SplitByType(_allChannels);
@@ -209,11 +220,13 @@ public partial class MainViewModel : ObservableObject
         var query = (SearchText ?? "").Trim().ToLowerInvariant();
         FilteredChannels.Clear();
 
+        var limit = string.IsNullOrEmpty(query) ? 500 : 0;
         foreach (var ch in category.Channels)
         {
             if (ShowFavoritesOnly && !ch.IsFavorite) continue;
             if (query.Length > 0 && !ch.Name.ToLowerInvariant().Contains(query)) continue;
             FilteredChannels.Add(ch);
+            if (limit > 0 && FilteredChannels.Count >= limit) break;
         }
     }
 
@@ -251,6 +264,8 @@ public partial class MainViewModel : ObservableObject
     public void LoadLastSession()
     {
         var s = _settings.Load();
+        Volume = s.DefaultVolume;
+        if (!s.AutoLoadLastSession) return;
         if (s.LastSourceType == "url" && !string.IsNullOrEmpty(s.LastSourceUrl))
             _ = LoadM3UFromUrlAsync(s.LastSourceUrl);
         else if (s.LastSourceType == "file" && !string.IsNullOrEmpty(s.LastSourceFile))
