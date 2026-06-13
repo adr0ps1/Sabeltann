@@ -118,7 +118,8 @@
                              ItemsSource="{Binding FilteredChannels}"
                              SelectedItem="{Binding SelectedChannel}"
                              BorderThickness="0"
-                             Background="Transparent">
+                             Background="Transparent"
+                             IsVisible="{Binding ShowFlatList}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Border Classes="ChannelCard"
@@ -151,6 +152,40 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
+
+                    <ListBox Grid.Row="1" Margin="0,2,0,0"
+                             ItemsSource="{Binding ShowGroups}"
+                             SelectedItem="{Binding SelectedGroup}"
+                             BorderThickness="0"
+                             Background="Transparent"
+                             IsVisible="{Binding ShowGroupsList}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Classes="ChannelCard"
+                                        Padding="6,5" Margin="4,2"
+                                        Background="#1e1e2e" CornerRadius="8"
+                                        HorizontalAlignment="Stretch">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                        <Border Width="28" Height="28"
+                                                CornerRadius="7" Background="#cba6f7">
+                                            <TextBlock Text="📺"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="#1e1e2e" FontSize="11"/>
+                                        </Border>
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="#cdd6f4" FontSize="13" FontWeight="SemiBold"/>
+                                        <Border Grid.Column="2" CornerRadius="10" Background="#313244"
+                                                Padding="6,2" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Count}" Foreground="#a6adc8" FontSize="10"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                 </Grid>
             </Border>
 
@@ -160,6 +195,14 @@
                 <Border Background="#11111b" IsVisible="{Binding HasContent}">
                     <ctrl:VideoView x:Name="VideoView"/>
                 </Border>
+
+                <Button Background="#44000000" BorderThickness="0" CornerRadius="8"
+                        Width="32" Height="32" HorizontalAlignment="Right" VerticalAlignment="Top"
+                        Margin="8" Padding="0" IsVisible="{Binding HasContent}"
+                        Command="{Binding StopCommand}">
+                    <TextBlock Text="✕" Foreground="#f38ba8" FontSize="16" FontWeight="Bold"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Button>
 
                 <views:ConnectionPage x:Name="ConnectionPage" IsVisible="{Binding ShowWelcome}"/>
 

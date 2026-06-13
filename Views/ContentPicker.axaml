@@ -5,7 +5,7 @@
         <Border Margin="60,40" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Grid RowDefinitions="Auto,*,Auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
-            <TextBlock Grid.Row="0" Text="Choose content type"
+            <TextBlock Grid.Row="0" Text="Select category"
                        Foreground="#cdd6f4" FontSize="20" FontWeight="Bold"
                        HorizontalAlignment="Center" Margin="0,0,0,32"/>
 
@@ -44,7 +44,7 @@
                                        VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel Spacing="4" HorizontalAlignment="Center">
-                            <TextBlock Text="Movies &amp; Shows" Foreground="#cdd6f4" FontSize="22" FontWeight="Bold"
+                            <TextBlock Text="Movies &amp; Series" Foreground="#cdd6f4" FontSize="22" FontWeight="Bold"
                                        HorizontalAlignment="Center"/>
                             <TextBlock Text="Browse VOD and series content"
                                        Foreground="#6c7086" FontSize="12"

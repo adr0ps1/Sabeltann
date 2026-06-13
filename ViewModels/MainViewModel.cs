@@ -13,9 +13,15 @@ public partial class MainViewModel : ObservableObject
     private readonly SettingsService _settings = new();
     private PlaybackService? _player;
     private List<ChannelListItemViewModel> _allChannels = [];
+    private List<ShowGroup> _allShowGroups = [];
+    private List<ChannelListItemViewModel> _liveChannels = [];
+    private List<ChannelListItemViewModel> _vodChannels = [];
 
     [ObservableProperty]
     private ObservableCollection<CategoryViewModel> _categories = [];
+
+    [ObservableProperty]
+    private ObservableCollection<ShowGroup> _showGroups = [];
 
     [ObservableProperty]
     private ObservableCollection<ChannelListItemViewModel> _filteredChannels = [];
@@ -25,6 +31,59 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private ChannelListItemViewModel? _selectedChannel;
+
+    [ObservableProperty]
+    private ShowGroup? _selectedGroup;
+
+    partial void OnSelectedGroupChanged(ShowGroup? value)
+    {
+        if (value is null) return;
+        FilteredChannels.Clear();
+        foreach (var ch in value.Channels)
+            FilteredChannels.Add(ch);
+        if (FilteredChannels.Count > 0)
+            SelectedChannel = FilteredChannels[0];
+        StatusText = $"{value.Name} — {value.Count} episodes";
+    }
+
+    public void SetupShowGroups()
+    {
+        ShowGroups.Clear();
+        foreach (var g in _allShowGroups)
+            ShowGroups.Add(g);
+    }
+
+    private void ApplyChannelSplit()
+    {
+        var split = ChannelGrouper.SplitByType(_allChannels);
+        _liveChannels = split.Live;
+        _vodChannels = split.Vod;
+    }
+
+    public void ShowLiveChannels()
+    {
+        FilteredChannels.Clear();
+        Categories.Clear();
+        ShowContentPicker = false;
+        _allChannels = [.. _liveChannels];
+        ChannelCount = _allChannels.Count;
+        HasContent = ChannelCount > 0;
+        RestoreFavorites();
+        BuildCategories();
+    }
+
+    public void ShowVodChannels()
+    {
+        FilteredChannels.Clear();
+        Categories.Clear();
+        ShowContentPicker = false;
+        _allChannels = [.. _vodChannels];
+        ChannelCount = _allChannels.Count;
+        HasContent = ChannelCount > 0;
+        RestoreFavorites();
+        BuildCategories();
+        SetupShowGroups();
+    }
 
     [ObservableProperty]
     private string _statusText = "Ready";
@@ -73,6 +132,12 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _showCategoryGrid;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowFlatList))]
+    private bool _showGroupsList;
+
+    public bool ShowFlatList => !ShowGroupsList;
 
     private XtreamConnectionInfo? _pendingXtreamInfo;
     private M3UPlaylist? _pendingPlaylist;
@@ -279,6 +344,8 @@ public partial class MainViewModel : ObservableObject
             ShowContentPicker = false;
             var channels = await _xtream.GetLiveStreamsAsync(_pendingXtreamInfo);
             _allChannels = channels.Select(ch => new ChannelListItemViewModel(ch)).ToList();
+            ApplyChannelSplit();
+            _allShowGroups = ChannelGrouper.GroupChannels(_allChannels);
             ChannelCount = _allChannels.Count;
             HasContent = ChannelCount > 0;
             RestoreFavorites();
@@ -323,6 +390,7 @@ public partial class MainViewModel : ObservableObject
         ShowContentPicker = false;
         var playlist = _pendingPlaylist;
         _allChannels = playlist.Channels.Select(ch => new ChannelListItemViewModel(ch)).ToList();
+        ApplyChannelSplit();
         ChannelCount = _allChannels.Count;
         HasContent = ChannelCount > 0;
         RestoreFavorites();
@@ -394,6 +462,8 @@ public partial class MainViewModel : ObservableObject
     private void LoadChannels(M3UPlaylist playlist)
     {
         _allChannels = playlist.Channels.Select(ch => new ChannelListItemViewModel(ch)).ToList();
+        ApplyChannelSplit();
+        _allShowGroups = ChannelGrouper.GroupChannels(_allChannels);
         ChannelCount = _allChannels.Count;
         HasContent = ChannelCount > 0;
         RestoreFavorites();

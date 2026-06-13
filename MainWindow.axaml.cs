@@ -29,7 +29,7 @@ public partial class MainWindow : Window
         VideoView.Attach(_player.Player);
         KeyDown += OnKeyDown;
 
-        _transportTimer.Interval = TimeSpan.FromSeconds(5);
+        _transportTimer.Interval = TimeSpan.FromSeconds(3);
         _transportTimer.Tick += OnTransportTimerTick;
 
         PointerMoved += OnWindowPointerMoved;
@@ -45,11 +45,14 @@ public partial class MainWindow : Window
         ContentPicker.LiveTvSelected += async (_, _) =>
         {
             await _vm.ShowPlaylistContentAsync();
-            _vm.ShowCategoryGrid = false;
+            _vm.ShowLiveChannels();
+            _vm.ShowGroupsList = false;
         };
         ContentPicker.VodSelected += async (_, _) =>
         {
             await _vm.ShowPlaylistContentAsync();
+            _vm.ShowVodChannels();
+            _vm.ShowGroupsList = true;
         };
 
         Opened += (_, _) =>
@@ -99,12 +102,12 @@ public partial class MainWindow : Window
 
     private void OnWindowPointerMoved(object? sender, PointerEventArgs e)
     {
-        if (_isFullscreen) ShowTransportTemporarily();
+        ShowTransportTemporarily();
     }
 
     private void OnTransportPointerMoved(object? sender, PointerEventArgs e)
     {
-        if (_isFullscreen) ShowTransportTemporarily();
+        ShowTransportTemporarily();
     }
 
     private void ShowTransportTemporarily()
