@@ -164,8 +164,7 @@
                 <views:ConnectionPage x:Name="ConnectionPage" IsVisible="{Binding ShowWelcome}"/>
 
                 <views:ContentPicker x:Name="ContentPicker" IsVisible="{Binding ShowContentPicker}"/>
-
-                <views:CategoryGrid IsVisible="{Binding ShowCategoryGrid}" IsEnabled="{Binding ShowCategoryGrid}"/>
+                <!-- CategoryGrid removed - causes freeze -->
 
                 <Border IsVisible="{Binding ShowConnectionOverlay}"
                         Background="#cc11111b" CornerRadius="12" Padding="28"

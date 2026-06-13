@@ -50,7 +50,6 @@ public partial class MainWindow : Window
         ContentPicker.VodSelected += async (_, _) =>
         {
             await _vm.ShowPlaylistContentAsync();
-            _vm.ShowCategoryGrid = true;
         };
 
         Opened += (_, _) =>
@@ -230,6 +229,7 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         _transportTimer.Stop();
+        _vm.DebugStats.Stop();
         VideoView.Detach();
         _player.Dispose();
         base.OnClosed(e);

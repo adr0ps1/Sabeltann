@@ -152,7 +152,6 @@ public partial class MainViewModel : ObservableObject
     {
         if (value is not null && _player is not null && !string.IsNullOrEmpty(value.Url))
         {
-            ShowCategoryGrid = false;
             ShowConnectionOverlay = true;
             ConnectionState = "Connecting...";
             ConnectionProgress = 0;
@@ -297,7 +296,6 @@ public partial class MainViewModel : ObservableObject
     {
         HasContent = false;
         ShowContentPicker = true;
-        ShowCategoryGrid = false;
         FilteredChannels.Clear();
         Categories.Clear();
         SelectedChannel = null;
