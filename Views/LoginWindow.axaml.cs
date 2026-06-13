@@ -1,4 +1,9 @@
+using Sabeltann;
+
+using Avalonia.Interactivity;
 using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
+
 using Sabeltann.Models;
 
 namespace Sabeltann;
@@ -7,7 +12,7 @@ public partial class LoginWindow : Window
 {
     public LoginWindow()
     {
-        InitializeComponent();
+        this.Load();
     }
 
     private void OnLogin(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -34,3 +39,9 @@ public partial class LoginWindow : Window
         Close(null);
     }
 }
+
+
+
+
+
+

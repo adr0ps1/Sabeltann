@@ -1,9 +1,20 @@
-using Avalonia.Controls;
+using Sabeltann;
+
+using Avalonia.Threading;
+using Avalonia.Platform.Storage;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Platform.Storage;
-using Avalonia.Threading;
-using Avalonia.Threading;
+using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
+
+using Avalonia.Markup.Xaml;
+
+using Avalonia.Markup.Xaml;
+
+using Avalonia.Markup.Xaml;
+
+using Avalonia.Markup.Xaml;
+
 using Sabeltann.Models;
 using Sabeltann.Services;
 using Sabeltann.ViewModels;
@@ -18,7 +29,7 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
-        InitializeComponent();
+        this.Load();
         LogService.Info("Application started");
         _player = new PlaybackService();
         _vm = new MainViewModel();
@@ -84,15 +95,6 @@ public partial class MainWindow : Window
             if (!_vm.HasContent)
                 await _vm.ShowPlaylistContentAsync();
             _vm.ShowVodChannels();
-            _vm.ShowGroupsList = false;
-        };
-        ContentPicker.SearchRequested += async (_, query) =>
-        {
-            if (!_vm.HasContent)
-                await _vm.ShowPlaylistContentAsync();
-            _vm.SearchText = query;
-            if (_vm.Categories.Count > 0 && _vm.SelectedCategory is null)
-                _vm.SelectedCategory = _vm.Categories[0];
             _vm.ShowGroupsList = false;
         };
 
@@ -256,3 +258,10 @@ public partial class MainWindow : Window
         base.OnClosed(e);
     }
 }
+
+
+
+
+
+
+

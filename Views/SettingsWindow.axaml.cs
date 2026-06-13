@@ -1,5 +1,11 @@
-using Avalonia.Controls;
+using Sabeltann;
+
 using Avalonia.Interactivity;
+using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
+
+using Avalonia.Markup.Xaml;
+
 using Sabeltann.Services;
 
 namespace Sabeltann.Views;
@@ -10,7 +16,7 @@ public partial class SettingsWindow : Window
 
     public SettingsWindow(SettingsData current, string? serverUrl, string? username, int channelCount)
     {
-        InitializeComponent();
+        this.Load();
         _data = current;
         VolumeSlider.Value = current.DefaultVolume;
         AutoLoadCheck.IsChecked = current.AutoLoadLastSession;
@@ -31,3 +37,9 @@ public partial class SettingsWindow : Window
         Close(_data);
     }
 }
+
+
+
+
+
+

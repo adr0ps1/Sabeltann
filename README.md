@@ -66,3 +66,5 @@ Code signing for Windows is provided by [SignPath Foundation](https://signpath.o
 ## License
 
 GPL-3.0 — see [LICENSE](LICENSE).
+
+**Important:** Usage of the signed installer/binaries is restricted to applications that have been code-signed through SignPath Foundation approval. Distribution of unsigned builds or use of the software before obtaining a valid code signing certificate is not permitted.

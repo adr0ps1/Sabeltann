@@ -1,5 +1,11 @@
-using Avalonia.Controls;
+using Sabeltann;
+
 using Avalonia.Interactivity;
+using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
+
+using Avalonia.Markup.Xaml;
+
 
 namespace Sabeltann.Views;
 
@@ -11,9 +17,15 @@ public partial class ConnectionPage : UserControl
 
     public ConnectionPage()
     {
-        InitializeComponent();
+        this.Load();
         M3UFileBtn.Click += (s, e) => LoadM3UFileRequested?.Invoke(s, e);
         M3UUrlBtn.Click += (s, e) => LoadM3UUrlRequested?.Invoke(s, e);
         XtreamBtn.Click += (s, e) => XtreamLoginRequested?.Invoke(s, e);
     }
 }
+
+
+
+
+
+

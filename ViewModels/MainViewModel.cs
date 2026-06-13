@@ -16,6 +16,7 @@ public partial class MainViewModel : ObservableObject
     private List<ShowGroup> _allShowGroups = [];
     private List<ChannelListItemViewModel> _liveChannels = [];
     private List<ChannelListItemViewModel> _vodChannels = [];
+    private List<ChannelListItemViewModel> _activePool = [];
 
     [ObservableProperty]
     private ObservableCollection<CategoryViewModel> _categories = [];
@@ -64,6 +65,36 @@ public partial class MainViewModel : ObservableObject
         Volume = data.DefaultVolume;
     }
 
+    public void SetSearchResults(string query)
+    {
+        ShowContentPicker = false;
+        SearchText = query;
+        var q = query.Trim().ToLowerInvariant();
+
+        FilteredChannels.Clear();
+        Categories.Clear();
+
+        if (string.IsNullOrEmpty(q))
+        {
+            ShowContentPicker = true;
+            return;
+        }
+
+        var pool = _activePool.Count > 0 ? _activePool : _allChannels;
+        var matches = pool
+            .Where(c => c.Name.ToLowerInvariant().Contains(q))
+            .Take(500)
+            .ToList();
+
+        if (matches.Count == 0) { StatusText = "No results"; return; }
+
+        var cat = new CategoryViewModel { Name = $"Search: \"{query}\" ({matches.Count})" };
+        cat.Channels.AddRange(matches);
+        Categories.Add(cat);
+        SelectedCategory = cat;
+        StatusText = $"{matches.Count} results for \"{query}\"";
+    }
+
     private void ApplyChannelSplit()
     {
         var split = ChannelGrouper.SplitByType(_allChannels);
@@ -76,6 +107,7 @@ public partial class MainViewModel : ObservableObject
     {
         ShowContentPicker = false;
         SelectedChannel = null;
+        _activePool = _liveChannels;
         ChannelCount = _liveChannels.Count;
         HasContent = ChannelCount > 0;
         var saved = _allChannels;
@@ -90,6 +122,7 @@ public partial class MainViewModel : ObservableObject
     {
         ShowContentPicker = false;
         SelectedChannel = null;
+        _activePool = _vodChannels;
         ChannelCount = _vodChannels.Count;
         HasContent = ChannelCount > 0;
         var saved = _allChannels;
@@ -210,7 +243,21 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnShowFavoritesOnlyChanged(bool value) => ApplyFilters();
 
-    partial void OnSearchTextChanged(string value) => ApplyFilters();
+    partial void OnSearchTextChanged(string value)
+    {
+        if (ShowContentPicker || SelectedCategory is null)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                if (ShowContentPicker) return;
+                ApplyFilters();
+                return;
+            }
+            SetSearchResults(value);
+            return;
+        }
+        ApplyFilters();
+    }
 
     private void ApplyFilters()
     {
@@ -383,6 +430,7 @@ public partial class MainViewModel : ObservableObject
     {
         HasContent = false;
         ShowContentPicker = true;
+        _activePool = _allChannels;
         FilteredChannels.Clear();
         Categories.Clear();
         SelectedChannel = null;
