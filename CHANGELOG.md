@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.5](https://github.com/adr0ps1/Sabeltann/compare/v0.1.4...v0.1.5) (2026-06-13)
+
+
+### Features
+
+* Embed app icon in EXE; add ARPPRODUCTICON and shortcut icons to MSI ([332db5b](https://github.com/adr0ps1/Sabeltann/commit/332db5b8ee6ed392d5fb638ccebc42a6b0176c6f))
+
+
+### Bug Fixes
+
+* Re-enable Sigstore attestation for public repo ([c482720](https://github.com/adr0ps1/Sabeltann/commit/c482720ac1f383ce7f6cf479f40c17fa710e1d4b))
+
 ## [0.1.4](https://github.com/adr0ps1/Sabeltann/compare/v0.1.3...v0.1.4) (2026-06-13)
 
 
