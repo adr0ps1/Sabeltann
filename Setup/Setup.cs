@@ -24,6 +24,9 @@ class Script
         project.Description = "IPTV Player";
         project.MajorUpgrade = MajorUpgrade.Default;
 
+        var outDir = Path.GetFullPath(Path.Combine("../installer"));
+        Directory.CreateDirectory(outDir);
+        project.OutDir = outDir;
         Compiler.BuildMsi(project);
     }
 }

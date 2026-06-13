@@ -33,9 +33,10 @@ Debug builds → `SabeltannDevelopment.exe` (won't clash with a running release)
 ## 📦 Installer (WiXSharp)
 
 ```bash
-dotnet tool install --global WiXSharp.Tool
 dotnet publish -c Release -r win-x64 --self-contained true
-wixsharp build --project Setup\Setup.wixsharp -c Release --out installer
+$env:PRODUCT_VERSION = "v1.0.0"
+dotnet run --project Setup\Setup.csproj -c Release
+# MSI → installer\Sabeltann.msi
 ```
 
 ## 🚀 Release

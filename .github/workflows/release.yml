@@ -46,9 +46,9 @@ jobs:
       - run: dotnet publish --configuration Release --runtime win-x64 --self-contained true
 
       - name: Build WiXSharp Installer
-        run: |
-          dotnet tool install --global WiXSharp.Tool
-          wixsharp build --project Setup\Setup.wixsharp --configuration Release --out installer
+        run: dotnet run --project Setup\Setup.csproj --configuration Release
+        env:
+          PRODUCT_VERSION: ${{ needs.release-please.outputs.tag_name }}
 
       - name: Attest build provenance (exe)
         uses: actions/attest-build-provenance@bd77c077858b8d561b7a36cbe48ef4cc642ca39d # v2.2.2
