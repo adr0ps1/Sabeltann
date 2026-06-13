@@ -5,6 +5,9 @@
     <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
+    <Icon Id="app.ico" SourceFile="$(var.PublishDir)\Sabeltann.ico" />
+    <Property Id="ARPPRODUCTICON" Value="app.ico" />
+
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="INSTALLFOLDER" Name="Sabeltann" />
     </StandardDirectory>
@@ -16,7 +19,7 @@
     <StandardDirectory Id="DesktopFolder">
       <Component Id="DesktopShortcut">
         <Shortcut Id="DesktopAppShortcut" Name="Sabeltann IPTV" Description="IPTV Player"
-                  Target="[INSTALLFOLDER]Sabeltann.exe" />
+                  Target="[INSTALLFOLDER]Sabeltann.exe" Icon="app.ico" />
         <RegistryValue Root="HKCU" Key="Software\Sabeltann\Desktop" Name="shortcut"
                        Type="integer" Value="1" KeyPath="yes" />
       </Component>
@@ -25,7 +28,7 @@
     <DirectoryRef Id="ApplicationProgramsFolder">
       <Component Id="Shortcuts">
         <Shortcut Id="AppShortcut" Name="Sabeltann IPTV" Description="IPTV Player"
-                  Target="[INSTALLFOLDER]Sabeltann.exe" />
+                  Target="[INSTALLFOLDER]Sabeltann.exe" Icon="app.ico" />
         <Shortcut Id="UninstallShortcut" Name="Uninstall Sabeltann"
                   Target="[System64Folder]msiexec.exe" Arguments="/x [ProductCode]" />
         <RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" />

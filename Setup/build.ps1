@@ -12,6 +12,9 @@ $productVersion = $productVersion.TrimStart('v')
 $outDir = "$setupDir\..\installer"
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
+# Copy icon to publish directory for WiX to reference
+Copy-Item "$setupDir\..\Assets\Sabeltann.ico" "$publishDir\Sabeltann.ico" -Force
+
 # Generate Components.wxs from publish directory
 @"
 <?xml version="1.0" encoding="UTF-8"?>
