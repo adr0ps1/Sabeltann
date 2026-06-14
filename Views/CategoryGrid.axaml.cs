@@ -1,4 +1,3 @@
-using Sabeltann;
 
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
@@ -10,7 +9,7 @@ public partial class CategoryGrid : UserControl
 {
     public CategoryGrid()
     {
-        this.Load();
+        InitializeComponent();
     }
 }
 

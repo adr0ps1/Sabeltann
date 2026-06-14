@@ -1,4 +1,3 @@
-using Sabeltann;
 
 using Avalonia.Interactivity;
 using Avalonia.Controls;
@@ -12,7 +11,7 @@ public partial class LoginWindow : Window
 {
     public LoginWindow()
     {
-        this.Load();
+        InitializeComponent();
     }
 
     private void OnLogin(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
