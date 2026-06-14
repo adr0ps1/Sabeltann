@@ -1,5 +1,3 @@
-using Sabeltann;
-
 using Avalonia.Controls;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -11,7 +9,7 @@ public partial class App : Application
 {
     public override void Initialize()
     {
-        this.Load();
+        AvaloniaXamlLoader.Load(this);
     }
 
     public override void OnFrameworkInitializationCompleted()

@@ -1,4 +1,3 @@
-using Sabeltann;
 
 using Avalonia.Interactivity;
 using Avalonia.Controls;
@@ -11,7 +10,7 @@ public partial class InputDialog : Window
 {
     public InputDialog()
     {
-        this.Load();
+        InitializeComponent();
     }
 
     public InputDialog(string prompt, string defaultValue) : this()

@@ -1,4 +1,3 @@
-using Sabeltann;
 
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -13,7 +12,7 @@ public partial class ContentPicker : UserControl
 
     public ContentPicker()
     {
-        this.Load();
+        InitializeComponent();
         LiveTvBtn.Click += (s, e) => LiveTvSelected?.Invoke(s, e);
         VodBtn.Click += (s, e) => VodSelected?.Invoke(s, e);
     }
