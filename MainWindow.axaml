@@ -36,9 +36,9 @@
         <vm:MainViewModel/>
     </Design.DataContext>
 
-    <Grid RowDefinitions="44,Auto,*,28">
+    <Grid x:Name="MainGrid" RowDefinitions="44,Auto,*,28">
 
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Background="#181825">
+        <Grid x:Name="TitleBar" Grid.Row="0" ColumnDefinitions="Auto,*" Background="#181825">
             <Border Padding="14,0,12,0" Background="#181825">
                 <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                     <Border Width="24" Height="24" CornerRadius="6" Background="#cba6f7">

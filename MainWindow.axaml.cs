@@ -152,6 +152,7 @@ public partial class MainWindow : Window
         _isFullscreen = WindowState != WindowState.FullScreen;
         WindowState = _isFullscreen ? WindowState.FullScreen : WindowState.Normal;
 
+        TitleBar.IsVisible = !_isFullscreen;
         MainMenu.IsVisible = !_isFullscreen;
         CategoryBar.IsVisible = !_isFullscreen;
         SidebarPanel.IsVisible = !_isFullscreen;
@@ -160,11 +161,17 @@ public partial class MainWindow : Window
 
         if (_isFullscreen)
         {
+            MainGrid.RowDefinitions[0].Height = new GridLength(0);
+            MainGrid.RowDefinitions[1].Height = new GridLength(0);
+            MainGrid.RowDefinitions[3].Height = new GridLength(0);
             ContentGrid.ColumnDefinitions[0].Width = new GridLength(0);
             ContentGrid.ColumnDefinitions[1].Width = new GridLength(1);
         }
         else
         {
+            MainGrid.RowDefinitions[0].Height = new GridLength(44);
+            MainGrid.RowDefinitions[1].Height = GridLength.Auto;
+            MainGrid.RowDefinitions[3].Height = new GridLength(28);
             ContentGrid.ColumnDefinitions[0].Width = new GridLength(280);
             ContentGrid.ColumnDefinitions[1].Width = new GridLength(5);
         }
