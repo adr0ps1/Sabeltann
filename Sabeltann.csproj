@@ -12,6 +12,18 @@
     <AssemblyName Condition="'$(Configuration)'!='Debug'">Sabeltann</AssemblyName>
   </PropertyGroup>
 
+  <Target Name="CopyVlcNative" AfterTargets="AfterBuild">
+    <PropertyGroup>
+      <_VlcSource>$([System.IO.Path]::Combine('$(NuGetPackageRoot)', 'videolan.libvlc.windows', '3.0.21', 'build', 'x64'))</_VlcSource>
+    </PropertyGroup>
+    <ItemGroup>
+      <_VlcDlls Include="$(_VlcSource)\*.dll" Condition="Exists('$(_VlcSource)')" />
+      <_VlcPlugins Include="$(_VlcSource)\plugins\**\*.*" Condition="Exists('$(_VlcSource)')" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_VlcDlls)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_VlcPlugins)" DestinationFolder="$(OutDir)\plugins\%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+
   <ItemGroup>
     <EmbeddedResource Include="Assets\pirate.svg" />
   </ItemGroup>

@@ -1,20 +1,9 @@
-using Sabeltann;
-
-using Avalonia.Threading;
-using Avalonia.Platform.Storage;
+using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
-
-using Avalonia.Markup.Xaml;
-
-using Avalonia.Markup.Xaml;
-
-using Avalonia.Markup.Xaml;
-
-using Avalonia.Markup.Xaml;
-
+using Avalonia.Platform.Storage;
+using Avalonia.Threading;
+using Avalonia.Threading;
 using Sabeltann.Models;
 using Sabeltann.Services;
 using Sabeltann.ViewModels;
@@ -29,96 +18,96 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
-        try
+        InitializeComponent();
+        LogService.Info("Application started");
+        _player = new PlaybackService();
+        _vm = new MainViewModel();
+        _vm.SetPlayer(_player);
+        _vm.ToggleFullscreenRequested += ToggleFullscreen;
+        DataContext = _vm;
+
+        VideoView.Attach(_player.Player);
+        KeyDown += OnKeyDown;
+
+        var transportTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+        transportTimer.Tick += (_, _) => { TransportPopup.IsOpen = false; transportTimer.Stop(); };
+        PointerMoved += (_, _) =>
         {
-            this.Load();
-            LogService.Info("Application started");
-            _player = new PlaybackService();
-            _vm = new MainViewModel();
-            _vm.SetPlayer(_player);
-            _vm.ToggleFullscreenRequested += ToggleFullscreen;
-            DataContext = _vm;
-
-            VideoView.Attach(_player.Player);
-            KeyDown += OnKeyDown;
-
-            var transportTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
-            transportTimer.Tick += (_, _) => { TransportPopup.IsOpen = false; transportTimer.Stop(); };
-            PointerMoved += (_, _) =>
+            if (_vm.IsPlaying)
             {
-                try
-                {
-                    if (_vm.IsPlaying)
-                    {
-                        TransportPopup.IsOpen = true;
-                        transportTimer.Stop();
-                        transportTimer.Start();
-                    }
-                }
-                catch (Exception ex) { LogService.Error("PointerMoved", new { ex.Message }); }
-            };
+                TransportPopup.IsOpen = true;
+                transportTimer.Stop();
+                transportTimer.Start();
+            }
+        };
 
-            LoadPirateIcon();
-            _vm.LoadLastSession();
+        LoadPirateIcon();
+        _vm.LoadLastSession();
 
-            TransportPopup.PlacementTarget = VideoView;
+        TransportPopup.PlacementTarget = VideoView;
 
-            _vm.PropertyChanged += (_, e) =>
-            {
-                try
-                {
-                    if (e.PropertyName == nameof(MainViewModel.IsPlaying))
-                    {
-                        if (_vm.IsPlaying)
-                        {
-                            TransportPopup.IsOpen = true;
-                            transportTimer.Stop();
-                            transportTimer.Start();
-                        }
-                        if (!_vm.IsPlaying && _isFullscreen)
-                            ToggleFullscreen();
-                    }
-                }
-                catch (Exception ex) { LogService.Error("PropertyChanged", new { ex.Message }); }
-            };
-
-            Opened += (_, _) =>
-            {
-                try { Activate(); Topmost = true; Topmost = false; }
-                catch (Exception ex) { LogService.Error("Opened", new { ex.Message }); }
-            };
-
-            ConnectionPage.LoadM3UFileRequested += OnLoadM3UFile;
-            ConnectionPage.LoadM3UUrlRequested += OnLoadM3UUrl;
-            ConnectionPage.XtreamLoginRequested += OnXtreamLogin;
-
-            ContentPicker.LiveTvSelected += async (_, _) =>
-            {
-                try
-                {
-                    if (!_vm.HasContent) await _vm.ShowPlaylistContentAsync();
-                    _vm.ShowLiveChannels();
-                    _vm.ShowGroupsList = false;
-                }
-                catch (Exception ex) { LogService.Error("LiveTvSelected", new { ex.Message }); }
-            };
-            ContentPicker.VodSelected += async (_, _) =>
-            {
-                try
-                {
-                    if (!_vm.HasContent) await _vm.ShowPlaylistContentAsync();
-                    _vm.ShowVodChannels();
-                    _vm.ShowGroupsList = false;
-                }
-                catch (Exception ex) { LogService.Error("VodSelected", new { ex.Message }); }
-            };
-            LogService.Info("MainWindow initialization complete");
-        }
-        catch (Exception ex)
+        _vm.PropertyChanged += (_, e) =>
         {
-            LogService.Error("MainWindow constructor failed", new { ex.Message, ex.StackTrace });
-            throw;
-        }
+            if (e.PropertyName == nameof(MainViewModel.IsPlaying))
+            {
+                if (_vm.IsPlaying)
+                {
+                    TransportPopup.IsOpen = true;
+                    transportTimer.Stop();
+                    transportTimer.Start();
+                }
+                if (!_vm.IsPlaying && _isFullscreen)
+                    ToggleFullscreen();
+            }
+        };
+
+        Opened += (_, _) =>
+        {
+            Activate();
+            Topmost = true;
+            Topmost = false;
+        };
+
+        ConnectionPage.LoadM3UFileRequested += OnLoadM3UFile;
+        ConnectionPage.LoadM3UUrlRequested += OnLoadM3UUrl;
+        ConnectionPage.XtreamLoginRequested += OnXtreamLogin;
+
+        ContentPicker.LiveTvSelected += async (_, _) =>
+        {
+            if (!_vm.HasContent)
+                await _vm.ShowPlaylistContentAsync();
+            _vm.ShowLiveChannels();
+            _vm.ShowGroupsList = false;
+        };
+        ContentPicker.VodSelected += async (_, _) =>
+        {
+            if (!_vm.HasContent)
+                await _vm.ShowPlaylistContentAsync();
+            _vm.ShowVodChannels();
+            _vm.ShowGroupsList = false;
+        };
+        ContentPicker.SearchRequested += async (_, query) =>
+        {
+            if (!_vm.HasContent)
+                await _vm.ShowPlaylistContentAsync();
+            _vm.SearchText = query;
+            if (_vm.Categories.Count > 0 && _vm.SelectedCategory is null)
+                _vm.SelectedCategory = _vm.Categories[0];
+            _vm.ShowGroupsList = false;
+        };
+
+        Opened += (_, _) =>
+        {
+            Activate();
+            Topmost = true;
+            Topmost = false;
+        };
+
+        _vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainViewModel.IsPlaying) && !_vm.IsPlaying && _isFullscreen)
+                ToggleFullscreen();
+        };
     }
 
     private void LoadPirateIcon()
@@ -195,7 +184,7 @@ public partial class MainWindow : Window
             ToggleFullscreen();
             e.Handled = true;
         }
-        else if (e.Key == Key.Space && _vm.IsPlaying && TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() is not TextBox)
+        else if (e.Key == Key.Space)
         {
             _vm.TogglePlayPauseCommand.Execute(null);
             e.Handled = true;
@@ -211,7 +200,7 @@ public partial class MainWindow : Window
             _vm.StatusText = "Ready";
             e.Handled = true;
         }
-        else if (e.Key == Key.D && !_vm.ShowContentPicker && TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() is not TextBox)
+        else if (e.Key == Key.D)
         {
             _vm.ShowDebugOverlay = !_vm.ShowDebugOverlay;
             e.Handled = true;
@@ -279,15 +268,3 @@ public partial class MainWindow : Window
         base.OnClosed(e);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
