@@ -27,7 +27,10 @@ public partial class MainWindow : Window
         _vm.ToggleFullscreenRequested += ToggleFullscreen;
         DataContext = _vm;
 
-        VideoView.Attach(_player.Player);
+        if (_player?.Player is not null)
+            VideoView.Attach(_player.Player);
+        else
+            LogService.Warn("VLC player not available");
         KeyDown += OnKeyDown;
 
         var transportTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };

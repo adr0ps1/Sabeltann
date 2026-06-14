@@ -9,12 +9,7 @@ public static class XamlLoader
 {
     public static void Load(this Control control)
     {
-        try
-        {
-            AvaloniaXamlLoader.Load(control);
-        }
-        catch { }
-
+        try { AvaloniaXamlLoader.Load(control); } catch { }
         try
         {
             var fields = control.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -30,10 +25,6 @@ public static class XamlLoader
 
     public static void Load(this Application app)
     {
-        try
-        {
-            AvaloniaXamlLoader.Load(app);
-        }
-        catch { }
+        try { AvaloniaXamlLoader.Load(app); } catch { }
     }
 }

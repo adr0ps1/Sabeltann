@@ -18,17 +18,24 @@ public class PlaybackService : IDisposable
 
     public PlaybackService()
     {
-        Core.Initialize();
-        _libVlc = new LibVLC("--network-caching=2000", "--no-video-title-show");
-        _mediaPlayer = new MediaPlayer(_libVlc);
-        _mediaPlayer.Buffering += OnBuffering;
-        _mediaPlayer.Playing += (_, _) => PlayingStarted?.Invoke(this, EventArgs.Empty);
-        _mediaPlayer.Stopped += (_, _) => Stopped?.Invoke(this, EventArgs.Empty);
-        _mediaPlayer.EncounteredError += (_, _) =>
+        try
         {
-            LogService.Error("VLC playback error", new { url = _currentMedia?.Mrl });
-            Error?.Invoke(this, "Playback failed");
-        };
+            Core.Initialize();
+            _libVlc = new LibVLC("--network-caching=2000", "--no-video-title-show");
+            _mediaPlayer = new MediaPlayer(_libVlc);
+            _mediaPlayer.Buffering += OnBuffering;
+            _mediaPlayer.Playing += (_, _) => PlayingStarted?.Invoke(this, EventArgs.Empty);
+            _mediaPlayer.Stopped += (_, _) => Stopped?.Invoke(this, EventArgs.Empty);
+            _mediaPlayer.EncounteredError += (_, _) =>
+            {
+                LogService.Error("VLC playback error", new { url = _currentMedia?.Mrl });
+                Error?.Invoke(this, "Playback failed");
+            };
+        }
+        catch (Exception ex)
+        {
+            LogService.Error("VLC initialization failed", new { ex.Message });
+        }
     }
 
     private void OnBuffering(object? sender, MediaPlayerBufferingEventArgs e)
