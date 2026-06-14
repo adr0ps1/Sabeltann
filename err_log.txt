@@ -1,8 +1,0 @@
-Unhandled exception. System.NullReferenceException: Object reference not set to an instance of an object.
-   at Sabeltann.MainWindow..ctor() in C:\Users\adria\repos\Sabeltann\MainWindow.axaml.cs:line 31
-   at Sabeltann.App.OnFrameworkInitializationCompleted() in C:\Users\adria\repos\Sabeltann\App.axaml.cs:line 21
-   at Avalonia.AppBuilder.SetupUnsafe()
-   at Avalonia.AppBuilder.Setup()
-   at Avalonia.AppBuilder.SetupWithLifetime(IApplicationLifetime lifetime)
-   at Avalonia.ClassicDesktopStyleApplicationLifetimeExtensions.StartWithClassicDesktopLifetime(AppBuilder builder, String[] args, Action`1 lifetimeBuilder)
-   at Sabeltann.Program.Main(String[] args) in C:\Users\adria\repos\Sabeltann\Program.cs:line 10
