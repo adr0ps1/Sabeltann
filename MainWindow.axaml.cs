@@ -1,3 +1,4 @@
+using Sabeltann;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -18,7 +19,7 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
-        InitializeComponent();
+        this.Load();
         LogService.Info("Application started");
         _player = new PlaybackService();
         _vm = new MainViewModel();
@@ -260,3 +261,4 @@ public partial class MainWindow : Window
         base.OnClosed(e);
     }
 }
+
