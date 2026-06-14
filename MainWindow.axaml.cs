@@ -163,6 +163,7 @@ public partial class MainWindow : Window
         _isFullscreen = WindowState != WindowState.FullScreen;
         WindowState = _isFullscreen ? WindowState.FullScreen : WindowState.Normal;
 
+        TitleBar.IsVisible = !_isFullscreen;
         MainMenu.IsVisible = !_isFullscreen;
         CategoryBar.IsVisible = !_isFullscreen;
         SidebarPanel.IsVisible = !_isFullscreen;
