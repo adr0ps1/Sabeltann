@@ -87,6 +87,13 @@
                          BorderThickness="1" BorderBrush="#45475a"
                          FontSize="12" Padding="6,4"
                          Margin="8,0" VerticalAlignment="Center"/>
+                <ToggleButton Grid.Column="3" IsChecked="{Binding ShowDebugOverlay}"
+                              Background="Transparent" BorderThickness="0"
+                              Margin="4,0" Padding="6,2"
+                              VerticalAlignment="Center">
+                    <TextBlock Text="DEBUG" Foreground="#f38ba8" FontSize="9" FontWeight="Bold"
+                               LetterSpacing="1"/>
+                </ToggleButton>
                 <Border Grid.Column="4" CornerRadius="10" Background="#313244" 
                         Padding="8,2" Margin="6,0" VerticalAlignment="Center">
                     <TextBlock Text="{Binding ChannelCount, StringFormat='{}{0} channels'}"

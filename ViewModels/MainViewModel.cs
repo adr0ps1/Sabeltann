@@ -279,19 +279,27 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnSelectedChannelChanged(ChannelListItemViewModel? value)
     {
-        if (value is not null && _player is not null && !string.IsNullOrEmpty(value.Url))
+        try
         {
-            ShowConnectionOverlay = true;
-            ConnectionState = "Connecting...";
-            ConnectionProgress = 0;
-            _player.Play(value.Url);
-            DebugStats.SetUrl(value.Url);
-            IsPlaying = true;
-            SubtitleTracks = _player.GetSubtitleTracks();
-            CurrentSubtitleTrack = _player.CurrentSubtitleTrack;
-            StatusText = $"Playing: {value.Name}";
-
-            MergeAndSave(s => s.LastChannelUrl = value.Url);
+            if (value is not null && _player is not null && !string.IsNullOrEmpty(value.Url))
+            {
+                LogService.Info("Playing channel", new { name = value.Name, url = value.Url });
+                ShowConnectionOverlay = true;
+                ConnectionState = "Connecting...";
+                ConnectionProgress = 0;
+                _player.Play(value.Url);
+                DebugStats.SetUrl(value.Url);
+                IsPlaying = true;
+                SubtitleTracks = _player.GetSubtitleTracks();
+                CurrentSubtitleTrack = _player.CurrentSubtitleTrack;
+                StatusText = $"Playing: {value.Name}";
+                MergeAndSave(s => s.LastChannelUrl = value.Url);
+            }
+        }
+        catch (Exception ex)
+        {
+            LogService.Error("Failed to play channel", new { name = value?.Name, error = ex.Message });
+            StatusText = $"Error: {ex.Message}";
         }
     }
 

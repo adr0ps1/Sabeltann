@@ -24,7 +24,11 @@ public class PlaybackService : IDisposable
         _mediaPlayer.Buffering += OnBuffering;
         _mediaPlayer.Playing += (_, _) => PlayingStarted?.Invoke(this, EventArgs.Empty);
         _mediaPlayer.Stopped += (_, _) => Stopped?.Invoke(this, EventArgs.Empty);
-        _mediaPlayer.EncounteredError += (_, _) => Error?.Invoke(this, "Playback failed");
+        _mediaPlayer.EncounteredError += (_, _) =>
+        {
+            LogService.Error("VLC playback error", new { url = _currentMedia?.Mrl });
+            Error?.Invoke(this, "Playback failed");
+        };
     }
 
     private void OnBuffering(object? sender, MediaPlayerBufferingEventArgs e)

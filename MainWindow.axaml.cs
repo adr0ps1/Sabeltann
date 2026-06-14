@@ -29,6 +29,7 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
+<<<<<<< HEAD
         this.Load();
         LogService.Info("Application started");
         _player = new PlaybackService();
@@ -43,46 +44,42 @@ public partial class MainWindow : Window
         var transportTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
         transportTimer.Tick += (_, _) => { TransportPopup.IsOpen = false; transportTimer.Stop(); };
         PointerMoved += (_, _) =>
+=======
+        try
         {
-            if (_vm.IsPlaying)
+            InitializeComponent();
+            LogService.Info("Application started");
+            _player = new PlaybackService();
+            _vm = new MainViewModel();
+            _vm.SetPlayer(_player);
+            _vm.ToggleFullscreenRequested += ToggleFullscreen;
+            DataContext = _vm;
+
+            VideoView.Attach(_player.Player);
+            KeyDown += OnKeyDown;
+
+            var transportTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+            transportTimer.Tick += (_, _) => { TransportPopup.IsOpen = false; transportTimer.Stop(); };
+            PointerMoved += (_, _) =>
             {
-                TransportPopup.IsOpen = true;
-                transportTimer.Stop();
-                transportTimer.Start();
-            }
-        };
-
-        LoadPirateIcon();
-        _vm.LoadLastSession();
-
-        TransportPopup.PlacementTarget = VideoView;
-
-        _vm.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(MainViewModel.IsPlaying))
-            {
-                if (_vm.IsPlaying)
+                try
                 {
-                    TransportPopup.IsOpen = true;
-                    transportTimer.Stop();
-                    transportTimer.Start();
+                    if (_vm.IsPlaying)
+                    {
+                        TransportPopup.IsOpen = true;
+                        transportTimer.Stop();
+                        transportTimer.Start();
+                    }
                 }
-                if (!_vm.IsPlaying && _isFullscreen)
-                    ToggleFullscreen();
-            }
-        };
+                catch (Exception ex) { LogService.Error("PointerMoved", new { ex.Message }); }
+            };
 
-        Opened += (_, _) =>
-        {
-            Activate();
-            Topmost = true;
-            Topmost = false;
-        };
+            LoadPirateIcon();
+            _vm.LoadLastSession();
 
-        ConnectionPage.LoadM3UFileRequested += OnLoadM3UFile;
-        ConnectionPage.LoadM3UUrlRequested += OnLoadM3UUrl;
-        ConnectionPage.XtreamLoginRequested += OnXtreamLogin;
+            TransportPopup.PlacementTarget = VideoView;
 
+<<<<<<< HEAD
         ContentPicker.LiveTvSelected += async (_, _) =>
         {
             if (!_vm.HasContent)
@@ -97,19 +94,75 @@ public partial class MainWindow : Window
             _vm.ShowVodChannels();
             _vm.ShowGroupsList = false;
         };
+=======
+            _vm.PropertyChanged += (_, e) =>
+            {
+                try
+                {
+                    if (e.PropertyName == nameof(MainViewModel.IsPlaying))
+                    {
+                        if (_vm.IsPlaying)
+                        {
+                            TransportPopup.IsOpen = true;
+                            transportTimer.Stop();
+                            transportTimer.Start();
+                        }
+                        if (!_vm.IsPlaying && _isFullscreen)
+                            ToggleFullscreen();
+                    }
+                }
+                catch (Exception ex) { LogService.Error("PropertyChanged", new { ex.Message }); }
+            };
 
-        Opened += (_, _) =>
-        {
-            Activate();
-            Topmost = true;
-            Topmost = false;
-        };
+            Opened += (_, _) =>
+            {
+                try { Activate(); Topmost = true; Topmost = false; }
+                catch (Exception ex) { LogService.Error("Opened", new { ex.Message }); }
+            };
 
-        _vm.PropertyChanged += (_, e) =>
+            ConnectionPage.LoadM3UFileRequested += OnLoadM3UFile;
+            ConnectionPage.LoadM3UUrlRequested += OnLoadM3UUrl;
+            ConnectionPage.XtreamLoginRequested += OnXtreamLogin;
+
+            ContentPicker.LiveTvSelected += async (_, _) =>
+            {
+                try
+                {
+                    if (!_vm.HasContent) await _vm.ShowPlaylistContentAsync();
+                    _vm.ShowLiveChannels();
+                    _vm.ShowGroupsList = false;
+                }
+                catch (Exception ex) { LogService.Error("LiveTvSelected", new { ex.Message }); }
+            };
+            ContentPicker.VodSelected += async (_, _) =>
+            {
+                try
+                {
+                    if (!_vm.HasContent) await _vm.ShowPlaylistContentAsync();
+                    _vm.ShowVodChannels();
+                    _vm.ShowGroupsList = false;
+                }
+                catch (Exception ex) { LogService.Error("VodSelected", new { ex.Message }); }
+            };
+            ContentPicker.SearchRequested += async (_, query) =>
+            {
+                try
+                {
+                    if (!_vm.HasContent) await _vm.ShowPlaylistContentAsync();
+                    _vm.SearchText = query;
+                    if (_vm.Categories.Count > 0 && _vm.SelectedCategory is null)
+                        _vm.SelectedCategory = _vm.Categories[0];
+                    _vm.ShowGroupsList = false;
+                }
+                catch (Exception ex) { LogService.Error("SearchRequested", new { ex.Message }); }
+            };
+            LogService.Info("MainWindow initialization complete");
+        }
+        catch (Exception ex)
         {
-            if (e.PropertyName == nameof(MainViewModel.IsPlaying) && !_vm.IsPlaying && _isFullscreen)
-                ToggleFullscreen();
-        };
+            LogService.Error("MainWindow constructor failed", new { ex.Message, ex.StackTrace });
+            throw;
+        }
     }
 
     private void LoadPirateIcon()
@@ -190,7 +243,7 @@ public partial class MainWindow : Window
             _vm.StatusText = "Ready";
             e.Handled = true;
         }
-        else if (e.Key == Key.D)
+        else if (e.Key == Key.D && !_vm.ShowContentPicker && TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() is not TextBox)
         {
             _vm.ShowDebugOverlay = !_vm.ShowDebugOverlay;
             e.Handled = true;
@@ -258,6 +311,8 @@ public partial class MainWindow : Window
         base.OnClosed(e);
     }
 }
+
+
 
 
 
