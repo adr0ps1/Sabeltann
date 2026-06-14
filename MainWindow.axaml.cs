@@ -195,6 +195,11 @@ public partial class MainWindow : Window
             ToggleFullscreen();
             e.Handled = true;
         }
+        else if (e.Key == Key.Space && _vm.IsPlaying && TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() is not TextBox)
+        {
+            _vm.TogglePlayPauseCommand.Execute(null);
+            e.Handled = true;
+        }
         else if (e.Key == Key.Escape && _isFullscreen)
         {
             ToggleFullscreen();
