@@ -29,25 +29,9 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
-<<<<<<< HEAD
-        this.Load();
-        LogService.Info("Application started");
-        _player = new PlaybackService();
-        _vm = new MainViewModel();
-        _vm.SetPlayer(_player);
-        _vm.ToggleFullscreenRequested += ToggleFullscreen;
-        DataContext = _vm;
-
-        VideoView.Attach(_player.Player);
-        KeyDown += OnKeyDown;
-
-        var transportTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
-        transportTimer.Tick += (_, _) => { TransportPopup.IsOpen = false; transportTimer.Stop(); };
-        PointerMoved += (_, _) =>
-=======
         try
         {
-            InitializeComponent();
+            this.Load();
             LogService.Info("Application started");
             _player = new PlaybackService();
             _vm = new MainViewModel();
@@ -79,22 +63,6 @@ public partial class MainWindow : Window
 
             TransportPopup.PlacementTarget = VideoView;
 
-<<<<<<< HEAD
-        ContentPicker.LiveTvSelected += async (_, _) =>
-        {
-            if (!_vm.HasContent)
-                await _vm.ShowPlaylistContentAsync();
-            _vm.ShowLiveChannels();
-            _vm.ShowGroupsList = false;
-        };
-        ContentPicker.VodSelected += async (_, _) =>
-        {
-            if (!_vm.HasContent)
-                await _vm.ShowPlaylistContentAsync();
-            _vm.ShowVodChannels();
-            _vm.ShowGroupsList = false;
-        };
-=======
             _vm.PropertyChanged += (_, e) =>
             {
                 try
@@ -143,18 +111,6 @@ public partial class MainWindow : Window
                     _vm.ShowGroupsList = false;
                 }
                 catch (Exception ex) { LogService.Error("VodSelected", new { ex.Message }); }
-            };
-            ContentPicker.SearchRequested += async (_, query) =>
-            {
-                try
-                {
-                    if (!_vm.HasContent) await _vm.ShowPlaylistContentAsync();
-                    _vm.SearchText = query;
-                    if (_vm.Categories.Count > 0 && _vm.SelectedCategory is null)
-                        _vm.SelectedCategory = _vm.Categories[0];
-                    _vm.ShowGroupsList = false;
-                }
-                catch (Exception ex) { LogService.Error("SearchRequested", new { ex.Message }); }
             };
             LogService.Info("MainWindow initialization complete");
         }
@@ -311,6 +267,7 @@ public partial class MainWindow : Window
         base.OnClosed(e);
     }
 }
+
 
 
 
