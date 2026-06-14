@@ -9,18 +9,32 @@ public static class XamlLoader
 {
     public static void Load(this Control control)
     {
-        AvaloniaXamlLoader.Load(control);
-        var fields = control.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-        foreach (var field in fields)
+        try
         {
-            var found = control.FindControl<Control>(field.Name);
-            if (found is not null && field.FieldType.IsAssignableFrom(found.GetType()))
-                field.SetValue(control, found);
+            AvaloniaXamlLoader.Load(control);
+            var fields = control.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            foreach (var field in fields)
+            {
+                var found = control.FindControl<Control>(field.Name);
+                if (found is not null && field.FieldType.IsAssignableFrom(found.GetType()))
+                    field.SetValue(control, found);
+            }
+        }
+        catch
+        {
+            // XAML resource not available — running with no UI (InitializeComponent fallback)
         }
     }
 
     public static void Load(this Application app)
     {
-        AvaloniaXamlLoader.Load(app);
+        try
+        {
+            AvaloniaXamlLoader.Load(app);
+        }
+        catch
+        {
+            // XAML resource not available — running with no UI (InitializeComponent fallback)
+        }
     }
 }
