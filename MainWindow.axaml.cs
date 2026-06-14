@@ -86,15 +86,6 @@ public partial class MainWindow : Window
             _vm.ShowVodChannels();
             _vm.ShowGroupsList = false;
         };
-        ContentPicker.SearchRequested += async (_, query) =>
-        {
-            if (!_vm.HasContent)
-                await _vm.ShowPlaylistContentAsync();
-            _vm.SearchText = query;
-            if (_vm.Categories.Count > 0 && _vm.SelectedCategory is null)
-                _vm.SelectedCategory = _vm.Categories[0];
-            _vm.ShowGroupsList = false;
-        };
 
         Opened += (_, _) =>
         {
@@ -186,7 +177,8 @@ public partial class MainWindow : Window
         }
         else if (e.Key == Key.Space)
         {
-            _vm.TogglePlayPauseCommand.Execute(null);
+            if (_vm.IsPlaying)
+                _vm.TogglePlayPauseCommand.Execute(null);
             e.Handled = true;
         }
         else if (e.Key == Key.Escape && _isFullscreen)

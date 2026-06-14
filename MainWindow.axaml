@@ -268,7 +268,7 @@
         </Grid>
 
         <Popup x:Name="TransportPopup" IsLightDismissEnabled="False"
-               OverlayDismissEventPassThrough="True" MinWidth="800"
+               OverlayDismissEventPassThrough="True" MinWidth="1200"
                HorizontalOffset="0" VerticalOffset="-60">
             <Border Padding="8,5" Background="#cc000000" CornerRadius="8" MinWidth="600">
                 <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto" VerticalAlignment="Center">
