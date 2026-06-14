@@ -3,6 +3,7 @@
         xmlns:vm="using:Sabeltann.ViewModels"
         xmlns:ctrl="using:Sabeltann.Controls"
         xmlns:views="using:Sabeltann.Views"
+        x:Name="ThisWindow"
         xmlns:c="using:Sabeltann.Converters"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -305,8 +306,8 @@
                                HorizontalAlignment="Center"/>
 
                     <Button Grid.Column="6" Classes="TransportBtn"
-                            Command="{Binding ToggleSubtitlesCommand}"
-                            ToolTip.Tip="Subtitles">
+                            ToolTip.Tip="Subtitles"
+                            Click="OnCcClick">
                         <TextBlock Text="CC" Foreground="#89b4fa" FontSize="10" FontWeight="Bold"/>
                     </Button>
 

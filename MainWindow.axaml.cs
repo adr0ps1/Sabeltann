@@ -254,6 +254,30 @@ public partial class MainWindow : Window
         Close();
     }
 
+    private void OnCcClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn) return;
+        _vm.RefreshSubtitleTracks();
+        var menu = new ContextMenu();
+        void AddItem(string header, int id)
+        {
+            var mi = new MenuItem { Header = header, Tag = id };
+            mi.Click += (_, _) =>
+            {
+                _vm.SelectSubtitleCommand.Execute(id);
+                menu.Close();
+            };
+            menu.Items.Add(mi);
+        }
+        AddItem("Off", -1);
+        foreach (var t in _vm.SubtitleTrackItems)
+        {
+            if (t.Id != -1)
+                AddItem(t.Name, t.Id);
+        }
+        menu.Open(btn);
+    }
+
     protected override void OnClosed(EventArgs e)
     {
         _vm.DebugStats.Stop();

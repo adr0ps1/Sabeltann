@@ -149,7 +149,9 @@ public partial class MainViewModel : ObservableObject
     private int _channelCount;
 
     [ObservableProperty]
-    private List<(int Id, string Name)> _subtitleTracks = [];
+    private bool _showSubtitlePopup;
+
+    public ObservableCollection<SubtitleTrackItem> SubtitleTrackItems { get; } = [];
 
     [ObservableProperty]
     private int _currentSubtitleTrack = -1;
@@ -290,7 +292,10 @@ public partial class MainViewModel : ObservableObject
                 _player.Play(value.Url);
                 DebugStats.SetUrl(value.Url);
                 IsPlaying = true;
-                SubtitleTracks = _player.GetSubtitleTracks();
+                SubtitleTrackItems.Clear();
+                SubtitleTrackItems.Add(new SubtitleTrackItem(-1, "Off"));
+                foreach (var t in _player.GetSubtitleTracks())
+                    SubtitleTrackItems.Add(new SubtitleTrackItem(t.Id, t.Name));
                 CurrentSubtitleTrack = _player.CurrentSubtitleTrack;
                 StatusText = $"Playing: {value.Name}";
                 MergeAndSave(s => s.LastChannelUrl = value.Url);
@@ -304,14 +309,27 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ToggleSubtitles()
+    private void ToggleSubtitlePopup()
+    {
+        ShowSubtitlePopup = !ShowSubtitlePopup;
+    }
+
+    public void RefreshSubtitleTracks()
+    {
+        if (_player is null || !IsPlaying) return;
+        SubtitleTrackItems.Clear();
+        SubtitleTrackItems.Add(new SubtitleTrackItem(-1, "Off"));
+        foreach (var t in _player.GetSubtitleTracks())
+            SubtitleTrackItems.Add(new SubtitleTrackItem(t.Id, t.Name));
+    }
+
+    [RelayCommand]
+    private void SelectSubtitle(int id)
     {
         if (_player is null) return;
-        var next = _player.CurrentSubtitleTrack <= 0 && _player.GetSubtitleTracks().Count > 0
-            ? _player.GetSubtitleTracks()[0].Id
-            : -1;
-        _player.SetSubtitleTrack(next);
-        CurrentSubtitleTrack = next;
+        _player.SetSubtitleTrack(id);
+        CurrentSubtitleTrack = id;
+        ShowSubtitlePopup = false;
     }
 
     partial void OnVolumeChanged(int value) => _player?.SetVolume(value);
@@ -611,4 +629,11 @@ public partial class MainViewModel : ObservableObject
                 SelectedChannel = ch;
         }
     }
+}
+
+public class SubtitleTrackItem(int id, string name)
+{
+    public int Id { get; } = id;
+    public string Name { get; } = name;
+    public bool IsOff => Id == -1;
 }
