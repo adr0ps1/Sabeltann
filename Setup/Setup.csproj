@@ -7,6 +7,6 @@
     <AssemblyName>SabeltannSetup</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="WixSharp" Version="2.*" />
+    <PackageReference Include="WixSharp" Version="1.*" />
   </ItemGroup>
 </Project>

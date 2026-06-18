@@ -1,5 +1,11 @@
 using WixSharp;
 
+// Let WixSharp find the WiX v3 toolchain via the WIX environment variable
+// (exported from the CI install step, or set by a local WiX 3.11 installation).
+var wixBin = Environment.GetEnvironmentVariable("WIX");
+if (!string.IsNullOrEmpty(wixBin))
+    Compiler.WixLocation = wixBin;
+
 if (args.Length < 3)
 {
     Console.Error.WriteLine("Usage: SabeltannSetup <publishDir> <version> <outDir>");

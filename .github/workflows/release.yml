@@ -55,6 +55,14 @@ jobs:
           if (-not $dir) { Write-Error "Publish dir not found"; exit 1 }
           "PUBLISH_DIR=$dir" | Out-File -FilePath $env:GITHUB_ENV -Append
 
+      - name: Install WiX Toolset v3
+        shell: pwsh
+        run: |
+          choco install wixtoolset -y --no-progress
+          $bin = Get-ChildItem "C:\Program Files (x86)\WiX Toolset v3*\bin" -Directory |
+                 Sort-Object Name | Select-Object -Last 1 -ExpandProperty FullName
+          "WIX=$bin\" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: Build MSI Installer
         run: pwsh -File Setup\build.ps1
         env:
