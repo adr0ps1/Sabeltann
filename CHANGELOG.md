@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.9](https://github.com/adr0ps1/Sabeltann/compare/v0.1.8...v0.1.9) (2026-06-18)
+
+
+### Bug Fixes
+
+* Use WixSharp 1.x and install WiX v3 toolchain for MSI build ([7aee6ae](https://github.com/adr0ps1/Sabeltann/commit/7aee6ae393b79ac16f29982aaa0b860fb5dbc66c))
+
 ## [0.1.8](https://github.com/adr0ps1/Sabeltann/compare/v0.1.7...v0.1.8) (2026-06-18)
 
 
