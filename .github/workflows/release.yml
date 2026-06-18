@@ -45,10 +45,15 @@ jobs:
 
       - run: dotnet publish --configuration Release --runtime win-x64 --self-contained true
 
-      - name: Install WiX Toolset
+      # Resolve publish dir without hardcoding the TFM (net9.0 vs net10.0 etc.)
+      - name: Locate publish directory
+        shell: pwsh
         run: |
-          dotnet tool install --global wix
-          wix eula accept wix7
+          $dir = Get-ChildItem "bin/Release/**/win-x64/publish" -Directory |
+                 Sort-Object LastWriteTime -Descending |
+                 Select-Object -First 1 -ExpandProperty FullName
+          if (-not $dir) { Write-Error "Publish dir not found"; exit 1 }
+          "PUBLISH_DIR=$dir" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Build MSI Installer
         run: pwsh -File Setup\build.ps1
@@ -58,7 +63,7 @@ jobs:
       - name: Attest build provenance (exe)
         uses: actions/attest-build-provenance@bd77c077858b8d561b7a36cbe48ef4cc642ca39d # v2.2.2
         with:
-          subject-path: bin/Release/net10.0/win-x64/publish/Sabeltann.exe
+          subject-path: ${{ env.PUBLISH_DIR }}\Sabeltann.exe
 
       - name: Attest build provenance (msi)
         uses: actions/attest-build-provenance@bd77c077858b8d561b7a36cbe48ef4cc642ca39d # v2.2.2
@@ -69,7 +74,7 @@ jobs:
         with:
           name: Sabeltann-${{ needs.release-please.outputs.tag_name }}
           path: |
-            bin/Release/net10.0/win-x64/publish/
+            ${{ env.PUBLISH_DIR }}/
             installer/
           compression-level: 9
 
@@ -77,6 +82,6 @@ jobs:
         with:
           tag_name: ${{ needs.release-please.outputs.tag_name }}
           files: |
-            bin/Release/net10.0/win-x64/publish/Sabeltann.exe
+            ${{ env.PUBLISH_DIR }}/Sabeltann.exe
             installer/*.msi
           generate_release_notes: false

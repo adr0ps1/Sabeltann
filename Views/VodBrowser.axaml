@@ -1,0 +1,97 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sabeltann.ViewModels"
+             x:Name="Root"
+             x:Class="Sabeltann.Views.VodBrowser">
+    <Grid Background="#11111b" RowDefinitions="Auto,Auto,*,Auto">
+
+        <!-- Header bar -->
+        <Border Grid.Row="0" Padding="12,10" Background="#181825" BorderThickness="0,0,0,1" BorderBrush="#313244">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                        Width="28" Height="28" Padding="0" Margin="0,0,8,0"
+                        Command="{Binding $parent[Window].DataContext.GoBackToPickerCommand}"
+                        ToolTip.Tip="Back to menu">
+                    <TextBlock Text="←" Foreground="#a6adc8" FontSize="14"
+                               VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </Button>
+                <TextBlock Grid.Column="1" Text="Movies" Foreground="#cdd6f4" FontSize="16" FontWeight="Bold"
+                           VerticalAlignment="Center"/>
+                <Border Grid.Column="2" CornerRadius="10" Background="#313244" Padding="8,2"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="{Binding StatusText}" Foreground="#a6adc8" FontSize="11"/>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Filter bar -->
+        <Border Grid.Row="1" Padding="12,6" Background="#181825" BorderThickness="0,0,0,1" BorderBrush="#313244">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                <TextBlock Grid.Column="0" Text="Category" VerticalAlignment="Center"
+                           FontSize="11" FontWeight="SemiBold"
+                           Foreground="#a6adc8" Margin="0,0,8,0"/>
+                <ComboBox Grid.Column="1" ItemsSource="{Binding Categories}"
+                          SelectedItem="{Binding SelectedCategory}"
+                          MinWidth="150" FontSize="12" MaxWidth="250"/>
+                <TextBox Grid.Column="2" Text="{Binding SearchText}"
+                         PlaceholderText="Search movies..."
+                         Background="#1e1e2e" Foreground="#cdd6f4"
+                         BorderThickness="1" BorderBrush="#45475a"
+                         FontSize="12" Padding="6,4"
+                         Margin="12,0" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled">
+            <WrapPanel Margin="16,12">
+                <ItemsControl ItemsSource="{Binding Movies}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:VodMovieViewModel}">
+                            <Button Background="#181825" BorderThickness="1" BorderBrush="#313244"
+                                    CornerRadius="12" Padding="0" Margin="6,6" Width="160"
+                                    Command="{Binding #Root.DataContext.PlayMovieCommand}"
+                                    CommandParameter="{Binding .}">
+                                <StackPanel>
+                                    <Border Height="200" Background="#313244" CornerRadius="12,12,0,0">
+                                        <Grid>
+                                            <Image Source="{Binding PosterSrc}" Stretch="UniformToFill"
+                                                   HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                                            <TextBlock Text="{Binding Initial}"
+                                                       Foreground="#6c7086" FontSize="42" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       IsVisible="{Binding PosterSrc, Converter={x:Static vm:MainViewModel.ImgFallback}}"/>
+                                        </Grid>
+                                    </Border>
+                                    <StackPanel Margin="10,8" Spacing="2">
+                                        <TextBlock Text="{Binding Name}" Foreground="#cdd6f4" FontSize="12"
+                                                   FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding YearDisplay}" Foreground="#6c7086" FontSize="11"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </WrapPanel>
+        </ScrollViewer>
+
+        <!-- Loading overlay -->
+        <Border Grid.Row="2" IsVisible="{Binding IsLoading}" Background="#cc11111b"
+                HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+                <TextBlock Text="{Binding StatusText}" Foreground="#cdd6f4" FontSize="14"
+                           HorizontalAlignment="Center"/>
+                <ProgressBar IsIndeterminate="True" MinWidth="200" Height="4"
+                             Foreground="#cba6f7" Background="#313244"/>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Grid.Row="3" Text="Press Escape to go back" Foreground="#45475a" FontSize="11"
+                   HorizontalAlignment="Center" Margin="0,8"/>
+    </Grid>
+</UserControl>

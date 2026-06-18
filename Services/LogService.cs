@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace Sabeltann.Services;
@@ -12,6 +13,8 @@ public static class LogService
         WriteIndented = false,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
+
+    private static readonly object WriteLock = new();
 
     static LogService()
     {
@@ -36,6 +39,7 @@ public static class LogService
 
     private static void Write(string level, string message, object? extra)
     {
+        string line;
         try
         {
             var entry = new Dictionary<string, object?>
@@ -47,10 +51,26 @@ public static class LogService
             if (extra is not null)
                 entry["extra"] = extra;
 
-            var line = JsonSerializer.Serialize(entry, JsonOpts);
-            var file = Path.Combine(LogDir, $"sabeltann-{DateTime.UtcNow:yyyy-MM-dd}.jsonl");
-            File.AppendAllText(file, line + Environment.NewLine);
+            line = JsonSerializer.Serialize(entry, JsonOpts) + Environment.NewLine;
         }
-        catch { }
+        catch
+        {
+            return;
+        }
+
+        var file = Path.Combine(LogDir, $"sabeltann-{DateTime.UtcNow:yyyy-MM-dd}.jsonl");
+
+        lock (WriteLock)
+        {
+            try
+            {
+                File.AppendAllText(file, line);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"[LogService] Failed to write log: {ex.Message}");
+                Trace.WriteLine($"[LogService] Dropped entry: {line.Trim()}");
+            }
+        }
     }
 }

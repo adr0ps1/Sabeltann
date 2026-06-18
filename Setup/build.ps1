@@ -1,53 +1,36 @@
-$setupDir = Split-Path $MyInvocation.MyCommand.Path -Parent
-$publishDir = "$setupDir\..\bin\Release\net10.0\win-x64\publish"
-if (-not (Test-Path $publishDir)) {
-  $publishDir = "$setupDir\..\bin\Release\net10.0\publish"
-  if (-not (Test-Path $publishDir)) { Write-Error "Publish directory not found"; exit 1 }
+$repoRoot = Split-Path $PSScriptRoot -Parent
+$releaseDir = Join-Path $repoRoot "bin\Release"
+
+# Find publish dir without hardcoding the TFM (e.g. net9.0 vs net10.0).
+$publishDir = Get-ChildItem "$releaseDir\*\win-x64\publish" -Directory -ErrorAction SilentlyContinue |
+              Sort-Object LastWriteTime -Descending |
+              Select-Object -First 1
+
+if (-not $publishDir) {
+    Write-Error "Publish directory not found under $releaseDir"
+    exit 1
 }
-$publishDir = (Resolve-Path $publishDir).Path
+$publishPath = $publishDir.FullName
+
 $productVersion = $env:PRODUCT_VERSION
 if (-not $productVersion) { $productVersion = "1.0.0" }
 $productVersion = $productVersion.TrimStart('v')
 
-$outDir = "$setupDir\..\installer"
+$outDir = Join-Path $repoRoot "installer"
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
-# Copy icon to publish directory for WiX to reference
-Copy-Item "$setupDir\..\Assets\Sabeltann.ico" "$publishDir\Sabeltann.ico" -Force
+Write-Host "Publish dir : $publishPath"
+Write-Host "Version     : $productVersion"
+Write-Host "Output dir  : $outDir"
 
-# Generate Components.wxs from publish directory
-@"
-<?xml version="1.0" encoding="UTF-8"?>
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
-  <Fragment>
-    <ComponentGroup Id="SabeltannFiles" Directory="INSTALLFOLDER">
-"@ | Set-Content "$setupDir\Components.wxs"
+# Copy icon to publish dir so it gets bundled in the MSI.
+Copy-Item (Join-Path $repoRoot "Assets\Sabeltann.ico") (Join-Path $publishPath "Sabeltann.ico") -Force
 
-Get-ChildItem "$publishDir\*.exe", "$publishDir\*.dll" | ForEach-Object {
-    $id = "f" + (Get-Random -Maximum 99999999)
-    @(
-        "      <Component Id='$id' Guid='*' Bitness='always64'>",
-        "        <File Source='`$(var.PublishDir)\$($_.Name)' />",
-        "      </Component>"
-    ) | Add-Content "$setupDir\Components.wxs"
-}
+# Build and run the WixSharp installer project.
+dotnet run --project (Join-Path $PSScriptRoot "Setup.csproj") --configuration Release -- `
+    "$publishPath" "$productVersion" "$outDir"
 
-@"
-    </ComponentGroup>
-  </Fragment>
-</Wix>
-"@ | Add-Content "$setupDir\Components.wxs"
-
-# Build MSI
-wix build "$setupDir\Setup.wxs" "$setupDir\Components.wxs" `
-  -d ProductVersion="$productVersion" `
-  -d PublishDir="$publishDir" `
-  -arch x64 `
-  -o "$outDir\Sabeltann-$productVersion.msi"
-
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "MSI created: $outDir\Sabeltann-$productVersion.msi"
-} else {
-    Write-Error "WiX build failed"
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Installer build failed"
     exit 1
 }

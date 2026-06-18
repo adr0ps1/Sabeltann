@@ -1,9 +1,0 @@
-Unhandled exception. Avalonia.Markup.Xaml.XamlLoadException: No precompiled XAML found for Sabeltann.App, make sure to specify x:Class and include your XAML file as AvaloniaResource
-   at Avalonia.Markup.Xaml.AvaloniaXamlLoader.Load(Object obj)
-   at Sabeltann.XamlLoader.Load(Application app) in C:\Users\adria\repos\Sabeltann\Services\XamlLoader.cs:line 24
-   at Sabeltann.App.Initialize() in C:\Users\adria\repos\Sabeltann\App.axaml.cs:line 14
-   at Avalonia.AppBuilder.SetupUnsafe()
-   at Avalonia.AppBuilder.Setup()
-   at Avalonia.AppBuilder.SetupWithLifetime(IApplicationLifetime lifetime)
-   at Avalonia.ClassicDesktopStyleApplicationLifetimeExtensions.StartWithClassicDesktopLifetime(AppBuilder builder, String[] args, Action`1 lifetimeBuilder)
-   at Sabeltann.Program.Main(String[] args) in C:\Users\adria\repos\Sabeltann\Program.cs:line 10

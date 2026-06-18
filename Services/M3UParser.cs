@@ -68,7 +68,7 @@ public class M3UParser
     {
         var ch = new Channel();
 
-        var commaIdx = line.IndexOf(',');
+        var commaIdx = FindNameSeparator(line);
         if (commaIdx < 0) return ch;
 
         var metaPart = line[8..commaIdx];
@@ -86,6 +86,22 @@ public class M3UParser
         ch.Group = ExtractAttr(metaPart, "group-title");
 
         return ch;
+    }
+
+    /// <summary>
+    /// Finds the first comma that is NOT inside a double-quoted string.
+    /// This is the separator between the EXTINF metadata and the channel name.
+    /// </summary>
+    private static int FindNameSeparator(string line)
+    {
+        bool inQuotes = false;
+        for (int i = 0; i < line.Length; i++)
+        {
+            var c = line[i];
+            if (c == '"') inQuotes = !inQuotes;
+            else if (c == ',' && !inQuotes) return i;
+        }
+        return -1;
     }
 
     private static string? ExtractAttr(string input, string attr)

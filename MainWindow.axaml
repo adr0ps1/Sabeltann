@@ -39,7 +39,8 @@
 
     <Grid x:Name="MainGrid" RowDefinitions="44,Auto,*,28">
 
-        <Grid x:Name="TitleBar" Grid.Row="0" ColumnDefinitions="Auto,*" Background="#181825">
+        <Grid x:Name="TitleBar" Grid.Row="0" ColumnDefinitions="Auto,Auto,*" Background="#181825">
+            <Grid Grid.Column="0" ColumnDefinitions="Auto,Auto" Background="#181825">
             <Border Padding="14,0,12,0" Background="#181825">
                 <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                     <Border Width="24" Height="24" CornerRadius="6" Background="#cba6f7">
@@ -50,6 +51,13 @@
                                FontWeight="Bold" LetterSpacing="2" VerticalAlignment="Center"/>
                 </StackPanel>
             </Border>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                        Margin="4,0,0,0">
+                <Ellipse Width="8" Height="8" Margin="0,0,6,0"
+                         Fill="{Binding IsConnected, Converter={x:Static vm:MainViewModel.ConnDot}}"/>
+                <TextBlock Text="{Binding ConnectionLabel}" Foreground="#6c7086" FontSize="11"/>
+            </StackPanel>
+            </Grid>
             <Menu x:Name="MainMenu" Grid.Column="1" Background="#181825" Foreground="#cdd6f4"
                   FontSize="13">
                 <MenuItem Header="_File">
@@ -65,9 +73,17 @@
             </Menu>
         </Grid>
 
-        <Border x:Name="CategoryBar" Grid.Row="1" Padding="10,7" Background="#313244">
-            <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+        <Border x:Name="CategoryBar" Grid.Row="1" Padding="10,7" Background="#313244"
+                IsVisible="{Binding IsCategoryBarVisible}">
+            <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto">
+                <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                        Width="28" Height="28" Padding="0" Margin="0,0,8,0"
+                        Command="{Binding GoBackToPickerCommand}"
+                        ToolTip.Tip="Back to menu">
+                    <TextBlock Text="←" Foreground="#a6adc8" FontSize="14"
+                               VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </Button>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                     <TextBlock Text="Category" VerticalAlignment="Center"
                                FontSize="11" FontWeight="SemiBold"
                                Foreground="#a6adc8" LetterSpacing="1"/>
@@ -76,26 +92,27 @@
                               DisplayMemberBinding="{Binding Name}"
                               MinWidth="150" FontSize="12"/>
                 </StackPanel>
-                <ToggleButton Grid.Column="1" IsChecked="{Binding ShowFavoritesOnly}"
+                <ToggleButton Grid.Column="2" IsChecked="{Binding ShowFavoritesOnly}"
                               Background="Transparent" BorderThickness="0"
                               Margin="6,0,0,0" Padding="4,0"
-                              VerticalAlignment="Center">
+                              VerticalAlignment="Center"
+                              IsVisible="{Binding IsLiveTv}">
                     <TextBlock Text="★" Foreground="#f9e2af" FontSize="13"/>
                 </ToggleButton>
-                <TextBox Grid.Column="2" Text="{Binding SearchText}"
+                <TextBox Grid.Column="3" Text="{Binding SearchText}"
                          PlaceholderText="Search channels..."
                          Background="#1e1e2e" Foreground="#cdd6f4"
                          BorderThickness="1" BorderBrush="#45475a"
                          FontSize="12" Padding="6,4"
                          Margin="8,0" VerticalAlignment="Center"/>
-                <ToggleButton Grid.Column="3" IsChecked="{Binding ShowDebugOverlay}"
+                <ToggleButton Grid.Column="4" IsChecked="{Binding ShowDebugOverlay}"
                               Background="Transparent" BorderThickness="0"
                               Margin="4,0" Padding="6,2"
                               VerticalAlignment="Center">
                     <TextBlock Text="DEBUG" Foreground="#f38ba8" FontSize="9" FontWeight="Bold"
                                LetterSpacing="1"/>
                 </ToggleButton>
-                <Border Grid.Column="4" CornerRadius="10" Background="#313244" 
+                <Border Grid.Column="5" CornerRadius="10" Background="#313244" 
                         Padding="8,2" Margin="6,0" VerticalAlignment="Center">
                     <TextBlock Text="{Binding ChannelCount, StringFormat='{}{0} channels'}"
                                Foreground="#a6adc8" FontSize="11"/>
@@ -103,121 +120,84 @@
             </Grid>
         </Border>
 
-        <Grid x:Name="ContentGrid" Grid.Row="2" ColumnDefinitions="280,1,*">
+        <Grid x:Name="ContentGrid" Grid.Row="2" ColumnDefinitions="*">
 
-            <Border x:Name="SidebarPanel" Grid.Column="0" Background="#181825">
-                <Grid RowDefinitions="40,*">
-                    <Border Grid.Row="0" Padding="12,0" BorderThickness="0,0,0,1" BorderBrush="#2a2a3c">
-                        <Grid ColumnDefinitions="Auto,Auto,*,Auto">
-                            <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
-                                    Width="24" Height="24" Padding="0" Margin="0,0,6,0"
-                                    Command="{Binding GoBackToPickerCommand}">
-                                <TextBlock Text="←" Foreground="#a6adc8" FontSize="14"
-                                           VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                            </Button>
-                            <TextBlock Grid.Column="1" FontSize="13" FontWeight="SemiBold" Foreground="#cdd6f4"
-                                       VerticalAlignment="Center">
-                                <Run Text="Channels"/>
-                                <Run Text="{Binding ChannelCount, StringFormat='({0})'}"
-                                     Foreground="#6c7086" FontSize="11"/>
-                            </TextBlock>
-                        </Grid>
-                    </Border>
+            <Grid Grid.Column="0">
+                <!-- Channel grid for Live TV -->
+                <ScrollViewer IsVisible="{Binding ShowChannelGrid}" HorizontalScrollBarVisibility="Disabled">
+                    <WrapPanel Margin="12,8">
+                        <ItemsControl ItemsSource="{Binding FilteredChannels}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="0" Margin="4,4" Background="#181825"
+                                            CornerRadius="10" BorderThickness="1" BorderBrush="#313244"
+                                            Width="200" Height="140">
+                                        <Grid RowDefinitions="*,Auto">
+                                            <Button Grid.Row="0" Background="Transparent" BorderThickness="0"
+                                                    CornerRadius="10,10,0,0" Padding="0"
+                                                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                                    Command="{Binding $parent[Window].DataContext.SelectChannelCommand}"
+                                                    CommandParameter="{Binding .}">
+                                                <Border Background="#313244" CornerRadius="10,10,0,0">
+                                                    <Grid>
+                                                        <Image Source="{Binding LogoSrc}" Stretch="UniformToFill"
+                                                               HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                                                        <Border Width="40" Height="40" CornerRadius="10"
+                                                                Background="{Binding Name, Converter={x:Static vm:MainViewModel.HashColor}}"
+                                                                HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                IsVisible="{Binding LogoSrc, Converter={x:Static vm:MainViewModel.ImgFallback}}">
+                                                            <TextBlock Text="{Binding Name, Converter={x:Static vm:MainViewModel.FirstChar}}"
+                                                                       Foreground="#cdd6f4" FontSize="16" FontWeight="Bold"
+                                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        <Button Background="Transparent" BorderThickness="0"
+                                                                Width="28" Height="28" Padding="0"
+                                                                HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                                Command="{Binding $parent[Window].DataContext.ToggleFavoriteCommand}"
+                                                                CommandParameter="{Binding .}">
+                                                            <TextBlock Text="★" FontSize="14"
+                                                                       Foreground="{Binding IsFavorite, Converter={StaticResource StarColorConverter}}"
+                                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Button>
+                                                    </Grid>
+                                                </Border>
+                                            </Button>
+                                            <TextBlock Grid.Row="1" Text="{Binding Name}" Foreground="#cdd6f4" FontSize="11"
+                                                       TextTrimming="CharacterEllipsis" Margin="8,4"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </WrapPanel>
+                </ScrollViewer>
 
-                    <ListBox Grid.Row="1" Margin="0,2,0,0"
-                             ItemsSource="{Binding FilteredChannels}"
-                             SelectedItem="{Binding SelectedChannel}"
-                             BorderThickness="0"
-                             Background="Transparent"
-                             IsVisible="{Binding ShowFlatList}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <Border Classes="ChannelCard"
-                                        Padding="6,5" Margin="4,2"
-                                        Background="#1e1e2e" CornerRadius="8"
-                                        HorizontalAlignment="Stretch">
-                                    <Grid ColumnDefinitions="30,*,Auto" ColumnSpacing="8">
-                                        <Border Grid.Column="0" Width="28" Height="28"
-                                                CornerRadius="7" Background="#45475a">
-                                            <TextBlock Text="TV"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       Foreground="#6c7086" FontSize="9"/>
-                                        </Border>
-                                        <TextBlock Grid.Column="1" Text="{Binding Name}"
-                                                   VerticalAlignment="Center"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   Foreground="#cdd6f4" FontSize="12"/>
-                                        <Button Grid.Column="2" Width="22" Height="22"
-                                                Background="Transparent" BorderThickness="0"
-                                                Command="{Binding $parent[Window].DataContext.ToggleFavoriteCommand}"
-                                                CommandParameter="{Binding .}"
-                                                Padding="0">
-                                            <TextBlock Text="★" FontSize="12"
-                                                       Foreground="{Binding IsFavorite, Converter={StaticResource StarColorConverter}}"
-                                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                        </Button>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-
-                    <ListBox Grid.Row="1" Margin="0,2,0,0"
-                             ItemsSource="{Binding ShowGroups}"
-                             SelectedItem="{Binding SelectedGroup}"
-                             BorderThickness="0"
-                             Background="Transparent"
-                             IsVisible="{Binding ShowGroupsList}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <Border Classes="ChannelCard"
-                                        Padding="6,5" Margin="4,2"
-                                        Background="#1e1e2e" CornerRadius="8"
-                                        HorizontalAlignment="Stretch">
-                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-                                        <Border Width="28" Height="28"
-                                                CornerRadius="7" Background="#cba6f7">
-                                            <TextBlock Text="📺"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       Foreground="#1e1e2e" FontSize="11"/>
-                                        </Border>
-                                        <TextBlock Grid.Column="1" Text="{Binding Name}"
-                                                   VerticalAlignment="Center"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   Foreground="#cdd6f4" FontSize="13" FontWeight="SemiBold"/>
-                                        <Border Grid.Column="2" CornerRadius="10" Background="#313244"
-                                                Padding="6,2" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Count}" Foreground="#a6adc8" FontSize="10"/>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </Grid>
-            </Border>
-
-            <GridSplitter x:Name="SidebarSplitter" Grid.Column="1" Width="1" Background="#313244"/>
-
-            <Grid Grid.Column="2">
-                <Border Background="#11111b" IsVisible="{Binding HasContent}">
+                <Border Background="#11111b" IsVisible="{Binding ShowVideo}">
                     <ctrl:VideoView x:Name="VideoView"/>
                 </Border>
 
                 <Button Background="#44000000" BorderThickness="0" CornerRadius="8"
                         Width="32" Height="32" HorizontalAlignment="Right" VerticalAlignment="Top"
-                        Margin="8" Padding="0" IsVisible="{Binding HasContent}"
-                        Command="{Binding StopCommand}">
+                        Margin="8" Padding="0" IsVisible="{Binding ShowVideo}"
+                        Command="{Binding StopPlaybackCommand}">
                     <TextBlock Text="✕" Foreground="#f38ba8" FontSize="16" FontWeight="Bold"
                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Button>
 
-                <views:ConnectionPage x:Name="ConnectionPage" IsVisible="{Binding ShowWelcome}"/>
+                <views:ConnectionPage x:Name="ConnectionPage" IsVisible="{Binding IsWelcome}"/>
 
-                <views:ContentPicker x:Name="ContentPicker" IsVisible="{Binding ShowContentPicker}"/>
-                <!-- CategoryGrid removed - causes freeze -->
+                <views:ContentPicker x:Name="ContentPicker" IsVisible="{Binding IsPicker}"/>
+                <Border IsVisible="{Binding IsMovies}" Background="#11111b">
+                    <views:VodBrowser DataContext="{Binding VodBrowser}"/>
+                </Border>
+                <Border IsVisible="{Binding IsSeries}" Background="#11111b">
+                    <views:SeriesBrowser DataContext="{Binding SeriesBrowser}"/>
+                </Border>
 
                 <Border IsVisible="{Binding ShowConnectionOverlay}"
                         Background="#cc11111b" CornerRadius="12" Padding="28"
@@ -272,7 +252,7 @@
                OverlayDismissEventPassThrough="True" MinWidth="1200"
                HorizontalOffset="0" VerticalOffset="-60">
             <Border Padding="8,5" Background="#cc000000" CornerRadius="8" MinWidth="600">
-                <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto" VerticalAlignment="Center">
+                <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto" VerticalAlignment="Center">
 
                     <Button Grid.Column="0" Classes="TransportBtn"
                             Command="{Binding TogglePlayPauseCommand}">
@@ -306,12 +286,20 @@
                                HorizontalAlignment="Center"/>
 
                     <Button Grid.Column="6" Classes="TransportBtn"
+                            Command="{Binding ToggleMuteCommand}"
+                            ToolTip.Tip="Mute">
+                        <TextBlock Text="{Binding IsMuted, Converter={x:Static vm:MainViewModel.MuteIcon}}"
+                                   Foreground="#a6adc8" FontSize="11"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Button>
+
+                    <Button Grid.Column="7" Classes="TransportBtn"
                             ToolTip.Tip="Subtitles"
                             Click="OnCcClick">
                         <TextBlock Text="CC" Foreground="#89b4fa" FontSize="10" FontWeight="Bold"/>
                     </Button>
 
-                    <Button Grid.Column="7" Classes="TransportBtn"
+                    <Button Grid.Column="8" Classes="TransportBtn"
                             Command="{Binding FullscreenCommand}"
                             ToolTip.Tip="Fullscreen (F)">
                         <TextBlock Text="⛶" Foreground="#89b4fa" FontSize="13"/>

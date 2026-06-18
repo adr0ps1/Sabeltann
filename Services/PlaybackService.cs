@@ -74,8 +74,7 @@ public class PlaybackService : IDisposable
         _currentMedia?.Dispose();
         _currentMedia = null;
 
-        if (_mediaPlayer.IsPlaying)
-            _mediaPlayer.Stop();
+        _mediaPlayer.Stop();
     }
 
     public void Pause()
@@ -91,6 +90,13 @@ public class PlaybackService : IDisposable
     public void SetVolume(int volume)
     {
         _mediaPlayer.Volume = Math.Clamp(volume, 0, 200);
+    }
+
+    public bool IsMuted => _mediaPlayer.Mute;
+
+    public void ToggleMute()
+    {
+        _mediaPlayer.ToggleMute();
     }
 
     public List<(int Id, string Name)> GetSubtitleTracks()

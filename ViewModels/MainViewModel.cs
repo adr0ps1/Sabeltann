@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using Avalonia.Data.Converters;
+using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sabeltann.Models;
@@ -6,23 +8,50 @@ using Sabeltann.Services;
 
 namespace Sabeltann.ViewModels;
 
+public enum ContentMode
+{
+    Welcome,
+    Picker,
+    LiveTv,
+    Movies,
+    Series
+}
+
 public partial class MainViewModel : ObservableObject
 {
+    public static readonly FuncValueConverter<bool, string> MuteIcon = new(
+        muted => muted ? "🔇" : "🔊");
+
+    public static readonly FuncValueConverter<bool, IBrush> ConnDot = new(
+        connected => connected ? new SolidColorBrush(Color.Parse("#a6e3a1")) : new SolidColorBrush(Color.Parse("#6c7086")));
+
+    public static readonly FuncValueConverter<string, IBrush> HashColor = new(name =>
+    {
+        if (string.IsNullOrEmpty(name))
+            return new SolidColorBrush(Color.Parse("#313244"));
+        var h = (uint)Math.Abs(name.GetHashCode()) % 6;
+        var colors = new[] { "#cba6f7", "#89b4fa", "#a6e3a1", "#f9e2af", "#f38ba8", "#94e2d5" };
+        return new SolidColorBrush(Color.Parse(colors[h]));
+    });
+
+    public static readonly FuncValueConverter<string, string> FirstChar = new(name =>
+        string.IsNullOrEmpty(name) ? "?" : name[..1].ToUpperInvariant());
+
+    public static readonly FuncValueConverter<object?, bool> ImgFallback = new(
+        value => value is null);
+
     private readonly M3UParser _parser = new();
     private readonly XtreamService _xtream = new();
     private readonly SettingsService _settings = new();
+    private readonly ChannelCacheService _cache = new();
     private PlaybackService? _player;
     private List<ChannelListItemViewModel> _allChannels = [];
-    private List<ShowGroup> _allShowGroups = [];
     private List<ChannelListItemViewModel> _liveChannels = [];
-    private List<ChannelListItemViewModel> _vodChannels = [];
-    private List<ChannelListItemViewModel> _activePool = [];
+    private List<ChannelListItemViewModel> _movieChannels = [];
+    private List<ChannelListItemViewModel> _seriesChannels = [];
 
     [ObservableProperty]
     private ObservableCollection<CategoryViewModel> _categories = [];
-
-    [ObservableProperty]
-    private ObservableCollection<ShowGroup> _showGroups = [];
 
     [ObservableProperty]
     private ObservableCollection<ChannelListItemViewModel> _filteredChannels = [];
@@ -32,27 +61,6 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private ChannelListItemViewModel? _selectedChannel;
-
-    [ObservableProperty]
-    private ShowGroup? _selectedGroup;
-
-    partial void OnSelectedGroupChanged(ShowGroup? value)
-    {
-        if (value is null) return;
-        FilteredChannels.Clear();
-        foreach (var ch in value.Channels)
-            FilteredChannels.Add(ch);
-        ShowGroupsList = false;
-        SelectedChannel = null;
-        StatusText = $"{value.Name} — {value.Count} episodes";
-    }
-
-    public void SetupShowGroups()
-    {
-        ShowGroups.Clear();
-        foreach (var g in _allShowGroups)
-            ShowGroups.Add(g);
-    }
 
     public string ConnectionServerUrl => _pendingXtreamInfo?.ServerUrl ?? _settings.Load().LastXtream?.ServerUrl ?? "";
     public string ConnectionUsername => _pendingXtreamInfo?.Username ?? _settings.Load().LastXtream?.Username ?? "";
@@ -67,7 +75,6 @@ public partial class MainViewModel : ObservableObject
 
     public void SetSearchResults(string query)
     {
-        ShowContentPicker = false;
         SearchText = query;
         var q = query.Trim().ToLowerInvariant();
 
@@ -76,17 +83,26 @@ public partial class MainViewModel : ObservableObject
 
         if (string.IsNullOrEmpty(q))
         {
-            ShowContentPicker = true;
+            if (Mode == ContentMode.LiveTv)
+            {
+                ShowLiveChannels();
+            }
             return;
         }
 
-        var pool = _activePool.Count > 0 ? _activePool : _allChannels;
+        var pool = Mode switch
+        {
+            ContentMode.Movies => _movieChannels,
+            ContentMode.Series => _seriesChannels,
+            _ => _liveChannels.Count > 0 ? _liveChannels : _allChannels
+        };
+
         var matches = pool
             .Where(c => c.Name.ToLowerInvariant().Contains(q))
             .Take(500)
             .ToList();
 
-        if (matches.Count == 0) { StatusText = "No results"; return; }
+        if (matches.Count == 0) { StatusText = $"No results for \"{query}\""; return; }
 
         var cat = new CategoryViewModel { Name = $"Search: \"{query}\" ({matches.Count})" };
         cat.Channels.AddRange(matches);
@@ -95,42 +111,82 @@ public partial class MainViewModel : ObservableObject
         StatusText = $"{matches.Count} results for \"{query}\"";
     }
 
-    private void ApplyChannelSplit()
-    {
-        var split = ChannelGrouper.SplitByType(_allChannels);
-        _liveChannels = split.Live;
-        _vodChannels = split.Vod;
-        LogService.Info($"Split: {_liveChannels.Count} live, {_vodChannels.Count} vod out of {_allChannels.Count} total");
-    }
-
     public void ShowLiveChannels()
     {
-        ShowContentPicker = false;
+        Mode = ContentMode.LiveTv;
+        IsBrowsing = true;
+        SelectedCategory = null;
         SelectedChannel = null;
-        _activePool = _liveChannels;
+        _player?.Stop();
+        IsPlaying = false;
         ChannelCount = _liveChannels.Count;
-        HasContent = ChannelCount > 0;
-        var saved = _allChannels;
-        _allChannels = _liveChannels;
-        BuildCategories();
-        _allChannels = saved;
+        Categories.Clear();
+        var groups = _liveChannels
+            .GroupBy(ch => ch.Group ?? "Uncategorized")
+            .OrderBy(g => g.Key == "Uncategorized" ? 1 : 0)
+            .ThenBy(g => g.Key);
+        foreach (var g in groups)
+        {
+            var cat = new CategoryViewModel { Name = g.Key };
+            cat.Channels.AddRange(g);
+            Categories.Add(cat);
+        }
         if (Categories.Count > 0)
             SelectedCategory = Categories[0];
     }
 
-    public void ShowVodChannels()
+    public async Task ShowMoviesBrowserAsync()
     {
-        ShowContentPicker = false;
-        SelectedChannel = null;
-        _activePool = _vodChannels;
-        ChannelCount = _vodChannels.Count;
-        HasContent = ChannelCount > 0;
-        var saved = _allChannels;
-        _allChannels = _vodChannels;
-        BuildCategories();
-        _allChannels = saved;
-        if (Categories.Count > 0)
-            SelectedCategory = Categories[0];
+        VodBrowser.PlayRequested -= OnVodPlayRequested;
+        VodBrowser.PlayRequested += OnVodPlayRequested;
+        Mode = ContentMode.Movies;
+
+        if (_pendingXtreamInfo is not null)
+        {
+            await VodBrowser.InitializeAsync(_pendingXtreamInfo);
+        }
+        else
+        {
+            VodBrowser.InitializeFromChannels(_movieChannels);
+        }
+    }
+
+    public async Task ShowSeriesBrowserAsync()
+    {
+        SeriesBrowser.PlayRequested -= OnVodPlayRequested;
+        SeriesBrowser.PlayRequested += OnVodPlayRequested;
+        Mode = ContentMode.Series;
+
+        if (_pendingXtreamInfo is not null)
+        {
+            await SeriesBrowser.InitializeFromXtreamAsync(_pendingXtreamInfo);
+        }
+        else
+        {
+            SeriesBrowser.InitializeFromEpisodes(_seriesChannels);
+        }
+    }
+
+    private void OnVodPlayRequested(string url)
+    {
+        try
+        {
+            Mode = ContentMode.LiveTv;
+            _currentPlayingUrl = url;
+            LogService.Info("Playing VOD", new { url });
+            ShowConnectionOverlay = true;
+            ConnectionState = "Connecting...";
+            ConnectionProgress = 0;
+            _player?.Play(url);
+            DebugStats.SetUrl(url);
+            IsPlaying = true;
+            StatusText = "Playing VOD content";
+        }
+        catch (Exception ex)
+        {
+            LogService.Error("Failed to play VOD", new { error = ex.Message });
+            StatusText = $"Error: {ex.Message}";
+        }
     }
 
     [ObservableProperty]
@@ -140,10 +196,50 @@ public partial class MainViewModel : ObservableObject
     private int _volume = 100;
 
     [ObservableProperty]
+    private bool _isMuted;
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PlayPauseSymbol))]
+    [NotifyPropertyChangedFor(nameof(ShowOverlay))]
+    [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
+    [NotifyPropertyChangedFor(nameof(ShowVideo))]
     private bool _isPlaying;
 
     public string PlayPauseSymbol => IsPlaying ? "⏸" : "⏵";
+    public bool ShowOverlay => IsPlaying;
+    public bool ShowVideo => IsPlaying || IsPaused;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowVideo))]
+    private bool _isPaused;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsWelcome))]
+    [NotifyPropertyChangedFor(nameof(IsPicker))]
+    [NotifyPropertyChangedFor(nameof(IsLiveTv))]
+    [NotifyPropertyChangedFor(nameof(IsMovies))]
+    [NotifyPropertyChangedFor(nameof(IsSeries))]
+    [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
+    [NotifyPropertyChangedFor(nameof(IsCategoryBarVisible))]
+    private ContentMode _mode = ContentMode.Welcome;
+
+    partial void OnModeChanged(ContentMode value)
+    {
+        // The category dropdown and search only apply to Live TV mode.
+        // Movies/Series have their own dedicated browsers.
+    }
+
+    public bool IsWelcome => Mode == ContentMode.Welcome;
+    public bool IsPicker => Mode == ContentMode.Picker;
+    public bool IsLiveTv => Mode == ContentMode.LiveTv;
+    public bool IsMovies => Mode == ContentMode.Movies;
+    public bool IsSeries => Mode == ContentMode.Series;
+    public bool ShowChannelGrid => Mode == ContentMode.LiveTv && IsBrowsing;
+    public bool IsCategoryBarVisible => Mode == ContentMode.LiveTv;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
+    private bool _isBrowsing;
 
     [ObservableProperty]
     private int _channelCount;
@@ -163,12 +259,6 @@ public partial class MainViewModel : ObservableObject
     private string _searchText = "";
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowWelcome))]
-    private bool _hasContent;
-
-    public bool ShowWelcome => !HasContent;
-
-    [ObservableProperty]
     private string _connectionState = "";
 
     [ObservableProperty]
@@ -177,20 +267,12 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _showConnectionOverlay;
 
-    [ObservableProperty]
-    private bool _showContentPicker;
-
-    [ObservableProperty]
-    private bool _showCategoryGrid;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowFlatList))]
-    private bool _showGroupsList;
-
-    public bool ShowFlatList => !ShowGroupsList;
+    public VodBrowserViewModel VodBrowser { get; } = new();
+    public SeriesBrowserViewModel SeriesBrowser { get; } = new();
 
     private XtreamConnectionInfo? _pendingXtreamInfo;
     private M3UPlaylist? _pendingPlaylist;
+    private string? _currentPlayingUrl;
 
     public event Action? ToggleFullscreenRequested;
 
@@ -207,6 +289,9 @@ public partial class MainViewModel : ObservableObject
             StatusText = $"Playback error: {msg}";
             ConnectionState = msg;
             ConnectionProgress = 0;
+            IsPlaying = false;
+            IsPaused = false;
+            ShowConnectionOverlay = false;
         };
         _player.Buffering += (_, pct) =>
         {
@@ -240,25 +325,26 @@ public partial class MainViewModel : ObservableObject
     {
         if (value is null) return;
         ApplyFilters();
-        MergeAndSave(s => s.LastCategoryName = value.Name);
+        if (Mode == ContentMode.LiveTv && !value.Name.StartsWith("Search:", StringComparison.OrdinalIgnoreCase))
+            MergeAndSave(s => s.LastCategoryName = value.Name);
     }
 
     partial void OnShowFavoritesOnlyChanged(bool value) => ApplyFilters();
 
     partial void OnSearchTextChanged(string value)
     {
-        if (ShowContentPicker || SelectedCategory is null)
+        if (Mode != ContentMode.LiveTv) return;
+
+        if (string.IsNullOrWhiteSpace(value))
         {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                if (ShowContentPicker) return;
-                ApplyFilters();
-                return;
-            }
-            SetSearchResults(value);
+            ApplyFilters();
             return;
         }
-        ApplyFilters();
+
+        if (SelectedCategory is null)
+            SetSearchResults(value);
+        else
+            ApplyFilters();
     }
 
     private void ApplyFilters()
@@ -267,16 +353,29 @@ public partial class MainViewModel : ObservableObject
         if (category is null) return;
 
         var query = (SearchText ?? "").Trim().ToLowerInvariant();
-        FilteredChannels.Clear();
+        const int displayLimit = 500;
 
-        var limit = string.IsNullOrEmpty(query) ? 500 : 0;
+        var filtered = new List<ChannelListItemViewModel>();
+        int totalMatching = 0;
         foreach (var ch in category.Channels)
         {
             if (ShowFavoritesOnly && !ch.IsFavorite) continue;
             if (query.Length > 0 && !ch.Name.ToLowerInvariant().Contains(query)) continue;
-            FilteredChannels.Add(ch);
-            if (limit > 0 && FilteredChannels.Count >= limit) break;
+            totalMatching++;
+            if (filtered.Count < displayLimit)
+                filtered.Add(ch);
         }
+
+        FilteredChannels.Clear();
+        foreach (var ch in filtered)
+            FilteredChannels.Add(ch);
+
+        if (totalMatching > filtered.Count)
+            StatusText = $"Showing {filtered.Count} of {totalMatching} (use search to narrow)";
+        else if (query.Length > 0)
+            StatusText = $"{filtered.Count} matches";
+        else
+            StatusText = $"{filtered.Count} channels";
     }
 
     partial void OnSelectedChannelChanged(ChannelListItemViewModel? value)
@@ -285,6 +384,8 @@ public partial class MainViewModel : ObservableObject
         {
             if (value is not null && _player is not null && !string.IsNullOrEmpty(value.Url))
             {
+                IsBrowsing = false;
+                _currentPlayingUrl = value.Url;
                 LogService.Info("Playing channel", new { name = value.Name, url = value.Url });
                 ShowConnectionOverlay = true;
                 ConnectionState = "Connecting...";
@@ -292,6 +393,7 @@ public partial class MainViewModel : ObservableObject
                 _player.Play(value.Url);
                 DebugStats.SetUrl(value.Url);
                 IsPlaying = true;
+                IsPaused = false;
                 SubtitleTrackItems.Clear();
                 SubtitleTrackItems.Add(new SubtitleTrackItem(-1, "Off"));
                 foreach (var t in _player.GetSubtitleTracks())
@@ -365,12 +467,34 @@ public partial class MainViewModel : ObservableObject
         try
         {
             LogService.Info("Loading M3U from URL", new { url });
-            StatusText = "Downloading playlist...";
-            var playlist = await _parser.LoadFromUrlAsync(url);
+
+            var cached = _cache.LoadChannels(url);
+            M3UPlaylist playlist;
+            if (cached is not null && cached.Count > 0)
+            {
+                playlist = new M3UPlaylist { Channels = cached, SourceUrl = url };
+                StatusText = $"Loaded {cached.Count:N0} channels from cache";
+                LogService.Info("M3U loaded from cache", new { channelCount = cached.Count });
+            }
+            else
+            {
+                StatusText = "Downloading playlist...";
+                playlist = await _parser.LoadFromUrlAsync(url);
+                foreach (var ch in playlist.Channels)
+                    ch.Type = ChannelClassifier.Classify(ch);
+                _cache.SaveChannels(url, playlist.Channels);
+                LogService.Info("M3U loaded from URL and cached", new { channelCount = playlist.Channels.Count });
+            }
+
             _pendingPlaylist = playlist;
-            ShowContentPicker = true;
+            _allChannels = [];
+            _liveChannels = [];
+            _movieChannels = [];
+            _seriesChannels = [];
+            IsConnected = true;
+            ConnectionLabel = $"{playlist.Channels.Count:N0} channels";
+            Mode = ContentMode.Picker;
             MergeAndSave(s => { s.LastSourceType = "url"; s.LastSourceUrl = url; });
-            LogService.Info("M3U loaded from URL", new { channelCount = playlist.Channels.Count });
         }
         catch (Exception ex)
         {
@@ -384,12 +508,35 @@ public partial class MainViewModel : ObservableObject
         try
         {
             LogService.Info("Loading M3U from file", new { path });
-            StatusText = "Loading file...";
-            var playlist = await _parser.LoadFromFileAsync(path);
+
+            var key = $"file:{path}:{new FileInfo(path).LastWriteTimeUtc:O}";
+            var cached = _cache.LoadChannels(key);
+            M3UPlaylist playlist;
+            if (cached is not null && cached.Count > 0)
+            {
+                playlist = new M3UPlaylist { Channels = cached, SourceFile = path };
+                StatusText = $"Loaded {cached.Count:N0} channels from cache";
+                LogService.Info("M3U loaded from cache", new { channelCount = cached.Count });
+            }
+            else
+            {
+                StatusText = "Loading file...";
+                playlist = await _parser.LoadFromFileAsync(path);
+                foreach (var ch in playlist.Channels)
+                    ch.Type = ChannelClassifier.Classify(ch);
+                _cache.SaveChannels(key, playlist.Channels);
+                LogService.Info("M3U loaded from file and cached", new { channelCount = playlist.Channels.Count });
+            }
+
             _pendingPlaylist = playlist;
-            ShowContentPicker = true;
+            _allChannels = [];
+            _liveChannels = [];
+            _movieChannels = [];
+            _seriesChannels = [];
+            IsConnected = true;
+            ConnectionLabel = $"{playlist.Channels.Count:N0} channels";
+            Mode = ContentMode.Picker;
             MergeAndSave(s => { s.LastSourceType = "file"; s.LastSourceFile = path; });
-            LogService.Info("M3U loaded from file", new { channelCount = playlist.Channels.Count });
         }
         catch (Exception ex)
         {
@@ -406,7 +553,7 @@ public partial class MainViewModel : ObservableObject
             StatusText = "Authenticating...";
             await _xtream.ValidateAsync(info);
             _pendingXtreamInfo = info;
-            ShowContentPicker = true;
+            Mode = ContentMode.Picker;
 
             MergeAndSave(s =>
             {
@@ -433,14 +580,15 @@ public partial class MainViewModel : ObservableObject
         try
         {
             StatusText = "Loading channels...";
-            ShowContentPicker = false;
             var channels = await _xtream.GetLiveStreamsAsync(_pendingXtreamInfo);
             _allChannels = channels.Select(ch => new ChannelListItemViewModel(ch)).ToList();
-            ApplyChannelSplit();
-            _allShowGroups = ChannelGrouper.GroupChannels(_allChannels);
+            _liveChannels = _allChannels.Where(c => c.Type == ChannelType.LiveTv).ToList();
+            _movieChannels = _allChannels.Where(c => c.Type == ChannelType.Movie).ToList();
+            _seriesChannels = _allChannels.Where(c => c.Type == ChannelType.Series).ToList();
             ChannelCount = _allChannels.Count;
-            HasContent = ChannelCount > 0;
             RestoreFavorites();
+            foreach (var ch in _liveChannels)
+                ch.BeginLoadImage();
             BuildCategories();
             RestoreLastSessionSelection();
         }
@@ -454,15 +602,34 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void GoBackToPicker()
     {
-        HasContent = false;
-        ShowContentPicker = true;
-        _activePool = _allChannels;
+        Mode = ContentMode.Picker;
+        IsBrowsing = false;
         FilteredChannels.Clear();
         Categories.Clear();
         SelectedChannel = null;
         _player?.Stop();
         IsPlaying = false;
+        IsPaused = false;
         StatusText = "Ready";
+    }
+
+    [RelayCommand]
+    private void StopPlayback()
+    {
+        _player?.Stop();
+        IsPlaying = false;
+        IsPaused = false;
+        SelectedChannel = null;
+
+        if (Mode == ContentMode.LiveTv)
+        {
+            IsBrowsing = true;
+            StatusText = "Browsing channels";
+        }
+        else
+        {
+            StatusText = "Ready";
+        }
     }
 
     [RelayCommand]
@@ -474,6 +641,8 @@ public partial class MainViewModel : ObservableObject
 
     public async Task ShowPlaylistContentAsync()
     {
+        if (_allChannels.Count > 0) return;
+
         if (_pendingPlaylist is null)
         {
             if (_pendingXtreamInfo is not null)
@@ -481,31 +650,43 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        ShowContentPicker = false;
         var playlist = _pendingPlaylist;
+        foreach (var ch in playlist.Channels)
+            ch.Type = ChannelClassifier.Classify(ch);
+
         _allChannels = playlist.Channels.Select(ch => new ChannelListItemViewModel(ch)).ToList();
-        ApplyChannelSplit();
+        _liveChannels = _allChannels.Where(c => c.Type == ChannelType.LiveTv).ToList();
+        _movieChannels = _allChannels.Where(c => c.Type == ChannelType.Movie).ToList();
+        _seriesChannels = _allChannels.Where(c => c.Type == ChannelType.Series).ToList();
         ChannelCount = _allChannels.Count;
-        HasContent = ChannelCount > 0;
         RestoreFavorites();
-        BuildCategories();
+        foreach (var ch in _liveChannels)
+            ch.BeginLoadImage();
+        foreach (var ch in _movieChannels)
+            ch.BeginLoadImage();
+        LogService.Info($"Classified {_allChannels.Count}: {_liveChannels.Count} live, {_movieChannels.Count} movies, {_seriesChannels.Count} series");
     }
+
+    [ObservableProperty]
+    private string _connectionLabel = "Not connected";
+
+    [ObservableProperty]
+    private bool _isConnected;
 
     [RelayCommand]
     private void TogglePlayPause()
     {
         if (_player is null) return;
-        if (_player.IsPlaying)
+        try
         {
             _player.Pause();
-            IsPlaying = false;
-            StatusText = "Paused";
+            IsPlaying = _player.IsPlaying;
+            IsPaused = !IsPlaying;
+            StatusText = IsPlaying ? "Playing" : "Paused";
         }
-        else if (SelectedChannel is not null)
+        catch (Exception ex)
         {
-            _player.Play(SelectedChannel.Url);
-            IsPlaying = true;
-            StatusText = $"Playing: {SelectedChannel.Name}";
+            LogService.Error("TogglePlayPause failed", new { error = ex.Message });
         }
     }
 
@@ -519,6 +700,13 @@ public partial class MainViewModel : ObservableObject
     private void Forward()
     {
         _player?.Seek(10000);
+    }
+
+    [RelayCommand]
+    private void ToggleMute()
+    {
+        _player?.ToggleMute();
+        IsMuted = _player?.IsMuted ?? false;
     }
 
     [RelayCommand]
@@ -550,22 +738,8 @@ public partial class MainViewModel : ObservableObject
     {
         _player?.Stop();
         IsPlaying = false;
+        IsPaused = false;
         StatusText = "Stopped";
-    }
-
-    private void LoadChannels(M3UPlaylist playlist)
-    {
-        _allChannels = playlist.Channels.Select(ch => new ChannelListItemViewModel(ch)).ToList();
-        ApplyChannelSplit();
-        _allShowGroups = ChannelGrouper.GroupChannels(_allChannels);
-        ChannelCount = _allChannels.Count;
-        HasContent = ChannelCount > 0;
-        RestoreFavorites();
-        BuildCategories();
-        RestoreLastSessionSelection();
-
-        var groups = _allChannels.Select(c => c.Group).Where(g => g is not null).Distinct().OrderBy(g => g).ToList();
-        LogService.Info($"Loaded {_allChannels.Count} channels, {groups.Count} unique groups", new { groups });
     }
 
     private void RestoreFavorites()

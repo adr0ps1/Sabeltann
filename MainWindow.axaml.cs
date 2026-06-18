@@ -76,31 +76,20 @@ public partial class MainWindow : Window
 
         ContentPicker.LiveTvSelected += async (_, _) =>
         {
-            if (!_vm.HasContent)
-                await _vm.ShowPlaylistContentAsync();
+            await _vm.ShowPlaylistContentAsync();
             _vm.ShowLiveChannels();
-            _vm.ShowGroupsList = false;
         };
-        ContentPicker.VodSelected += async (_, _) =>
+        ContentPicker.MoviesSelected += async (_, _) =>
         {
-            if (!_vm.HasContent)
-                await _vm.ShowPlaylistContentAsync();
-            _vm.ShowVodChannels();
-            _vm.ShowGroupsList = false;
+            await _vm.ShowPlaylistContentAsync();
+            await _vm.ShowMoviesBrowserAsync();
+        };
+        ContentPicker.SeriesSelected += async (_, _) =>
+        {
+            await _vm.ShowPlaylistContentAsync();
+            await _vm.ShowSeriesBrowserAsync();
         };
 
-        Opened += (_, _) =>
-        {
-            Activate();
-            Topmost = true;
-            Topmost = false;
-        };
-
-        _vm.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(MainViewModel.IsPlaying) && !_vm.IsPlaying && _isFullscreen)
-                ToggleFullscreen();
-        };
     }
 
     private void LoadPirateIcon()
@@ -147,9 +136,6 @@ public partial class MainWindow : Window
 
         TitleBar.IsVisible = !_isFullscreen;
         MainMenu.IsVisible = !_isFullscreen;
-        CategoryBar.IsVisible = !_isFullscreen;
-        SidebarPanel.IsVisible = !_isFullscreen;
-        SidebarSplitter.IsVisible = !_isFullscreen;
         StatusBar.IsVisible = !_isFullscreen;
 
         if (_isFullscreen)
@@ -157,30 +143,21 @@ public partial class MainWindow : Window
             MainGrid.RowDefinitions[0].Height = new GridLength(0);
             MainGrid.RowDefinitions[1].Height = new GridLength(0);
             MainGrid.RowDefinitions[3].Height = new GridLength(0);
-            ContentGrid.ColumnDefinitions[0].Width = new GridLength(0);
-            ContentGrid.ColumnDefinitions[1].Width = new GridLength(1);
         }
         else
         {
             MainGrid.RowDefinitions[0].Height = new GridLength(44);
             MainGrid.RowDefinitions[1].Height = GridLength.Auto;
             MainGrid.RowDefinitions[3].Height = new GridLength(28);
-            ContentGrid.ColumnDefinitions[0].Width = new GridLength(280);
-            ContentGrid.ColumnDefinitions[1].Width = new GridLength(5);
         }
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.F)
+        // ESC during playback: stop and return to browsing, don't go all the way back
+        if (e.Key == Key.Escape && (_vm.IsPlaying || _vm.IsPaused))
         {
-            ToggleFullscreen();
-            e.Handled = true;
-        }
-        else if (e.Key == Key.Space)
-        {
-            if (_vm.IsPlaying)
-                _vm.TogglePlayPauseCommand.Execute(null);
+            _vm.StopPlaybackCommand.Execute(null);
             e.Handled = true;
         }
         else if (e.Key == Key.Escape && _isFullscreen)
@@ -188,10 +165,30 @@ public partial class MainWindow : Window
             ToggleFullscreen();
             e.Handled = true;
         }
-        else if (e.Key == Key.Escape && _vm.ShowContentPicker)
+        else if (e.Key == Key.Escape && _vm.Mode == ContentMode.Picker)
         {
-            _vm.ShowContentPicker = false;
+            _vm.Mode = ContentMode.Welcome;
             _vm.StatusText = "Ready";
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape && _vm.Mode == ContentMode.LiveTv)
+        {
+            _vm.GoBackToPickerCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape && (_vm.Mode == ContentMode.Movies || _vm.Mode == ContentMode.Series))
+        {
+            _vm.GoBackToPickerCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.F)
+        {
+            ToggleFullscreen();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Space)
+        {
+            _vm.TogglePlayPauseCommand.Execute(null);
             e.Handled = true;
         }
         else if (e.Key == Key.D)
@@ -283,6 +280,7 @@ public partial class MainWindow : Window
         _vm.DebugStats.Stop();
         VideoView.Detach();
         _player.Dispose();
+        ImageService.Shutdown();
         base.OnClosed(e);
     }
 }

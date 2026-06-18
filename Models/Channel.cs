@@ -9,4 +9,12 @@ public class Channel
     public string? Logo { get; set; }
     public string? Group { get; set; }
     public int Duration { get; set; } = -1;
+    public ChannelType Type { get; set; } = ChannelType.LiveTv;
+}
+
+public enum ChannelType
+{
+    LiveTv,
+    Movie,
+    Series
 }
