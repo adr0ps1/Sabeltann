@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.8](https://github.com/adr0ps1/Sabeltann/compare/v0.1.7...v0.1.8) (2026-06-18)
+
+
+### Features
+
+* Add VOD/series browsers, channel classifier, and WixSharp installer ([cf2d94e](https://github.com/adr0ps1/Sabeltann/commit/cf2d94e7bca2440d38f1ae918b672fb6cc5f3519))
+* CC/subtitle selection via context menu with live track refresh ([9eaba79](https://github.com/adr0ps1/Sabeltann/commit/9eaba7928b8fd5381e5ddc32bfb11fde2aeb4962))
+
+
+### Bug Fixes
+
+* Restore InitializeComponent(), net10.0, drop XamlLoader, VLC 3.0.23.1 ([f171ea7](https://github.com/adr0ps1/Sabeltann/commit/f171ea7356e7f2373a0a1a8113c051d207f856f1))
+
 ## [0.1.7](https://github.com/adr0ps1/Sabeltann/compare/v0.1.6...v0.1.7) (2026-06-14)
 
 
