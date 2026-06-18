@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
 using WixSharp;
 
 // Let WixSharp find the WiX v3 toolchain via the WIX environment variable
