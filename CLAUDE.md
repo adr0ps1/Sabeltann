@@ -46,6 +46,7 @@ Sabeltann is a Windows IPTV player built on Avalonia 12 + LibVLCSharp. It follow
 - **`ImageService`** — async channel logo downloader with an in-memory cache; `Shutdown()` must be called on exit.
 - **`LogService`** — static, writes JSON lines to `logs/` in the app directory.
 - **`PlaybackService`** — wraps `LibVLC` + `MediaPlayer`. Falls back to launching an installed external VLC if embedded playback fails. Exposes `Error`, `Buffering`, `PlayingStarted`, `Stopped` events that `MainViewModel.SetPlayer()` wires up.
+- **`UpdateService`** — Velopack auto-updater backed by GitHub Releases. `CheckAndDownloadAsync()` runs on window `Opened`; a staged update is applied silently on `OnClosed` via `ApplyPendingOnExit()`. No-op unless launched from a Velopack install (`UpdateManager.IsInstalled`), so dev runs are unaffected. `Program.Main` calls `VelopackApp.Build().Run()` first so updater hooks run before Avalonia starts.
 
 ### Playlist loading flow
 
@@ -57,7 +58,7 @@ Sabeltann is a Windows IPTV player built on Avalonia 12 + LibVLCSharp. It follow
 ### XAML / binding notes
 
 - `AvaloniaUseCompiledBindingsByDefault` is `false` — all bindings use reflection. Compiled bindings can be enabled per-file with `x:CompileBindings="True"` if needed.
-- `Setup/` directory is excluded from compilation (`<Compile Remove="Setup\**\*.cs" />`). The WiX installer sources live there.
+- Packaging is handled by [Velopack](https://velopack.io): the `Release` workflow publishes the app, runs `vpk pack`/`vpk upload github` to produce a `Setup.exe`, portable zip and full/delta update packages, and uploads them to the GitHub release. The `Setup/` directory holds the older WixSharp MSI sources (excluded from compilation via `<Compile Remove="Setup\**\*.cs" />`) and is no longer wired into CI.
 - VLC native DLLs are copied post-build by the `CopyVlcNative` MSBuild target from the `VideoLAN.LibVLC.Windows` NuGet package.
 - The Avalonia diagnostics package (`AvaloniaUI.DiagnosticsSupport`) is only included in Debug builds.
 

@@ -25,12 +25,10 @@ jobs:
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
 
-  build-install:
+  build-release:
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: windows-latest
-    env:
-      PRODUCT_VERSION: ${{ needs.release-please.outputs.tag_name }}
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -43,53 +41,74 @@ jobs:
 
       - run: dotnet restore
 
-      - run: dotnet publish --configuration Release --runtime win-x64 --self-contained true
+      - name: Publish self-contained win-x64
+        run: dotnet publish --configuration Release --runtime win-x64 --self-contained true --output publish
 
-      # Resolve publish dir without hardcoding the TFM (net9.0 vs net10.0 etc.)
-      - name: Locate publish directory
+      - name: Install Velopack CLI (vpk)
         shell: pwsh
         run: |
-          $dir = Get-ChildItem "bin/Release/**/win-x64/publish" -Directory |
-                 Sort-Object LastWriteTime -Descending |
-                 Select-Object -First 1 -ExpandProperty FullName
-          if (-not $dir) { Write-Error "Publish dir not found"; exit 1 }
-          "PUBLISH_DIR=$dir" | Out-File -FilePath $env:GITHUB_ENV -Append
+          dotnet tool install -g vpk --version 1.2.0
+          "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Append
 
-      - name: Install WiX Toolset v3
+      - name: Compute version
+        id: ver
         shell: pwsh
         run: |
-          choco install wixtoolset -y --no-progress
-          $bin = Get-ChildItem "C:\Program Files (x86)\WiX Toolset v3*\bin" -Directory |
-                 Sort-Object Name | Select-Object -Last 1 -ExpandProperty FullName
-          "WIX=$bin\" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $v = "${{ needs.release-please.outputs.tag_name }}".TrimStart('v')
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
-      - name: Build MSI Installer
-        run: pwsh -File Setup\build.ps1
-        env:
-          PRODUCT_VERSION: ${{ needs.release-please.outputs.tag_name }}
+      # Pull the previous release's Velopack assets so vpk can build a delta
+      # package. Best-effort: the first Velopack release has nothing to diff
+      # against, so a failure here must not fail the build.
+      - name: Download previous release (for delta updates)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          vpk download github `
+            --repoUrl https://github.com/${{ github.repository }} `
+            --token ${{ secrets.GITHUB_TOKEN }} `
+            --outputDir Releases
 
-      - name: Attest build provenance (exe)
+      - name: Build Velopack release
+        shell: pwsh
+        run: |
+          vpk pack `
+            --packId Sabeltann `
+            --packVersion ${{ steps.ver.outputs.version }} `
+            --packDir publish `
+            --mainExe Sabeltann.exe `
+            --packTitle Sabeltann `
+            --packAuthors Sabeltann `
+            --icon Assets/Sabeltann.ico `
+            --outputDir Releases
+
+      - name: Attest build provenance (app exe)
         uses: actions/attest-build-provenance@bd77c077858b8d561b7a36cbe48ef4cc642ca39d # v2.2.2
         with:
-          subject-path: ${{ env.PUBLISH_DIR }}\Sabeltann.exe
+          subject-path: publish/Sabeltann.exe
 
-      - name: Attest build provenance (msi)
+      - name: Attest build provenance (installer)
         uses: actions/attest-build-provenance@bd77c077858b8d561b7a36cbe48ef4cc642ca39d # v2.2.2
         with:
-          subject-path: installer/*.msi
+          subject-path: Releases/*-Setup.exe
+
+      # Merges the Velopack assets (Setup.exe, portable zip, full/delta .nupkg
+      # and the releases.win.json manifest the in-app updater reads) into the
+      # release-please release for this tag.
+      - name: Upload Velopack release to GitHub
+        shell: pwsh
+        run: |
+          vpk upload github `
+            --repoUrl https://github.com/${{ github.repository }} `
+            --token ${{ secrets.GITHUB_TOKEN }} `
+            --outputDir Releases `
+            --publish `
+            --merge `
+            --tag ${{ needs.release-please.outputs.tag_name }} `
+            --releaseName ${{ needs.release-please.outputs.tag_name }}
 
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
           name: Sabeltann-${{ needs.release-please.outputs.tag_name }}
-          path: |
-            ${{ env.PUBLISH_DIR }}/
-            installer/
+          path: Releases/
           compression-level: 9
-
-      - uses: softprops/action-gh-release@01570a1f39cb168c169c802c3bceb9e93fb10974 # v2.1.0
-        with:
-          tag_name: ${{ needs.release-please.outputs.tag_name }}
-          files: |
-            ${{ env.PUBLISH_DIR }}/Sabeltann.exe
-            installer/*.msi
-          generate_release_notes: false

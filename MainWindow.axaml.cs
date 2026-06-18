@@ -13,6 +13,7 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _vm;
     private readonly PlaybackService _player;
+    private readonly UpdateService _updates = new();
     private bool _isFullscreen;
 
     public MainWindow()
@@ -69,6 +70,11 @@ public partial class MainWindow : Window
             Topmost = true;
             Topmost = false;
         };
+
+        _updates.UpdateReady += version =>
+            Dispatcher.UIThread.Post(() =>
+                _vm.StatusText = $"Update {version} downloaded — installs when you close Sabeltann");
+        Opened += (_, _) => _ = _updates.CheckAndDownloadAsync();
 
         ConnectionPage.LoadM3UFileRequested += OnLoadM3UFile;
         ConnectionPage.LoadM3UUrlRequested += OnLoadM3UUrl;
@@ -281,6 +287,7 @@ public partial class MainWindow : Window
         VideoView.Detach();
         _player.Dispose();
         ImageService.Shutdown();
+        _updates.ApplyPendingOnExit();
         base.OnClosed(e);
     }
 }

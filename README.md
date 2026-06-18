@@ -24,6 +24,7 @@ Built with Avalonia 12 and LibVLCSharp. Supports M3U playlists, Xtream Codes, an
 | Subtitles (CC) | Toggle VOD subtitle tracks |
 | Logging | JSON logs in `logs/` |
 | Error tracking | Sentry (optional) |
+| Auto-update | Velopack — checks GitHub Releases on launch, installs on exit |
 
 ## Keyboard shortcuts
 
@@ -40,7 +41,7 @@ Debug builds produce `SabeltannDevelopment.exe` so they don't conflict with a ru
 
 ## Release process
 
-Merging to `main` triggers [release-please](https://github.com/googleapis/release-please) to auto-version. The release workflow builds the app, creates the MSI, attests with Sigstore, and uploads to GitHub Releases.
+Merging to `main` triggers [release-please](https://github.com/googleapis/release-please) to auto-version. The release workflow publishes the app, packs a [Velopack](https://velopack.io) release (`Setup.exe`, portable zip, and full/delta update packages), attests with Sigstore, and uploads everything to the GitHub release for the tag. The in-app updater reads those release assets to deliver auto-updates.
 
 ## Tech stack
 
@@ -50,7 +51,7 @@ Merging to `main` triggers [release-please](https://github.com/googleapis/releas
 - CommunityToolkit.Mvvm 8.4.2
 - Sentry 5.x
 - Svg.Skia 3.x
-- WiX v4
+- Velopack 1.2 (installer + auto-update)
 
 ## Code signing
 
