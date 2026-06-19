@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.11](https://github.com/adr0ps1/Sabeltann/compare/v0.1.10...v0.1.11) (2026-06-19)
+
+
+### Bug Fixes
+
+* Regenerate icon and hide transport controls on minimize/deactivate ([bc52e97](https://github.com/adr0ps1/Sabeltann/commit/bc52e97c4f20abacdbfc32467bff9972bd73ac45))
+
 ## [0.1.10](https://github.com/adr0ps1/Sabeltann/compare/v0.1.9...v0.1.10) (2026-06-19)
 
 
