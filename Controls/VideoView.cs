@@ -1,4 +1,4 @@
-using Avalonia;
+using System.Runtime.InteropServices;
 using Avalonia.Controls;
 using Avalonia.Platform;
 using LibVLCSharp.Shared;
@@ -9,6 +9,8 @@ public class VideoView : NativeControlHost
 {
     private IntPtr _childHwnd;
     private MediaPlayer? _mediaPlayer;
+
+    public event Action? MouseActivity;
 
     public void Attach(MediaPlayer player)
     {
@@ -28,7 +30,7 @@ public class VideoView : NativeControlHost
     {
         if (OperatingSystem.IsWindows())
         {
-            _childHwnd = Win32.CreateChildWindow(parent.Handle);
+            _childHwnd = Native.SubclassCreate(parent.Handle, this);
             if (_mediaPlayer is not null)
                 _mediaPlayer.Hwnd = _childHwnd;
             return new Win32Handle(_childHwnd);
@@ -40,39 +42,63 @@ public class VideoView : NativeControlHost
     {
         if (OperatingSystem.IsWindows() && _childHwnd != IntPtr.Zero)
         {
+            Native.SubclassRemove(_childHwnd);
             if (_mediaPlayer is not null)
                 _mediaPlayer.Hwnd = IntPtr.Zero;
-            Win32.DestroyWindow(_childHwnd);
+            Native.DestroyWindow(_childHwnd);
             _childHwnd = IntPtr.Zero;
         }
         base.DestroyNativeControlCore(control);
     }
+
+    public void OnMouseActivity() => MouseActivity?.Invoke();
 }
 
-file static class Win32
+file static class Native
 {
-    [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true, CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     private static extern ushort RegisterClassEx(ref WNDCLASSEX lpwcx);
 
-    [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true, CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     private static extern IntPtr CreateWindowEx(
         int dwExStyle, string lpClassName, string lpWindowName,
         int dwStyle, int x, int y, int nWidth, int nHeight,
         IntPtr hWndParent, IntPtr hMenu, IntPtr hInstance, IntPtr lpParam);
 
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    [DllImport("user32.dll")]
     public static extern bool DestroyWindow(IntPtr hWnd);
 
-    [System.Runtime.InteropServices.DllImport("gdi32.dll")]
+    [DllImport("gdi32.dll")]
     private static extern IntPtr CreateSolidBrush(int color);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr SetWindowLongPtrW(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr SetWindowLongPtrA(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr CallWindowProc(IntPtr lpPrevWndFunc, IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr DefWindowProcW(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+
+    private const int WM_MOUSEMOVE = 0x0200;
+    private const int WM_LBUTTONDOWN = 0x0201;
+    private const int WM_LBUTTONUP = 0x0202;
+    private const int GWLP_WNDPROC = -4;
 
     private const int COLORREF = 0x0011111b;
     private static readonly string ClassName = "SabeltannVid";
-    private static readonly IntPtr HINSTANCE = System.Runtime.InteropServices.Marshal.GetHINSTANCE(typeof(Win32).Module);
+    private static readonly IntPtr HINSTANCE = Marshal.GetHINSTANCE(typeof(Native).Module);
     private static bool _registered;
-    private static readonly Win32WndProc DelegateInstance = DefProc;
 
-    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    private static readonly WndProcDelegate ClassWndProc = StaticWndProc;
+    private static readonly WndProcDelegate SubclassWndProc = SubClassProc;
+
+    private static readonly Dictionary<IntPtr, (IntPtr OriginalWndProc, WeakReference<VideoView> View)> _hooks = new();
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct WNDCLASSEX
     {
         public uint cbSize;
@@ -89,8 +115,12 @@ file static class Win32
         public IntPtr hIconSm;
     }
 
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern IntPtr DefWindowProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+    private delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+
+    private static IntPtr StaticWndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
+    {
+        return DefWindowProcW(hWnd, msg, wParam, lParam);
+    }
 
     private static void EnsureRegistered()
     {
@@ -99,8 +129,8 @@ file static class Win32
         var brush = CreateSolidBrush(COLORREF);
         var wcx = new WNDCLASSEX
         {
-            cbSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<WNDCLASSEX>(),
-            lpfnWndProc = System.Runtime.InteropServices.Marshal.GetFunctionPointerForDelegate(DelegateInstance),
+            cbSize = (uint)Marshal.SizeOf<WNDCLASSEX>(),
+            lpfnWndProc = Marshal.GetFunctionPointerForDelegate(ClassWndProc),
             hbrBackground = brush,
             hInstance = HINSTANCE,
             lpszClassName = ClassName,
@@ -108,20 +138,38 @@ file static class Win32
         RegisterClassEx(ref wcx);
     }
 
-    private static IntPtr DefProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
-    {
-        return DefWindowProc(hWnd, msg, wParam, lParam);
-    }
-
-    public static IntPtr CreateChildWindow(IntPtr parentHwnd)
+    public static IntPtr SubclassCreate(IntPtr parentHwnd, VideoView view)
     {
         EnsureRegistered();
-        return CreateWindowEx(0, ClassName, "",
+        var hwnd = CreateWindowEx(0, ClassName, "",
             0x40000000 | 0x10000000 | 0x02000000 | 0x04000000,
             0, 0, 0, 0, parentHwnd, IntPtr.Zero, HINSTANCE, IntPtr.Zero);
+
+        var originalProc = SetWindowLongPtrW(hwnd, GWLP_WNDPROC, Marshal.GetFunctionPointerForDelegate(SubclassWndProc));
+        _hooks[hwnd] = (originalProc, new WeakReference<VideoView>(view));
+        return hwnd;
     }
 
-    private delegate IntPtr Win32WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+    public static void SubclassRemove(IntPtr hwnd)
+    {
+        if (_hooks.TryGetValue(hwnd, out var hook))
+        {
+            SetWindowLongPtrW(hwnd, GWLP_WNDPROC, hook.OriginalWndProc);
+            _hooks.Remove(hwnd);
+        }
+    }
+
+    private static IntPtr SubClassProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
+    {
+        if (msg == WM_MOUSEMOVE || msg == WM_LBUTTONDOWN || msg == WM_LBUTTONUP)
+        {
+            if (_hooks.TryGetValue(hWnd, out var hook) && hook.View.TryGetTarget(out var view))
+                Avalonia.Threading.Dispatcher.UIThread.Post(view.OnMouseActivity);
+        }
+        if (_hooks.TryGetValue(hWnd, out var entry))
+            return CallWindowProc(entry.OriginalWndProc, hWnd, msg, wParam, lParam);
+        return DefWindowProcW(hWnd, msg, wParam, lParam);
+    }
 }
 
 file class Win32Handle : IPlatformHandle

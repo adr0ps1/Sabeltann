@@ -184,7 +184,7 @@
                 <Button Background="#44000000" BorderThickness="0" CornerRadius="8"
                         Width="32" Height="32" HorizontalAlignment="Right" VerticalAlignment="Top"
                         Margin="8" Padding="0" IsVisible="{Binding ShowVideo}"
-                        Command="{Binding StopPlaybackCommand}">
+                        Command="{Binding StopPlaybackCommand}" ZIndex="10">
                     <TextBlock Text="✕" Foreground="#f38ba8" FontSize="16" FontWeight="Bold"
                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Button>
@@ -308,58 +308,59 @@
             </Border>
         </Popup>
 
-        <Border x:Name="DebugPanel" Grid.Row="2" IsVisible="{Binding ShowDebugOverlay}"
-                Background="#cc11111b" CornerRadius="8" Padding="10"
-                HorizontalAlignment="Right" VerticalAlignment="Top"
-                Margin="8" MinWidth="260">
-            <StackPanel Spacing="3" DataContext="{Binding DebugStats}">
-                <TextBlock Text="Debug Stats" Foreground="#cba6f7" FontSize="13" FontWeight="Bold" Margin="0,0,0,4"/>
-                <Grid ColumnDefinitions="120,*">
-                    <TextBlock Grid.Column="0" Text="State" Foreground="#6c7086" FontSize="11"/>
-                    <TextBlock Grid.Column="1" Text="{Binding State}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
-                </Grid>
-                <Grid ColumnDefinitions="120,*">
-                    <TextBlock Grid.Column="0" Text="Connection" Foreground="#6c7086" FontSize="11"/>
-                    <TextBlock Grid.Column="1" Text="{Binding ConnectionUrl}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"/>
-                </Grid>
-                <Grid ColumnDefinitions="120,*">
-                    <TextBlock Grid.Column="0" Text="Input Bitrate" Foreground="#6c7086" FontSize="11"/>
-                    <TextBlock Grid.Column="1" Text="{Binding InputBitrate}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
-                </Grid>
-                <Grid ColumnDefinitions="120,*">
-                    <TextBlock Grid.Column="0" Text="Demux Bitrate" Foreground="#6c7086" FontSize="11"/>
-                    <TextBlock Grid.Column="1" Text="{Binding DemuxBitrate}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
-                </Grid>
-                <Grid ColumnDefinitions="120,*">
-                    <TextBlock Grid.Column="0" Text="Send Bitrate" Foreground="#6c7086" FontSize="11"/>
-                    <TextBlock Grid.Column="1" Text="{Binding SendBitrate}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
-                </Grid>
-                <Grid ColumnDefinitions="120,*">
-                    <TextBlock Grid.Column="0" Text="Sent Packets" Foreground="#6c7086" FontSize="11"/>
-                    <TextBlock Grid.Column="1" Text="{Binding SentPackets}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
-                </Grid>
-                <Grid ColumnDefinitions="120,*">
-                    <TextBlock Grid.Column="0" Text="Displayed" Foreground="#6c7086" FontSize="11"/>
-                    <TextBlock Grid.Column="1" Text="{Binding DisplayedPictures}" Foreground="#a6e3a1" FontSize="11" HorizontalAlignment="Right"/>
-                </Grid>
-                <Grid ColumnDefinitions="120,*">
-                    <TextBlock Grid.Column="0" Text="Lost Pictures" Foreground="#6c7086" FontSize="11"/>
-                    <TextBlock Grid.Column="1" Text="{Binding LostPictures}" Foreground="#f38ba8" FontSize="11" HorizontalAlignment="Right"/>
-                </Grid>
-                <Grid ColumnDefinitions="120,*">
-                    <TextBlock Grid.Column="0" Text="Corrupted" Foreground="#6c7086" FontSize="11"/>
-                    <TextBlock Grid.Column="1" Text="{Binding DemuxCorrupted}" Foreground="#f9e2af" FontSize="11" HorizontalAlignment="Right"/>
-                </Grid>
-                <Grid ColumnDefinitions="120,*">
-                    <TextBlock Grid.Column="0" Text="Discontinuity" Foreground="#6c7086" FontSize="11"/>
-                    <TextBlock Grid.Column="1" Text="{Binding DemuxDiscontinuity}" Foreground="#f9e2af" FontSize="11" HorizontalAlignment="Right"/>
-                </Grid>
-                <Grid ColumnDefinitions="120,*">
-                    <TextBlock Grid.Column="0" Text="Data Read" Foreground="#6c7086" FontSize="11"/>
-                    <TextBlock Grid.Column="1" Text="{Binding ReadBytes}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
-                </Grid>
-            </StackPanel>
-        </Border>
+        <Popup x:Name="DebugPopup" IsLightDismissEnabled="False"
+               OverlayDismissEventPassThrough="True"
+               HorizontalOffset="8" VerticalOffset="8">
+            <Border Background="#cc11111b" CornerRadius="8" Padding="10" MinWidth="260">
+                <StackPanel Spacing="3" DataContext="{Binding DebugStats}">
+                    <TextBlock Text="Debug Stats" Foreground="#cba6f7" FontSize="13" FontWeight="Bold" Margin="0,0,0,4"/>
+                    <Grid ColumnDefinitions="120,*">
+                        <TextBlock Grid.Column="0" Text="State" Foreground="#6c7086" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding State}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="120,*">
+                        <TextBlock Grid.Column="0" Text="Connection" Foreground="#6c7086" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding ConnectionUrl}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="120,*">
+                        <TextBlock Grid.Column="0" Text="Input Bitrate" Foreground="#6c7086" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding InputBitrate}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="120,*">
+                        <TextBlock Grid.Column="0" Text="Demux Bitrate" Foreground="#6c7086" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding DemuxBitrate}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="120,*">
+                        <TextBlock Grid.Column="0" Text="Send Bitrate" Foreground="#6c7086" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding SendBitrate}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="120,*">
+                        <TextBlock Grid.Column="0" Text="Sent Packets" Foreground="#6c7086" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding SentPackets}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="120,*">
+                        <TextBlock Grid.Column="0" Text="Displayed" Foreground="#6c7086" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding DisplayedPictures}" Foreground="#a6e3a1" FontSize="11" HorizontalAlignment="Right"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="120,*">
+                        <TextBlock Grid.Column="0" Text="Lost Pictures" Foreground="#6c7086" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding LostPictures}" Foreground="#f38ba8" FontSize="11" HorizontalAlignment="Right"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="120,*">
+                        <TextBlock Grid.Column="0" Text="Corrupted" Foreground="#6c7086" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding DemuxCorrupted}" Foreground="#f9e2af" FontSize="11" HorizontalAlignment="Right"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="120,*">
+                        <TextBlock Grid.Column="0" Text="Discontinuity" Foreground="#6c7086" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding DemuxDiscontinuity}" Foreground="#f9e2af" FontSize="11" HorizontalAlignment="Right"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="120,*">
+                        <TextBlock Grid.Column="0" Text="Data Read" Foreground="#6c7086" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding ReadBytes}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Popup>
 
         <TextBlock x:Name="StatusBar" Grid.Row="3" Text="{Binding StatusText}" Margin="10,3"
                    Foreground="#6c7086" FontSize="11"/>

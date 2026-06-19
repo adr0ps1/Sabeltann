@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Assets\pirate.svg" />
+    <EmbeddedResource Include="Assets\Sabeltann.ico" />
   </ItemGroup>
 
   <ItemGroup>
