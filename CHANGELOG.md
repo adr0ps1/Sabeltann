@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.17](https://github.com/adr0ps1/Sabeltann/compare/v0.1.16...v0.1.17) (2026-06-19)
+
+
+### Bug Fixes
+
+* ESC goes back to correct view, transport controls responsive, fix fullscreen-pause race ([#24](https://github.com/adr0ps1/Sabeltann/issues/24)) ([c7d709e](https://github.com/adr0ps1/Sabeltann/commit/c7d709ec541091842b6d073b6fce96e0fcbaa007))
+
 ## [0.1.16](https://github.com/adr0ps1/Sabeltann/compare/v0.1.15...v0.1.16) (2026-06-19)
 
 
