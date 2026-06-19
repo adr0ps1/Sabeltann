@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.16](https://github.com/adr0ps1/Sabeltann/compare/v0.1.15...v0.1.16) (2026-06-19)
+
+
+### Bug Fixes
+
+* Fixed image on all categories ([c2085f0](https://github.com/adr0ps1/Sabeltann/commit/c2085f00c5333461fd39bc5fd40fce6dfff337b2))
+
 ## [0.1.15](https://github.com/adr0ps1/Sabeltann/compare/v0.1.14...v0.1.15) (2026-06-19)
 
 
