@@ -3,5 +3,5 @@
 Sabeltann does not collect, store, or transmit any personal information.
 
 - **Logs**: Application logs are stored locally in the `logs/` folder on your machine. They are never sent externally.
-- **Error tracking**: Sentry error tracking is optional and only active if you explicitly configure a DSN. No data is sent by default.
-- **Network**: The application only connects to IPTV playlist URLs and stream sources that you provide. No telemetry or analytics are transmitted.
+- **Error tracking**: No error tracking service is used. Unhandled exceptions are logged locally only.
+- **Network**: The application only connects to IPTV playlist URLs, stream sources that you provide, and the Velopack update server (github.com). No telemetry or analytics are transmitted.

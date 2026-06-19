@@ -23,7 +23,6 @@ Built with Avalonia 12 and LibVLCSharp. Supports M3U playlists, Xtream Codes, an
 | Fullscreen (F) | Transport bar auto-hides |
 | Subtitles (CC) | Toggle VOD subtitle tracks |
 | Logging | JSON logs in `logs/` |
-| Error tracking | Sentry (optional) |
 | Auto-update | Velopack — checks GitHub Releases on launch, installs on exit |
 
 ## Keyboard shortcuts
@@ -49,7 +48,6 @@ Merging to `main` triggers [release-please](https://github.com/googleapis/releas
 - Avalonia 12
 - LibVLCSharp 3.9.7
 - CommunityToolkit.Mvvm 8.4.2
-- Sentry 5.x
 - Svg.Skia 3.x
 - Velopack 1.2 (installer + auto-update)
 
@@ -62,7 +60,7 @@ Code signing for Windows is provided by [SignPath Foundation](https://signpath.o
 - Reviewer — [@adr0ps1](https://github.com/adr0ps1)
 - Approver — [@adr0ps1](https://github.com/adr0ps1)
 
-**Privacy:** Sabeltann does not collect or transmit personal data. Logs are stored locally. Sentry error tracking is opt-in. See [Privacy Policy](PRIVACY.md).
+**Privacy:** Sabeltann does not collect or transmit personal data. Logs are stored locally. See [Privacy Policy](PRIVACY.md).
 
 ## License
 
