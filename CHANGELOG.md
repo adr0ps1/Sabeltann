@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.12](https://github.com/adr0ps1/Sabeltann/compare/v0.1.11...v0.1.12) (2026-06-19)
+
+
+### Bug Fixes
+
+* Upgrade release-please to v5 (Node 24), remove Sentry references from docs ([4d7d309](https://github.com/adr0ps1/Sabeltann/commit/4d7d3091838a69014eb86dafbe05762ba66d6238))
+
 ## [0.1.11](https://github.com/adr0ps1/Sabeltann/compare/v0.1.10...v0.1.11) (2026-06-19)
 
 
