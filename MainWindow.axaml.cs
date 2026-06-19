@@ -88,7 +88,7 @@ public partial class MainWindow : Window
             await Dispatcher.UIThread.InvokeAsync(async () =>
             {
                 _vm.StatusText = $"Update {version} available";
-                var dialog = new UpdateDialog(version);
+                var dialog = new UpdateDialog { Version = version };
                 await dialog.ShowDialog(this);
                 if (dialog.RestartRequested)
                 {
