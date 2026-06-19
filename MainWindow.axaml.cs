@@ -41,7 +41,7 @@ public partial class MainWindow : Window
 
         void ShowTransport()
         {
-            if (_vm.IsPlaying && IsActive)
+            if (_vm.IsPlaying || _vm.IsPaused)
             {
                 TransportPopup.IsOpen = true;
                 _transportTimer.Stop();
@@ -58,9 +58,9 @@ public partial class MainWindow : Window
 
         _vm.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(MainViewModel.IsPlaying) || e.PropertyName == nameof(MainViewModel.IsPaused))
+            if (e.PropertyName is nameof(MainViewModel.IsPlaying) or nameof(MainViewModel.IsPaused))
             {
-                if (_vm.IsPlaying)
+                if (_vm.IsPlaying || _vm.IsPaused)
                 {
                     TransportPopup.IsOpen = true;
                     _transportTimer.Stop();
@@ -70,9 +70,9 @@ public partial class MainWindow : Window
                 {
                     TransportPopup.IsOpen = false;
                     OverlayPanel.Opacity = 0;
+                    if (_isFullscreen)
+                        ToggleFullscreen();
                 }
-                if (!_vm.IsPlaying && !_vm.IsPaused && _isFullscreen)
-                    ToggleFullscreen();
             }
         };
 

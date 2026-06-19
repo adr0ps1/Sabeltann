@@ -124,58 +124,69 @@
 
             <Grid Grid.Column="0">
                 <!-- Channel grid for Live TV -->
-                <ScrollViewer IsVisible="{Binding ShowChannelGrid}" HorizontalScrollBarVisibility="Disabled">
-                    <WrapPanel Margin="12,8">
-                        <ItemsControl ItemsSource="{Binding FilteredChannels}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Padding="0" Margin="4,4" Background="#181825"
-                                            CornerRadius="10" BorderThickness="1" BorderBrush="#313244"
-                                            Width="200" Height="140">
-                                        <Grid RowDefinitions="*,Auto">
-                                            <Button Grid.Row="0" Background="Transparent" BorderThickness="0"
-                                                    CornerRadius="10,10,0,0" Padding="0"
-                                                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                                                    Command="{Binding $parent[Window].DataContext.SelectChannelCommand}"
-                                                    CommandParameter="{Binding .}">
-                                                <Border Background="#313244" CornerRadius="10,10,0,0">
-                                                    <Grid>
-                                                        <Image Source="{Binding LogoSrc}" Stretch="UniformToFill"
-                                                               HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-                                                        <Border Width="40" Height="40" CornerRadius="10"
-                                                                Background="{Binding Name, Converter={x:Static vm:MainViewModel.HashColor}}"
-                                                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                                IsVisible="{Binding LogoSrc, Converter={x:Static vm:MainViewModel.ImgFallback}}">
-                                                            <TextBlock Text="{Binding Name, Converter={x:Static vm:MainViewModel.FirstChar}}"
-                                                                       Foreground="#cdd6f4" FontSize="16" FontWeight="Bold"
-                                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                        </Border>
-                                                        <Button Background="Transparent" BorderThickness="0"
-                                                                Width="28" Height="28" Padding="0"
-                                                                HorizontalAlignment="Right" VerticalAlignment="Top"
-                                                                Command="{Binding $parent[Window].DataContext.ToggleFavoriteCommand}"
-                                                                CommandParameter="{Binding .}">
-                                                            <TextBlock Text="★" FontSize="14"
-                                                                       Foreground="{Binding IsFavorite, Converter={StaticResource StarColorConverter}}"
-                                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                        </Button>
-                                                    </Grid>
+                <ListBox x:Name="ChannelGrid" IsVisible="{Binding ShowChannelGrid}"
+                         ItemsSource="{Binding FilteredChannels}"
+                         SelectedItem="{Binding SelectedChannel}"
+                         Background="Transparent" BorderThickness="0" Padding="8"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto">
+                    <ListBox.Styles>
+                        <Style Selector="ListBoxItem">
+                            <Setter Property="Padding" Value="0"/>
+                            <Setter Property="Margin" Value="0"/>
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                        </Style>
+                    </ListBox.Styles>
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="0" Margin="2,2" Background="#181825"
+                                    CornerRadius="10" BorderThickness="1" BorderBrush="#313244"
+                                    Width="200" Height="140">
+                                <Grid RowDefinitions="*,Auto">
+                                    <Button Grid.Row="0" Background="Transparent" BorderThickness="0"
+                                            CornerRadius="10,10,0,0" Padding="0"
+                                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                            Command="{Binding $parent[Window].DataContext.SelectChannelCommand}"
+                                            CommandParameter="{Binding .}">
+                                        <Border Background="#313244" CornerRadius="10,10,0,0">
+                                            <Grid>
+                                                <Image Source="{Binding LogoSrc}" Stretch="UniformToFill"
+                                                       HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                                                <Border Width="40" Height="40" CornerRadius="10"
+                                                        Background="{Binding Name, Converter={x:Static vm:MainViewModel.HashColor}}"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        IsVisible="{Binding LogoSrc, Converter={x:Static vm:MainViewModel.ImgFallback}}">
+                                                    <TextBlock Text="{Binding Name, Converter={x:Static vm:MainViewModel.FirstChar}}"
+                                                               Foreground="#cdd6f4" FontSize="16" FontWeight="Bold"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
-                                            </Button>
-                                            <TextBlock Grid.Row="1" Text="{Binding Name}" Foreground="#cdd6f4" FontSize="11"
-                                                       TextTrimming="CharacterEllipsis" Margin="8,4"/>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </WrapPanel>
-                </ScrollViewer>
+                                                <Button Background="Transparent" BorderThickness="0"
+                                                        Width="28" Height="28" Padding="0"
+                                                        HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                        Command="{Binding $parent[Window].DataContext.ToggleFavoriteCommand}"
+                                                        CommandParameter="{Binding .}">
+                                                    <TextBlock Text="★" FontSize="14"
+                                                               Foreground="{Binding IsFavorite, Converter={StaticResource StarColorConverter}}"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </Button>
+                                    <TextBlock Grid.Row="1" Text="{Binding Name}" Foreground="#cdd6f4" FontSize="11"
+                                               TextTrimming="CharacterEllipsis" Margin="8,4"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
 
                 <Border Background="#11111b" IsVisible="{Binding ShowVideo}">
                     <ctrl:VideoView x:Name="VideoView"/>

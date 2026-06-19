@@ -24,6 +24,8 @@ public partial class ChannelListItemViewModel : ObservableObject
 
     public string Url { get; }
     public ChannelType Type { get; }
+    private bool _imageLoaded;
+    private bool _imageLoading;
 
     public ChannelListItemViewModel(Channel channel)
     {
@@ -34,16 +36,21 @@ public partial class ChannelListItemViewModel : ObservableObject
         Type = channel.Type;
     }
 
-    public void BeginLoadImage()
+    public void EnsureImageLoaded()
     {
-        if (!string.IsNullOrWhiteSpace(Logo))
-            _ = LoadAsync();
+        if (_imageLoaded || _imageLoading || string.IsNullOrWhiteSpace(Logo)) return;
+        _imageLoading = true;
+        _ = LoadAsync();
     }
 
     private async Task LoadAsync()
     {
         var bmp = await ImageService.LoadAsync(Logo);
+        _imageLoading = false;
         if (bmp is not null)
+        {
+            _imageLoaded = true;
             LogoSrc = bmp;
+        }
     }
 }
