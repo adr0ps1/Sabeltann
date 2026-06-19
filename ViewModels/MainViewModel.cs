@@ -104,6 +104,9 @@ public partial class MainViewModel : ObservableObject
 
         if (matches.Count == 0) { StatusText = $"No results for \"{query}\""; return; }
 
+        foreach (var ch in matches)
+            ch.EnsureImageLoaded();
+
         var cat = new CategoryViewModel { Name = $"Search: \"{query}\" ({matches.Count})" };
         cat.Channels.AddRange(matches);
         Categories.Add(cat);
@@ -366,6 +369,9 @@ public partial class MainViewModel : ObservableObject
                 filtered.Add(ch);
         }
 
+        foreach (var ch in filtered)
+            ch.EnsureImageLoaded();
+
         FilteredChannels.Clear();
         foreach (var ch in filtered)
             FilteredChannels.Add(ch);
@@ -587,8 +593,6 @@ public partial class MainViewModel : ObservableObject
             _seriesChannels = _allChannels.Where(c => c.Type == ChannelType.Series).ToList();
             ChannelCount = _allChannels.Count;
             RestoreFavorites();
-            foreach (var ch in _liveChannels)
-                ch.BeginLoadImage();
             BuildCategories();
             RestoreLastSessionSelection();
         }
@@ -660,10 +664,6 @@ public partial class MainViewModel : ObservableObject
         _seriesChannels = _allChannels.Where(c => c.Type == ChannelType.Series).ToList();
         ChannelCount = _allChannels.Count;
         RestoreFavorites();
-        foreach (var ch in _liveChannels)
-            ch.BeginLoadImage();
-        foreach (var ch in _movieChannels)
-            ch.BeginLoadImage();
         LogService.Info($"Classified {_allChannels.Count}: {_liveChannels.Count} live, {_movieChannels.Count} movies, {_seriesChannels.Count} series");
     }
 
