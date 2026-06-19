@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.10](https://github.com/adr0ps1/Sabeltann/compare/v0.1.9...v0.1.10) (2026-06-19)
+
+
+### Features
+
+* Switch to Velopack installer with auto-updates ([1431be9](https://github.com/adr0ps1/Sabeltann/commit/1431be93e2b2956ba506759d5fe2ea4572b008f9))
+* Switch to Velopack installer with auto-updates ([aead998](https://github.com/adr0ps1/Sabeltann/commit/aead9986d055d1c1f34a841317b0d490288c4f60))
+* Switch to Velopack installer with auto-updates ([#10](https://github.com/adr0ps1/Sabeltann/issues/10)) ([1431be9](https://github.com/adr0ps1/Sabeltann/commit/1431be93e2b2956ba506759d5fe2ea4572b008f9))
+
+
+### Bug Fixes
+
+* Target net472 for WixSharp installer so MSI builds ([a7584b1](https://github.com/adr0ps1/Sabeltann/commit/a7584b1f22898e6d4879c2fdc15bec6c86d7f43d))
+
 ## [0.1.9](https://github.com/adr0ps1/Sabeltann/compare/v0.1.8...v0.1.9) (2026-06-18)
 
 
