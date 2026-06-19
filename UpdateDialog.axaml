@@ -1,0 +1,28 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="140"
+        x:Class="Sabeltann.UpdateDialog"
+        Title="Update Available"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="#1e1e2e"
+        Foreground="#cdd6f4">
+
+    <StackPanel Margin="20" Spacing="14">
+        <TextBlock x:Name="MessageText" Text="A new version is available."
+                   FontSize="14" Foreground="#cdd6f4" TextWrapping="Wrap"/>
+        <Grid ColumnDefinitions="*,*" ColumnSpacing="8" Margin="0,6,0,0">
+            <Button Grid.Column="0" Content="Later" Click="OnLater"
+                    Background="#313244" Foreground="#cdd6f4"
+                    BorderThickness="0" CornerRadius="8"
+                    Padding="10,7" FontSize="13"/>
+            <Button Grid.Column="1" Content="Restart Now" Click="OnRestart" IsDefault="True"
+                    Background="#cba6f7" Foreground="#1e1e2e"
+                    BorderThickness="0" CornerRadius="8"
+                    Padding="10,7" FontSize="13" FontWeight="SemiBold"/>
+        </Grid>
+    </StackPanel>
+</Window>
