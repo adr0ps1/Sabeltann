@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.15](https://github.com/adr0ps1/Sabeltann/compare/v0.1.14...v0.1.15) (2026-06-19)
+
+
+### Bug Fixes
+
+* Add missing UpdateDialog.axaml ([4f8d455](https://github.com/adr0ps1/Sabeltann/commit/4f8d4556ede0399578472dd2b84cfb32789e5732))
+* Add missing UpdateDialog.axaml ([459b006](https://github.com/adr0ps1/Sabeltann/commit/459b006cc3b733499279ffe6e2c68a2809be5e97))
+
 ## [0.1.14](https://github.com/adr0ps1/Sabeltann/compare/v0.1.13...v0.1.14) (2026-06-19)
 
 
