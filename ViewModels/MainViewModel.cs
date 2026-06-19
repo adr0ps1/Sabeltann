@@ -174,7 +174,6 @@ public partial class MainViewModel : ObservableObject
     {
         try
         {
-            Mode = ContentMode.LiveTv;
             _currentPlayingUrl = url;
             LogService.Info("Playing VOD", new { url });
             ShowConnectionOverlay = true;
