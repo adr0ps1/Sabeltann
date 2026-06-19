@@ -219,17 +219,17 @@ public partial class MainWindow : Window
             _vm.GoBackToPickerCommand.Execute(null);
             e.Handled = true;
         }
-        else if (e.Key == Key.F)
+        else if (e.Key == Key.F && e.Source is not TextBox)
         {
             ToggleFullscreen();
             e.Handled = true;
         }
-        else if (e.Key == Key.Space)
+        else if (e.Key == Key.Space && e.Source is not TextBox)
         {
             _vm.TogglePlayPauseCommand.Execute(null);
             e.Handled = true;
         }
-        else if (e.Key == Key.D)
+        else if (e.Key == Key.D && e.Source is not TextBox)
         {
             _vm.ShowDebugOverlay = !_vm.ShowDebugOverlay;
                 DebugPopup.IsOpen = _vm.ShowDebugOverlay;
