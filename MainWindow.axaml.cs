@@ -203,7 +203,7 @@ public partial class MainWindow : Window
             ToggleFullscreen();
             e.Handled = true;
         }
-        else if (e.Key == Key.Escape && _vm.Mode == ContentMode.Picker)
+        else if (e.Key == Key.Escape && _vm.Mode == ContentMode.Picker && !_vm.IsConnected)
         {
             _vm.Mode = ContentMode.Welcome;
             _vm.StatusText = "Ready";
