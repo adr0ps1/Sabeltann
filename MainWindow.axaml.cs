@@ -7,6 +7,7 @@ using Avalonia.Threading;
 using Sabeltann.Models;
 using Sabeltann.Services;
 using Sabeltann.ViewModels;
+using System.Runtime.InteropServices;
 
 namespace Sabeltann;
 
@@ -16,8 +17,19 @@ public partial class MainWindow : Window
     private readonly PlaybackService _player;
     private readonly UpdateService _updates = new();
     private readonly DispatcherTimer _transportTimer;
+    private readonly DispatcherTimer _mousePollTimer;
+    private int _lastMouseX, _lastMouseY;
     private bool _isFullscreen;
     private bool _updateRestartPending;
+
+    [DllImport("user32.dll")]
+    private static extern bool GetCursorPos(out POINT lpPoint);
+
+    [DllImport("user32.dll")]
+    private static extern bool ScreenToClient(IntPtr hWnd, ref POINT lpPoint);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct POINT { public int X; public int Y; }
 
     public MainWindow()
     {
@@ -36,9 +48,6 @@ public partial class MainWindow : Window
         VideoView.MouseActivity += ShowTransport;
         KeyDown += OnKeyDown;
 
-        _transportTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
-        _transportTimer.Tick += (_, _) => { TransportPopup.IsOpen = false; _transportTimer.Stop(); };
-
         void ShowTransport()
         {
             if (_vm.IsPlaying || _vm.IsPaused)
@@ -49,7 +58,28 @@ public partial class MainWindow : Window
             }
         }
 
+        _transportTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+        _transportTimer.Tick += (_, _) => { TransportPopup.IsOpen = false; _transportTimer.Stop(); };
+
+        _mousePollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
+        _mousePollTimer.Tick += (_, _) =>
+        {
+            if (OperatingSystem.IsWindows() && TryGetPlatformHandle()?.Handle is IntPtr hwnd && hwnd != IntPtr.Zero)
+            {
+                GetCursorPos(out var pt);
+                ScreenToClient(hwnd, ref pt);
+                if (pt.X != _lastMouseX || pt.Y != _lastMouseY)
+                {
+                    _lastMouseX = pt.X;
+                    _lastMouseY = pt.Y;
+                    ShowTransport();
+                }
+            }
+        };
+
         PointerMoved += (_, _) => ShowTransport();
+
+        _mousePollTimer.Start();
 
         LoadPirateIcon();
         _vm.LoadLastSession();
@@ -70,10 +100,11 @@ public partial class MainWindow : Window
                 {
                     TransportPopup.IsOpen = false;
                     OverlayPanel.Opacity = 0;
-                    if (_isFullscreen)
-                        ToggleFullscreen();
                 }
             }
+
+            if (e.PropertyName == nameof(MainViewModel.IsPaused) && !_vm.IsPlaying && !_vm.IsPaused && _isFullscreen)
+                ToggleFullscreen();
         };
 
         Opened += (_, _) =>
@@ -161,7 +192,7 @@ public partial class MainWindow : Window
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        // ESC during playback: stop and return to browsing, don't go all the way back
+        // ESC during playback: stop and return to browsing with categories
         if (e.Key == Key.Escape && (_vm.IsPlaying || _vm.IsPaused))
         {
             _vm.StopPlaybackCommand.Execute(null);
