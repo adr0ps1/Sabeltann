@@ -51,10 +51,6 @@ Merging to `main` triggers [release-please](https://github.com/googleapis/releas
 - Svg.Skia 3.x
 - Velopack 1.2 (installer + auto-update)
 
-## Code signing
-
-Code signing for Windows is provided by [SignPath Foundation](https://signpath.org/). The certificate is issued to SignPath Foundation. Only tagged releases from `main` are signed.
-
 **Roles:**
 - Author — [@adr0ps1](https://github.com/adr0ps1)
 - Reviewer — [@adr0ps1](https://github.com/adr0ps1)
@@ -63,7 +59,6 @@ Code signing for Windows is provided by [SignPath Foundation](https://signpath.o
 **Privacy:** Sabeltann does not collect or transmit personal data. Logs are stored locally. See [Privacy Policy](PRIVACY.md).
 
 ## License
+This project is licensed under the **MIT License** — a short, permissive open-source license that allows anyone to use, modify, distribute, and even use the software in proprietary projects with minimal restrictions.
 
-GPL-3.0 — see [LICENSE](LICENSE).
-
-**Important:** Usage of the signed installer/binaries is restricted to applications that have been code-signed through SignPath Foundation approval. Distribution of unsigned builds or use of the software before obtaining a valid code signing certificate is not permitted.
+See [LICENSE](LICENSE) for the full text.
