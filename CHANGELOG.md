@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.13](https://github.com/adr0ps1/Sabeltann/compare/v0.1.12...v0.1.13) (2026-06-19)
+
+
+### Bug Fixes
+
+* Transport controls over video, fullscreen pause bug, icon, update dialog ([5d624fa](https://github.com/adr0ps1/Sabeltann/commit/5d624fa977b4abf2effb110313867b61700d436c))
+* Transport, fullscreen, icon, update dialog ([a3b2d0f](https://github.com/adr0ps1/Sabeltann/commit/a3b2d0fc8fe38a9714d5c23aee5663b42bfd2b43))
+
+
+### Chores
+
+* Update readme.md ([defd68a](https://github.com/adr0ps1/Sabeltann/commit/defd68ade2fd2e8ea26ab028129b074c8b92e04f))
+* Update readme.md ([9ce7f65](https://github.com/adr0ps1/Sabeltann/commit/9ce7f65210a49f68c4446d33ea6a9630b14ed283))
+
 ## [0.1.12](https://github.com/adr0ps1/Sabeltann/compare/v0.1.11...v0.1.12) (2026-06-19)
 
 
