@@ -1,12 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <!-- WixSharp (WiX v3) ships only .NET Framework assemblies, so the installer
+         builder must target .NET Framework. The windows-latest runner has 4.7.2. -->
+    <TargetFramework>net472</TargetFramework>
+    <!-- net472 defaults to C# 7.3; the builder uses top-level statements and
+         collection expressions, so opt into the latest language version. -->
+    <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Explicit usings only: implicit usings inject System.Net.Http etc. which
+         are not guaranteed to resolve on net472 and would break the build. -->
+    <ImplicitUsings>disable</ImplicitUsings>
     <AssemblyName>SabeltannSetup</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="WixSharp" Version="1.*" />
+    <PackageReference Include="WixSharp" Version="1.26.0" />
   </ItemGroup>
 </Project>
