@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.14](https://github.com/adr0ps1/Sabeltann/compare/v0.1.13...v0.1.14) (2026-06-19)
+
+
+### Bug Fixes
+
+* Debug overlay as popup over native video, UpdateDialog parameterless ctor ([5641ad8](https://github.com/adr0ps1/Sabeltann/commit/5641ad81655ebbf9ce2b340efe7d45d90d4630fc))
+* Debug popup over video, UpdateDialog ctor fix ([c5c8f95](https://github.com/adr0ps1/Sabeltann/commit/c5c8f959756e99b295eb281a732c979e45e7de2d))
+
 ## [0.1.13](https://github.com/adr0ps1/Sabeltann/compare/v0.1.12...v0.1.13) (2026-06-19)
 
 
