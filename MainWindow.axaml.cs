@@ -17,6 +17,7 @@ public partial class MainWindow : Window
     private readonly UpdateService _updates = new();
     private readonly DispatcherTimer _transportTimer;
     private bool _isFullscreen;
+    private bool _updateRestartPending;
 
     public MainWindow()
     {
@@ -32,11 +33,13 @@ public partial class MainWindow : Window
             VideoView.Attach(_player.Player);
         else
             LogService.Warn("VLC player not available");
+        VideoView.MouseActivity += ShowTransport;
         KeyDown += OnKeyDown;
 
         _transportTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
         _transportTimer.Tick += (_, _) => { TransportPopup.IsOpen = false; _transportTimer.Stop(); };
-        PointerMoved += (_, _) =>
+
+        void ShowTransport()
         {
             if (_vm.IsPlaying && IsActive)
             {
@@ -44,7 +47,9 @@ public partial class MainWindow : Window
                 _transportTimer.Stop();
                 _transportTimer.Start();
             }
-        };
+        }
+
+        PointerMoved += (_, _) => ShowTransport();
 
         LoadPirateIcon();
         _vm.LoadLastSession();
@@ -53,7 +58,7 @@ public partial class MainWindow : Window
 
         _vm.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(MainViewModel.IsPlaying))
+            if (e.PropertyName == nameof(MainViewModel.IsPlaying) || e.PropertyName == nameof(MainViewModel.IsPaused))
             {
                 if (_vm.IsPlaying)
                 {
@@ -66,16 +71,9 @@ public partial class MainWindow : Window
                     TransportPopup.IsOpen = false;
                     OverlayPanel.Opacity = 0;
                 }
-                if (!_vm.IsPlaying && _isFullscreen)
+                if (!_vm.IsPlaying && !_vm.IsPaused && _isFullscreen)
                     ToggleFullscreen();
             }
-        };
-
-        Deactivated += (_, _) =>
-        {
-            TransportPopup.IsOpen = false;
-            OverlayPanel.Opacity = 0;
-            _transportTimer.Stop();
         };
 
         Opened += (_, _) =>
@@ -85,9 +83,21 @@ public partial class MainWindow : Window
             Topmost = false;
         };
 
-        _updates.UpdateReady += version =>
-            Dispatcher.UIThread.Post(() =>
-                _vm.StatusText = $"Update {version} downloaded — installs when you close Sabeltann");
+        _updates.UpdateReady += async version =>
+        {
+            await Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                _vm.StatusText = $"Update {version} available";
+                var dialog = new UpdateDialog(version);
+                await dialog.ShowDialog(this);
+                if (dialog.RestartRequested)
+                {
+                    _updateRestartPending = true;
+                    _updates.ApplyPendingOnExit(restart: true);
+                    Close();
+                }
+            });
+        };
         Opened += (_, _) => _ = _updates.CheckAndDownloadAsync();
 
         ConnectionPage.LoadM3UFileRequested += OnLoadM3UFile;
@@ -117,34 +127,9 @@ public partial class MainWindow : Window
         try
         {
             using var stream = typeof(MainWindow).Assembly
-                .GetManifestResourceStream("Sabeltann.Assets.pirate.svg");
+                .GetManifestResourceStream("Sabeltann.Assets.Sabeltann.ico");
             if (stream is null) return;
-
-            var svg = new Svg.Skia.SKSvg();
-            var pic = svg.Load(stream);
-            if (pic is null) return;
-
-            var size = 256;
-            var srcW = pic.CullRect.Width;
-            var srcH = pic.CullRect.Height;
-            var scale = size / Math.Max(srcW, srcH);
-
-            using var bmp = new SkiaSharp.SKBitmap(size, size);
-            using var canvas = new SkiaSharp.SKCanvas(bmp);
-            canvas.Clear(SkiaSharp.SKColors.Transparent);
-
-            var tx = (size - srcW * scale) / 2f;
-            var ty = (size - srcH * scale) / 2f;
-            canvas.Save();
-            canvas.Translate(tx, ty);
-            canvas.Scale(scale);
-            canvas.DrawPicture(pic, SkiaSharp.SKPoint.Empty);
-            canvas.Restore();
-
-            using var img = SkiaSharp.SKImage.FromBitmap(bmp);
-            using var data = img.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
-            using var ms = new MemoryStream(data.ToArray());
-            Icon = new WindowIcon(Avalonia.Media.Imaging.Bitmap.DecodeToWidth(ms, size));
+            Icon = new WindowIcon(stream);
         }
         catch { }
     }
@@ -170,6 +155,8 @@ public partial class MainWindow : Window
             MainGrid.RowDefinitions[1].Height = GridLength.Auto;
             MainGrid.RowDefinitions[3].Height = new GridLength(28);
         }
+
+        TransportPopup.PlacementTarget = VideoView;
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
@@ -214,6 +201,7 @@ public partial class MainWindow : Window
         else if (e.Key == Key.D)
         {
             _vm.ShowDebugOverlay = !_vm.ShowDebugOverlay;
+                DebugPopup.IsOpen = _vm.ShowDebugOverlay;
             e.Handled = true;
         }
     }
@@ -312,7 +300,8 @@ public partial class MainWindow : Window
         VideoView.Detach();
         _player.Dispose();
         ImageService.Shutdown();
-        _updates.ApplyPendingOnExit();
+        if (!_updateRestartPending)
+            _updates.ApplyPendingOnExit(restart: false);
         base.OnClosed(e);
     }
 }
