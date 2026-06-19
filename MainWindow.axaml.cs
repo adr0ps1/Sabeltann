@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -14,6 +15,7 @@ public partial class MainWindow : Window
     private readonly MainViewModel _vm;
     private readonly PlaybackService _player;
     private readonly UpdateService _updates = new();
+    private readonly DispatcherTimer _transportTimer;
     private bool _isFullscreen;
 
     public MainWindow()
@@ -32,15 +34,15 @@ public partial class MainWindow : Window
             LogService.Warn("VLC player not available");
         KeyDown += OnKeyDown;
 
-        var transportTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
-        transportTimer.Tick += (_, _) => { TransportPopup.IsOpen = false; transportTimer.Stop(); };
+        _transportTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+        _transportTimer.Tick += (_, _) => { TransportPopup.IsOpen = false; _transportTimer.Stop(); };
         PointerMoved += (_, _) =>
         {
-            if (_vm.IsPlaying)
+            if (_vm.IsPlaying && IsActive)
             {
                 TransportPopup.IsOpen = true;
-                transportTimer.Stop();
-                transportTimer.Start();
+                _transportTimer.Stop();
+                _transportTimer.Start();
             }
         };
 
@@ -56,12 +58,24 @@ public partial class MainWindow : Window
                 if (_vm.IsPlaying)
                 {
                     TransportPopup.IsOpen = true;
-                    transportTimer.Stop();
-                    transportTimer.Start();
+                    _transportTimer.Stop();
+                    _transportTimer.Start();
+                }
+                else
+                {
+                    TransportPopup.IsOpen = false;
+                    OverlayPanel.Opacity = 0;
                 }
                 if (!_vm.IsPlaying && _isFullscreen)
                     ToggleFullscreen();
             }
+        };
+
+        Deactivated += (_, _) =>
+        {
+            TransportPopup.IsOpen = false;
+            OverlayPanel.Opacity = 0;
+            _transportTimer.Stop();
         };
 
         Opened += (_, _) =>
@@ -110,7 +124,7 @@ public partial class MainWindow : Window
             var pic = svg.Load(stream);
             if (pic is null) return;
 
-            var size = 64;
+            var size = 256;
             var srcW = pic.CullRect.Width;
             var srcH = pic.CullRect.Height;
             var scale = size / Math.Max(srcW, srcH);
@@ -279,6 +293,17 @@ public partial class MainWindow : Window
                 AddItem(t.Name, t.Id);
         }
         menu.Open(btn);
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == WindowStateProperty && WindowState == WindowState.Minimized)
+        {
+            TransportPopup.IsOpen = false;
+            OverlayPanel.Opacity = 0;
+            _transportTimer.Stop();
+        }
     }
 
     protected override void OnClosed(EventArgs e)
