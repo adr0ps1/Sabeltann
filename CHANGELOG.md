@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.19](https://github.com/adr0ps1/Sabeltann/compare/v0.1.18...v0.1.19) (2026-06-20)
+
+
+### Bug Fixes
+
+* Trigger workflows ([#38](https://github.com/adr0ps1/Sabeltann/issues/38)) ([984a5e7](https://github.com/adr0ps1/Sabeltann/commit/984a5e79c27e7aa247afc4d63ab948eb66e13507))
+
 ## [0.1.18](https://github.com/adr0ps1/Sabeltann/compare/v0.1.17...v0.1.18) (2026-06-20)
 
 
