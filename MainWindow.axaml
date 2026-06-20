@@ -1,7 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Sabeltann.ViewModels"
-        xmlns:ctrl="using:Sabeltann.Controls"
         xmlns:views="using:Sabeltann.Views"
         x:Name="ThisWindow"
         xmlns:c="using:Sabeltann.Converters"
@@ -21,9 +20,10 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Width" Value="34"/>
-            <Setter Property="Height" Value="34"/>
-            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Margin" Value="1"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
             <Style Selector="^:pointerover">
                 <Setter Property="Background" Value="#ffffff15"/>
             </Style>
@@ -71,6 +71,13 @@
                     <MenuItem Header="E_xit" Click="OnExit"/>
                 </MenuItem>
             </Menu>
+            <Border Grid.Column="2" IsVisible="{Binding ShowConnectionOverlay}"
+                    VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,8,0">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="{Binding ConnectionState}" Foreground="#a6e3a1" FontSize="11"/>
+                    <TextBlock Text="{Binding ConnectionProgress, StringFormat='{}{0}%'}" Foreground="#6c7086" FontSize="11"/>
+                </StackPanel>
+            </Border>
         </Grid>
 
         <Border x:Name="CategoryBar" Grid.Row="1" Padding="10,7" Background="#313244"
@@ -188,8 +195,8 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <Border Background="#11111b" IsVisible="{Binding ShowVideo}">
-                    <ctrl:VideoView x:Name="VideoView"/>
+                <Border x:Name="VideoBorder" Background="#11111b" IsVisible="{Binding ShowVideo}" ZIndex="1">
+                    <Image x:Name="VideoImage" Source="{Binding VideoBitmap}" Stretch="Uniform" />
                 </Border>
 
                 <Button Background="#44000000" BorderThickness="0" CornerRadius="8"
@@ -210,164 +217,151 @@
                     <views:SeriesBrowser DataContext="{Binding SeriesBrowser}"/>
                 </Border>
 
-                <Border IsVisible="{Binding ShowConnectionOverlay}"
-                        Background="#cc11111b" CornerRadius="12" Padding="28"
-                        HorizontalAlignment="Center" VerticalAlignment="Center"
-                        MinWidth="280">
-                    <StackPanel Spacing="12" HorizontalAlignment="Center">
-                        <TextBlock Text="{Binding ConnectionState}" Foreground="#cdd6f4"
-                                   FontSize="14" HorizontalAlignment="Center"
-                                   TextWrapping="Wrap" TextAlignment="Center"/>
-                        <ProgressBar Value="{Binding ConnectionProgress}" Maximum="100"
-                                     MinWidth="200" Height="4" Foreground="#cba6f7"
-                                     Background="#313244" IsIndeterminate="False"
-                                     HorizontalAlignment="Center"/>
-                        <TextBlock Text="{Binding ConnectionProgress, StringFormat='{}{0}%'}"
-                                   Foreground="#6c7086" FontSize="11"
+                <!-- Pause overlay -->
+                <Border x:Name="PauseOverlay" IsVisible="{Binding IsPaused}" ZIndex="10"
+                        Background="#8811111b" CornerRadius="0" Padding="0">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16">
+                        <TextBlock Text="⏸" Foreground="#cdd6f4" FontSize="48"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="Paused" Foreground="#a6adc8" FontSize="18"
                                    HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
 
-                <Panel x:Name="OverlayPanel" Background="Transparent"
-                       IsVisible="{Binding IsPlaying}" Opacity="0"
-                       PointerEntered="OnOverlayEntered"
-                       PointerExited="OnOverlayExited">
-                    <Border Background="#cc000000" CornerRadius="16" Padding="8"
-                            HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Spacing="16">
-                            <Button Width="42" Height="42" FontSize="18"
-                                    Command="{Binding RewindCommand}"
-                                    Background="Transparent" BorderThickness="0"
-                                    CornerRadius="21">
-                                <TextBlock Text="⏪" Foreground="#cdd6f4" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                            </Button>
-                            <Button Width="52" Height="52" FontSize="24"
-                                    Command="{Binding TogglePlayPauseCommand}"
-                                    Background="#cba6f7" BorderThickness="0" CornerRadius="26">
-                                <TextBlock Text="{Binding PlayPauseSymbol}" Foreground="#1e1e2e"
-                                           VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                            </Button>
-                            <Button Width="42" Height="42" FontSize="18"
-                                    Command="{Binding ForwardCommand}"
-                                    Background="Transparent" BorderThickness="0"
-                                    CornerRadius="21">
-                                <TextBlock Text="⏩" Foreground="#cdd6f4" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                            </Button>
-                        </StackPanel>
+                <!-- Transport bar (bottom overlay) -->
+                <Border x:Name="TransportBar" IsVisible="{Binding ShowVideo}" Opacity="0"
+                        Background="#cc000000" Padding="8,6"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Bottom" ZIndex="10"
+                        PointerEntered="OnTransportEntered"
+                        PointerExited="OnTransportExited">
+                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto" VerticalAlignment="Center">
+
+                        <!-- Play/Pause -->
+                        <Button Grid.Column="0" Classes="TransportBtn" Focusable="False"
+                                Command="{Binding TogglePlayPauseCommand}">
+                            <TextBlock Text="{Binding PlayPauseSymbol}" Foreground="#cdd6f4" FontSize="18"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
+
+                        <!-- Stop -->
+                        <Button Grid.Column="1" Classes="TransportBtn" Focusable="False"
+                                Command="{Binding StopCommand}">
+                            <TextBlock Text="⏹" Foreground="#f38ba8" FontSize="15"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
+
+                        <!-- Rewind -->
+                        <Button Grid.Column="2" Classes="TransportBtn" Focusable="False"
+                                Command="{Binding RewindCommand}"
+                                ToolTip.Tip="Rewind 10s">
+                            <TextBlock Text="⏪" Foreground="#a6adc8" FontSize="15"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
+
+                        <!-- Forward -->
+                        <Button Grid.Column="3" Classes="TransportBtn" Focusable="False"
+                                Command="{Binding ForwardCommand}"
+                                ToolTip.Tip="Forward 10s">
+                            <TextBlock Text="⏩" Foreground="#a6adc8" FontSize="15"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
+
+                        <!-- Progress bar + time -->
+                        <Grid Grid.Column="4" ColumnDefinitions="*,Auto" VerticalAlignment="Center" Margin="0,0,8,0">
+                            <Slider Grid.Column="0" Minimum="0" Maximum="1"
+                                    Value="{Binding VodPositionPercent}"
+                                    VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                       Foreground="#a6adc8" FontSize="11">
+                                <Run Text="{Binding PositionText}"/><Run Text=" / "/><Run Text="{Binding DurationText}"/>
+                            </TextBlock>
+                        </Grid>
+
+                        <!-- Volume button -->
+                        <Button Grid.Column="5" x:Name="VolumeBtn" Classes="TransportBtn" Focusable="False"
+                                Command="{Binding ToggleMuteCommand}"
+                                ToolTip.Tip="Volume"
+                                PointerEntered="OnVolumeBtnEntered"
+                                PointerExited="OnVolumeBtnExited">
+                            <TextBlock Text="{Binding IsMuted, Converter={x:Static vm:MainViewModel.MuteIcon}}"
+                                       Foreground="#a6adc8" FontSize="16"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Button>
+
+                        <!-- Subtitles -->
+                        <Button Grid.Column="6" Classes="TransportBtn" Focusable="False"
+                                ToolTip.Tip="Subtitles"
+                                Click="OnCcClick">
+                            <TextBlock Text="CC" Foreground="#89b4fa" FontSize="13" FontWeight="Bold"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
+
+                        <!-- Fullscreen -->
+                        <Button Grid.Column="7" Classes="TransportBtn" Focusable="False"
+                                Command="{Binding FullscreenCommand}"
+                                ToolTip.Tip="Fullscreen (F)">
+                            <TextBlock Text="⛶" Foreground="#89b4fa" FontSize="18"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Volume slider popup (outside grid, uses popup layer) -->
+                <Popup x:Name="VolumePopup" IsLightDismissEnabled="True"
+                       PlacementTarget="{Binding ElementName=VolumeBtn}"
+                       Placement="Top" MinWidth="30" MinHeight="100"
+                       HorizontalOffset="0" VerticalOffset="-4">
+                    <Border Background="#cc000000" CornerRadius="6" Padding="6" MinWidth="30" MinHeight="100">
+                        <Slider Orientation="Vertical" Minimum="0" Maximum="200"
+                                Value="{Binding Volume}" MinWidth="20"
+                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
-                </Panel>
+                </Popup>
+
             </Grid>
         </Grid>
 
-        <Popup x:Name="TransportPopup" IsLightDismissEnabled="False"
-               OverlayDismissEventPassThrough="True" MinWidth="1200"
-               HorizontalOffset="0" VerticalOffset="-60">
-            <Border Padding="8,5" Background="#cc000000" CornerRadius="8" MinWidth="600">
-                <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto" VerticalAlignment="Center">
-
-                    <Button Grid.Column="0" Classes="TransportBtn"
-                            Command="{Binding TogglePlayPauseCommand}">
-                        <TextBlock Text="{Binding PlayPauseSymbol}" Foreground="#cdd6f4" FontSize="12"/>
-                    </Button>
-
-                    <Button Grid.Column="1" Classes="TransportBtn"
-                            Command="{Binding StopCommand}">
-                        <TextBlock Text="⏹" Foreground="#f38ba8" FontSize="11"/>
-                    </Button>
-
-                    <Button Grid.Column="2" Classes="TransportBtn"
-                            Command="{Binding RewindCommand}"
-                            ToolTip.Tip="Rewind 10s">
-                        <TextBlock Text="⏪" Foreground="#a6adc8" FontSize="11"/>
-                    </Button>
-
-                    <Button Grid.Column="3" Classes="TransportBtn"
-                            Command="{Binding ForwardCommand}"
-                            ToolTip.Tip="Forward 10s">
-                        <TextBlock Text="⏩" Foreground="#a6adc8" FontSize="11"/>
-                    </Button>
-
-                    <Slider Grid.Column="4" Minimum="0" Maximum="200"
-                            Value="{Binding Volume}" Margin="12,0"
-                            VerticalAlignment="Center"/>
-
-                    <TextBlock Grid.Column="5" Text="{Binding Volume}"
-                               VerticalAlignment="Center" Margin="2,0" Width="24"
-                               Foreground="#a6adc8" FontSize="11"
-                               HorizontalAlignment="Center"/>
-
-                    <Button Grid.Column="6" Classes="TransportBtn"
-                            Command="{Binding ToggleMuteCommand}"
-                            ToolTip.Tip="Mute">
-                        <TextBlock Text="{Binding IsMuted, Converter={x:Static vm:MainViewModel.MuteIcon}}"
-                                   Foreground="#a6adc8" FontSize="11"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Button>
-
-                    <Button Grid.Column="7" Classes="TransportBtn"
-                            ToolTip.Tip="Subtitles"
-                            Click="OnCcClick">
-                        <TextBlock Text="CC" Foreground="#89b4fa" FontSize="10" FontWeight="Bold"/>
-                    </Button>
-
-                    <Button Grid.Column="8" Classes="TransportBtn"
-                            Command="{Binding FullscreenCommand}"
-                            ToolTip.Tip="Fullscreen (F)">
-                        <TextBlock Text="⛶" Foreground="#89b4fa" FontSize="13"/>
-                    </Button>
-                </Grid>
-            </Border>
-        </Popup>
+        <Border x:Name="DebugAnchor" Width="0" Height="0"
+                HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                Margin="0,0,8,0"/>
 
         <Popup x:Name="DebugPopup" IsLightDismissEnabled="False"
                OverlayDismissEventPassThrough="True"
-               HorizontalOffset="8" VerticalOffset="8">
-            <Border Background="#cc11111b" CornerRadius="8" Padding="10" MinWidth="260">
+               PlacementTarget="{Binding ElementName=DebugAnchor}"
+               Placement="TopEdgeAlignedRight"
+               HorizontalOffset="0" VerticalOffset="0" MinWidth="200">
+            <Border Background="#cc11111b" CornerRadius="8" Padding="10" MinWidth="220">
                 <StackPanel Spacing="3" DataContext="{Binding DebugStats}">
-                    <TextBlock Text="Debug Stats" Foreground="#cba6f7" FontSize="13" FontWeight="Bold" Margin="0,0,0,4"/>
-                    <Grid ColumnDefinitions="120,*">
+                    <TextBlock Text="Debug Info" Foreground="#cba6f7" FontSize="13" FontWeight="Bold" Margin="0,0,0,4"/>
+                    <Grid ColumnDefinitions="80,*">
                         <TextBlock Grid.Column="0" Text="State" Foreground="#6c7086" FontSize="11"/>
                         <TextBlock Grid.Column="1" Text="{Binding State}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
                     </Grid>
-                    <Grid ColumnDefinitions="120,*">
-                        <TextBlock Grid.Column="0" Text="Connection" Foreground="#6c7086" FontSize="11"/>
-                        <TextBlock Grid.Column="1" Text="{Binding ConnectionUrl}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"/>
+                    <Grid ColumnDefinitions="80,*">
+                        <TextBlock Grid.Column="0" Text="Resolution" Foreground="#6c7086" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Resolution}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
                     </Grid>
-                    <Grid ColumnDefinitions="120,*">
-                        <TextBlock Grid.Column="0" Text="Input Bitrate" Foreground="#6c7086" FontSize="11"/>
-                        <TextBlock Grid.Column="1" Text="{Binding InputBitrate}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                    <Grid ColumnDefinitions="80,*">
+                        <TextBlock Grid.Column="0" Text="Frames" Foreground="#6c7086" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Frames}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
                     </Grid>
-                    <Grid ColumnDefinitions="120,*">
-                        <TextBlock Grid.Column="0" Text="Demux Bitrate" Foreground="#6c7086" FontSize="11"/>
-                        <TextBlock Grid.Column="1" Text="{Binding DemuxBitrate}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                    <Grid ColumnDefinitions="80,*">
+                        <TextBlock Grid.Column="0" Text="Position" Foreground="#6c7086" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Position}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
                     </Grid>
-                    <Grid ColumnDefinitions="120,*">
-                        <TextBlock Grid.Column="0" Text="Send Bitrate" Foreground="#6c7086" FontSize="11"/>
-                        <TextBlock Grid.Column="1" Text="{Binding SendBitrate}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                    <Grid ColumnDefinitions="80,*">
+                        <TextBlock Grid.Column="0" Text="Duration" Foreground="#6c7086" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Duration}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
                     </Grid>
-                    <Grid ColumnDefinitions="120,*">
-                        <TextBlock Grid.Column="0" Text="Sent Packets" Foreground="#6c7086" FontSize="11"/>
-                        <TextBlock Grid.Column="1" Text="{Binding SentPackets}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                    <Grid ColumnDefinitions="80,*">
+                        <TextBlock Grid.Column="0" Text="Volume" Foreground="#6c7086" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Volume}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
                     </Grid>
-                    <Grid ColumnDefinitions="120,*">
-                        <TextBlock Grid.Column="0" Text="Displayed" Foreground="#6c7086" FontSize="11"/>
-                        <TextBlock Grid.Column="1" Text="{Binding DisplayedPictures}" Foreground="#a6e3a1" FontSize="11" HorizontalAlignment="Right"/>
-                    </Grid>
-                    <Grid ColumnDefinitions="120,*">
-                        <TextBlock Grid.Column="0" Text="Lost Pictures" Foreground="#6c7086" FontSize="11"/>
-                        <TextBlock Grid.Column="1" Text="{Binding LostPictures}" Foreground="#f38ba8" FontSize="11" HorizontalAlignment="Right"/>
-                    </Grid>
-                    <Grid ColumnDefinitions="120,*">
-                        <TextBlock Grid.Column="0" Text="Corrupted" Foreground="#6c7086" FontSize="11"/>
-                        <TextBlock Grid.Column="1" Text="{Binding DemuxCorrupted}" Foreground="#f9e2af" FontSize="11" HorizontalAlignment="Right"/>
-                    </Grid>
-                    <Grid ColumnDefinitions="120,*">
-                        <TextBlock Grid.Column="0" Text="Discontinuity" Foreground="#6c7086" FontSize="11"/>
-                        <TextBlock Grid.Column="1" Text="{Binding DemuxDiscontinuity}" Foreground="#f9e2af" FontSize="11" HorizontalAlignment="Right"/>
-                    </Grid>
-                    <Grid ColumnDefinitions="120,*">
-                        <TextBlock Grid.Column="0" Text="Data Read" Foreground="#6c7086" FontSize="11"/>
-                        <TextBlock Grid.Column="1" Text="{Binding ReadBytes}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                    <Grid ColumnDefinitions="80,*">
+                        <TextBlock Grid.Column="0" Text="URL" Foreground="#6c7086" FontSize="11" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" Text="{Binding ConnectionUrl}" Foreground="#cdd6f4" FontSize="11"
+                                   HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"
+                                   ToolTip.Tip="{Binding ConnectionUrl}" MaxWidth="120"/>
                     </Grid>
                 </StackPanel>
             </Border>

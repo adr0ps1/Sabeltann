@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sabeltann.Models;
@@ -44,6 +46,7 @@ public partial class MainViewModel : ObservableObject
     private readonly XtreamService _xtream = new();
     private readonly SettingsService _settings = new();
     private readonly ChannelCacheService _cache = new();
+    private DispatcherTimer? _positionTimer;
     private PlaybackService? _player;
     private List<ChannelListItemViewModel> _allChannels = [];
     private List<ChannelListItemViewModel> _liveChannels = [];
@@ -175,6 +178,7 @@ public partial class MainViewModel : ObservableObject
         try
         {
             _currentPlayingUrl = url;
+            _vodPausePosition = TimeSpan.Zero;
             LogService.Info("Playing VOD", new { url });
             ShowConnectionOverlay = true;
             ConnectionState = "Connecting...";
@@ -201,6 +205,39 @@ public partial class MainViewModel : ObservableObject
     private bool _isMuted;
 
     [ObservableProperty]
+    private double _vodPosition;
+
+    [ObservableProperty]
+    private double _vodDuration = 1;
+
+    public double VodPositionPercent
+    {
+        get => VodDuration > 0 ? Math.Clamp(VodPosition / VodDuration, 0, 1) : 0;
+        set
+        {
+            var pos = value * VodDuration;
+            _player?.SetPositionPercent((float)value);
+            VodPosition = pos;
+        }
+    }
+
+    public string PositionText => FormatTime(VodPosition);
+    public string DurationText => FormatTime(VodDuration);
+
+    private static string FormatTime(double ms)
+    {
+        if (ms <= 0) return "--:--";
+        var t = TimeSpan.FromMilliseconds(ms);
+        return t.TotalHours >= 1 ? $"{t.Hours:D2}:{t.Minutes:D2}:{t.Seconds:D2}" : $"{t.Minutes:D2}:{t.Seconds:D2}";
+    }
+
+    [RelayCommand]
+    private void Seek(double percent)
+    {
+        VodPositionPercent = percent;
+    }
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PlayPauseSymbol))]
     [NotifyPropertyChangedFor(nameof(ShowOverlay))]
     [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
@@ -209,6 +246,7 @@ public partial class MainViewModel : ObservableObject
 
     public string PlayPauseSymbol => IsPlaying ? "⏸" : "⏵";
     public bool ShowOverlay => IsPlaying;
+
     public bool ShowVideo => IsPlaying || IsPaused;
 
     [ObservableProperty]
@@ -275,11 +313,14 @@ public partial class MainViewModel : ObservableObject
     private XtreamConnectionInfo? _pendingXtreamInfo;
     private M3UPlaylist? _pendingPlaylist;
     private string? _currentPlayingUrl;
+    private TimeSpan _vodPausePosition;
 
     public event Action? ToggleFullscreenRequested;
 
     [ObservableProperty]
     private bool _showDebugOverlay;
+
+    public WriteableBitmap? VideoBitmap => _player?.VideoBitmap;
 
     public DebugStatsViewModel DebugStats { get; }
 
@@ -288,20 +329,13 @@ public partial class MainViewModel : ObservableObject
         _player = player;
         _player.Error += (_, msg) =>
         {
+            LogService.Info("VLC Error event fired", new { msg, isPlaying = IsPlaying, isPaused = IsPaused });
             StatusText = $"Playback error: {msg}";
             ConnectionState = msg;
             ConnectionProgress = 0;
             IsPlaying = false;
             IsPaused = false;
             ShowConnectionOverlay = false;
-        };
-        _player.Buffering += (_, pct) =>
-        {
-            ConnectionProgress = pct;
-            if (pct < 100)
-                ConnectionState = $"Buffering... {pct}%";
-            else
-                ConnectionState = "Starting playback...";
         };
         _player.PlayingStarted += (_, _) =>
         {
@@ -315,7 +349,29 @@ public partial class MainViewModel : ObservableObject
             ShowConnectionOverlay = false;
             ConnectionProgress = 0;
         };
-        DebugStats.SetPlayer(player);
+        _positionTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _positionTimer.Tick += (_, _) =>
+        {
+            if (_player is not null && (IsPlaying || IsPaused))
+            {
+                var len = _player.Length;
+                if (len > 0) VodDuration = len;
+                VodPosition = _player.TimeMs;
+            }
+
+            if (_player?.VideoBitmap is not null)
+            {
+                OnPropertyChanged(nameof(VideoBitmap));
+            }
+        };
+        _positionTimer.Start();
+
+        player.PlayingStarted += (_, _) =>
+        {
+            var len = _player.Length;
+            if (len > 0) VodDuration = len;
+        };
+        DebugStats.SetPlayer(player, this);
     }
 
     public MainViewModel()
@@ -391,6 +447,8 @@ public partial class MainViewModel : ObservableObject
             {
                 IsBrowsing = false;
                 _currentPlayingUrl = value.Url;
+                _vodPausePosition = TimeSpan.Zero;
+                _player.SetVolume(Volume);
                 LogService.Info("Playing channel", new { name = value.Name, url = value.Url });
                 ShowConnectionOverlay = true;
                 ConnectionState = "Connecting...";
@@ -605,6 +663,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void GoBackToPicker()
     {
+        LogService.Info("GoBackToPicker called", new { mode = Mode.ToString(), isPlaying = IsPlaying, isPaused = IsPaused });
         Mode = ContentMode.Picker;
         IsBrowsing = false;
         FilteredChannels.Clear();
@@ -619,10 +678,13 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void StopPlayback()
     {
+        LogService.Info("StopPlayback called", new { mode = Mode.ToString(), isPlaying = IsPlaying, isPaused = IsPaused });
         _player?.Stop();
         IsPlaying = false;
         IsPaused = false;
         SelectedChannel = null;
+        VodPosition = 0;
+        VodDuration = 1;
 
         if (Mode == ContentMode.LiveTv)
         {
@@ -678,10 +740,23 @@ public partial class MainViewModel : ObservableObject
         if (_player is null) return;
         try
         {
-            _player.Pause();
-            IsPlaying = _player.IsPlaying;
-            IsPaused = !IsPlaying;
-            StatusText = IsPlaying ? "Playing" : "Paused";
+            LogService.Info("TogglePlayPause entered", new { mode = Mode.ToString(), isPlaying = IsPlaying, isPaused = IsPaused });
+            if (IsPlaying)
+            {
+                LogService.Info("TogglePlayPause: pause");
+                _player.SetPause(true);
+                IsPaused = true;
+                IsPlaying = false;
+                StatusText = "Paused";
+            }
+            else if (IsPaused)
+            {
+                LogService.Info("TogglePlayPause: resume");
+                _player.SetPause(false);
+                IsPlaying = true;
+                IsPaused = false;
+                StatusText = "Playing";
+            }
         }
         catch (Exception ex)
         {
@@ -735,9 +810,14 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void Stop()
     {
+        LogService.Info("Stop command called", new { isPlaying = IsPlaying, isPaused = IsPaused });
         _player?.Stop();
+        _player?.SetVolume(Volume);
+        _vodPausePosition = TimeSpan.Zero;
         IsPlaying = false;
         IsPaused = false;
+        VodPosition = 0;
+        VodDuration = 1;
         StatusText = "Stopped";
     }
 

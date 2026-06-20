@@ -51,3 +51,7 @@ Debug builds produce `SabeltannDevelopment.exe` so they don't conflict with a ru
 - No nullable warnings — project has `<Nullable>enable</Nullable>`
 - File-scoped namespaces (`namespace Sabeltann;`)
 - `favorites.json` and `settings.json` stored in `%LocalAppData%\Sabeltann\`
+
+## Testing
+
+After changes, output a numbered list of what to test manually. Only include changes made between the last run and the next start — do not list pre-existing behavior.

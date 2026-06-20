@@ -67,3 +67,7 @@ Sabeltann is a Windows IPTV player built on Avalonia 12 + LibVLCSharp. It follow
 - File-scoped namespaces (`namespace Sabeltann;`).
 - Nullable reference types enabled — avoid `!` suppression unless reasoning is obvious.
 - `MainViewModel` is the single source of truth for all UI state. Views communicate back via events (e.g. `ConnectionPage.LoadM3UUrlRequested`) wired in `MainWindow`'s constructor, not via bindings to code-behind state.
+
+## Testing
+
+After any changes, output a numbered list of what to test manually. Only include changes made between the last run and the next start — do not list pre-existing behavior.

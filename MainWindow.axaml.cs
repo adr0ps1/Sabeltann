@@ -7,7 +7,6 @@ using Avalonia.Threading;
 using Sabeltann.Models;
 using Sabeltann.Services;
 using Sabeltann.ViewModels;
-using System.Runtime.InteropServices;
 
 namespace Sabeltann;
 
@@ -16,20 +15,9 @@ public partial class MainWindow : Window
     private readonly MainViewModel _vm;
     private readonly PlaybackService _player;
     private readonly UpdateService _updates = new();
-    private readonly DispatcherTimer _transportTimer;
-    private readonly DispatcherTimer _mousePollTimer;
-    private int _lastMouseX, _lastMouseY;
+    private readonly DispatcherTimer _transportAutoHide;
     private bool _isFullscreen;
     private bool _updateRestartPending;
-
-    [DllImport("user32.dll")]
-    private static extern bool GetCursorPos(out POINT lpPoint);
-
-    [DllImport("user32.dll")]
-    private static extern bool ScreenToClient(IntPtr hWnd, ref POINT lpPoint);
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct POINT { public int X; public int Y; }
 
     public MainWindow()
     {
@@ -38,73 +26,29 @@ public partial class MainWindow : Window
         _player = new PlaybackService();
         _vm = new MainViewModel();
         _vm.SetPlayer(_player);
+        _player.FrameRendered += () => VideoImage?.InvalidateVisual();
         _vm.ToggleFullscreenRequested += ToggleFullscreen;
         DataContext = _vm;
 
-        if (_player?.Player is not null)
-            VideoView.Attach(_player.Player);
-        else
-            LogService.Warn("VLC player not available");
-        VideoView.MouseActivity += ShowTransport;
         KeyDown += OnKeyDown;
 
-        void ShowTransport()
-        {
-            if (_vm.IsPlaying || _vm.IsPaused)
-            {
-                TransportPopup.IsOpen = true;
-                _transportTimer.Stop();
-                _transportTimer.Start();
-            }
-        }
+        _transportAutoHide = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+        _transportAutoHide.Tick += (_, _) => { TransportBar.Opacity = 0; _transportAutoHide.Stop(); };
 
-        _transportTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
-        _transportTimer.Tick += (_, _) => { TransportPopup.IsOpen = false; _transportTimer.Stop(); };
-
-        _mousePollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
-        _mousePollTimer.Tick += (_, _) =>
-        {
-            if (OperatingSystem.IsWindows() && TryGetPlatformHandle()?.Handle is IntPtr hwnd && hwnd != IntPtr.Zero)
-            {
-                GetCursorPos(out var pt);
-                ScreenToClient(hwnd, ref pt);
-                if (pt.X != _lastMouseX || pt.Y != _lastMouseY)
-                {
-                    _lastMouseX = pt.X;
-                    _lastMouseY = pt.Y;
-                    ShowTransport();
-                }
-            }
-        };
-
-        PointerMoved += (_, _) => ShowTransport();
-
-        _mousePollTimer.Start();
+        VideoBorder.PointerMoved += (_, _) => ShowTransport();
 
         LoadPirateIcon();
         _vm.LoadLastSession();
-
-        TransportPopup.PlacementTarget = VideoView;
 
         _vm.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(MainViewModel.IsPlaying) or nameof(MainViewModel.IsPaused))
             {
                 if (_vm.IsPlaying || _vm.IsPaused)
-                {
-                    TransportPopup.IsOpen = true;
-                    _transportTimer.Stop();
-                    _transportTimer.Start();
-                }
+                    ShowTransport();
                 else
-                {
-                    TransportPopup.IsOpen = false;
-                    OverlayPanel.Opacity = 0;
-                }
+                    TransportBar.Opacity = 0;
             }
-
-            if (e.PropertyName == nameof(MainViewModel.IsPaused) && !_vm.IsPlaying && !_vm.IsPaused && _isFullscreen)
-                ToggleFullscreen();
         };
 
         Opened += (_, _) =>
@@ -150,7 +94,16 @@ public partial class MainWindow : Window
             await _vm.ShowPlaylistContentAsync();
             await _vm.ShowSeriesBrowserAsync();
         };
+    }
 
+    private void ShowTransport()
+    {
+        if (_vm.IsPlaying || _vm.IsPaused)
+        {
+            TransportBar.Opacity = 1;
+            _transportAutoHide.Stop();
+            _transportAutoHide.Start();
+        }
     }
 
     private void LoadPirateIcon()
@@ -186,13 +139,10 @@ public partial class MainWindow : Window
             MainGrid.RowDefinitions[1].Height = GridLength.Auto;
             MainGrid.RowDefinitions[3].Height = new GridLength(28);
         }
-
-        TransportPopup.PlacementTarget = VideoView;
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        // ESC during playback: stop and return to browsing with categories
         if (e.Key == Key.Escape && (_vm.IsPlaying || _vm.IsPaused))
         {
             _vm.StopPlaybackCommand.Execute(null);
@@ -226,25 +176,44 @@ public partial class MainWindow : Window
         }
         else if (e.Key == Key.Space && e.Source is not TextBox)
         {
+            LogService.Info("Space pressed", new { mode = _vm.Mode.ToString(), isPlaying = _vm.IsPlaying, isPaused = _vm.IsPaused });
             _vm.TogglePlayPauseCommand.Execute(null);
             e.Handled = true;
         }
         else if (e.Key == Key.D && e.Source is not TextBox)
         {
             _vm.ShowDebugOverlay = !_vm.ShowDebugOverlay;
-                DebugPopup.IsOpen = _vm.ShowDebugOverlay;
+            DebugPopup.IsOpen = _vm.ShowDebugOverlay;
             e.Handled = true;
         }
     }
 
-    private void OnOverlayEntered(object? sender, PointerEventArgs e)
+    private void OnTransportEntered(object? sender, PointerEventArgs e)
     {
-        OverlayPanel.Opacity = 1;
+        TransportBar.Opacity = 1;
+        _transportAutoHide.Stop();
     }
 
-    private void OnOverlayExited(object? sender, PointerEventArgs e)
+    private void OnTransportExited(object? sender, PointerEventArgs e)
     {
-        OverlayPanel.Opacity = 0;
+        _transportAutoHide.Stop();
+        _transportAutoHide.Start();
+    }
+
+    private void OnVolumeClick(object? sender, RoutedEventArgs e)
+    {
+        _vm.ToggleMuteCommand.Execute(null);
+        VolumePopup.IsOpen = !VolumePopup.IsOpen;
+    }
+
+    private void OnVolumeBtnEntered(object? sender, PointerEventArgs e)
+    {
+        VolumePopup.IsOpen = true;
+    }
+
+    private void OnVolumeBtnExited(object? sender, PointerEventArgs e)
+    {
+        VolumePopup.IsOpen = false;
     }
 
     private async void OnLoadM3UUrl(object? sender, RoutedEventArgs e)
@@ -319,16 +288,14 @@ public partial class MainWindow : Window
         base.OnPropertyChanged(change);
         if (change.Property == WindowStateProperty && WindowState == WindowState.Minimized)
         {
-            TransportPopup.IsOpen = false;
-            OverlayPanel.Opacity = 0;
-            _transportTimer.Stop();
+            TransportBar.Opacity = 0;
+            _transportAutoHide.Stop();
         }
     }
 
     protected override void OnClosed(EventArgs e)
     {
         _vm.DebugStats.Stop();
-        VideoView.Detach();
         _player.Dispose();
         ImageService.Shutdown();
         if (!_updateRestartPending)
@@ -336,4 +303,3 @@ public partial class MainWindow : Window
         base.OnClosed(e);
     }
 }
-
