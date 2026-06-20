@@ -1,3 +1,4 @@
+using Avalonia.Threading;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Sabeltann.Services;
@@ -7,78 +8,69 @@ namespace Sabeltann.ViewModels;
 public class DebugStatsViewModel : INotifyPropertyChanged
 {
     private PlaybackService? _player;
-    private readonly Timer _timer;
+    private MainViewModel? _mainVm;
+    private readonly DispatcherTimer _timer;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
     private string _connectionUrl = "-";
     public string ConnectionUrl { get => _connectionUrl; set => SetField(ref _connectionUrl, value); }
 
-    private string _inputBitrate = "-";
-    public string InputBitrate { get => _inputBitrate; set => SetField(ref _inputBitrate, value); }
-
-    private string _demuxBitrate = "-";
-    public string DemuxBitrate { get => _demuxBitrate; set => SetField(ref _demuxBitrate, value); }
-
-    private string _sendBitrate = "-";
-    public string SendBitrate { get => _sendBitrate; set => SetField(ref _sendBitrate, value); }
-
-    private string _sentPackets = "-";
-    public string SentPackets { get => _sentPackets; set => SetField(ref _sentPackets, value); }
-
-    private string _displayedPictures = "-";
-    public string DisplayedPictures { get => _displayedPictures; set => SetField(ref _displayedPictures, value); }
-
-    private string _lostPictures = "-";
-    public string LostPictures { get => _lostPictures; set => SetField(ref _lostPictures, value); }
-
-    private string _demuxCorrupted = "-";
-    public string DemuxCorrupted { get => _demuxCorrupted; set => SetField(ref _demuxCorrupted, value); }
-
-    private string _demuxDiscontinuity = "-";
-    public string DemuxDiscontinuity { get => _demuxDiscontinuity; set => SetField(ref _demuxDiscontinuity, value); }
-
-    private string _readBytes = "-";
-    public string ReadBytes { get => _readBytes; set => SetField(ref _readBytes, value); }
-
     private string _state = "Idle";
     public string State { get => _state; set => SetField(ref _state, value); }
+
+    private string _resolution = "-";
+    public string Resolution { get => _resolution; set => SetField(ref _resolution, value); }
+
+    private string _frames = "-";
+    public string Frames { get => _frames; set => SetField(ref _frames, value); }
+
+    private string _position = "-";
+    public string Position { get => _position; set => SetField(ref _position, value); }
+
+    private string _duration = "-";
+    public string Duration { get => _duration; set => SetField(ref _duration, value); }
+
+    private int _volume;
+    public int Volume { get => _volume; set => SetField(ref _volume, value); }
 
     public DebugStatsViewModel(PlaybackService? player)
     {
         _player = player;
-        _timer = new Timer(Refresh, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+        _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _timer.Tick += (_, _) => Refresh();
+        _timer.Start();
     }
 
-    public void SetPlayer(PlaybackService? player)
+    public void SetPlayer(PlaybackService? player, MainViewModel? mainVm = null)
     {
         _player = player;
+        _mainVm = mainVm;
     }
 
-    private void Refresh(object? _)
+    private void Refresh()
     {
         try
         {
-            var player = _player?.Player;
-            if (player is null) return;
-
-            var media = player.Media;
-            State = player.IsPlaying ? "Playing" : player.State.ToString();
-
-            if (media?.Statistics is { } stats)
-            {
-                InputBitrate = FormatBitrate(stats.InputBitrate);
-                DemuxBitrate = FormatBitrate(stats.DemuxBitrate);
-                SendBitrate = FormatBitrate(stats.SendBitrate);
-                SentPackets = stats.SentPackets.ToString("N0");
-                DisplayedPictures = stats.DisplayedPictures.ToString("N0");
-                LostPictures = stats.LostPictures.ToString("N0");
-                DemuxCorrupted = stats.DemuxCorrupted.ToString("N0");
-                DemuxDiscontinuity = stats.DemuxDiscontinuity.ToString("N0");
-                ReadBytes = FormatBytes(stats.ReadBytes);
-            }
+            if (_player is null) return;
+            State = _player.IsPlaying ? "Playing" : "Idle";
+            Resolution = _player.VideoWidth > 0 ? $"{_player.VideoWidth}x{_player.VideoHeight}" : "-";
+            Frames = $"{_player.FramesDecoded}";
+            Position = _player.TimeMs > 0 ? FormatTime(_player.TimeMs) : "-";
+            Duration = _player.Length > 0 ? FormatTime(_player.Length) : "??:??";
+            Volume = _mainVm?.Volume ?? 0;
         }
-        catch { }
+        catch (Exception ex)
+        {
+            LogService.Error("DebugStats refresh failed", new { ex.Message, ex.GetType().Name });
+        }
+    }
+
+    private static string FormatTime(double ms)
+    {
+        if (ms <= 0) return "--:--";
+        var t = TimeSpan.FromMilliseconds(ms);
+        return t.TotalHours >= 1 ? $"{t.Hours:D2}:{t.Minutes:D2}:{t.Seconds:D2}" : $"{t.Minutes:D2}:{t.Seconds:D2}";
     }
 
     public void SetUrl(string url)
@@ -88,16 +80,8 @@ public class DebugStatsViewModel : INotifyPropertyChanged
 
     public void Stop()
     {
-        _timer.Dispose();
+        _timer.Stop();
     }
-
-    private static string FormatBitrate(float? bits) =>
-        bits is null ? "-" : $"{bits / 1000.0:F1} kb/s";
-
-    private static string FormatBytes(int? bytes) =>
-        bytes is null ? "-" : bytes >= 1_000_000
-            ? $"{bytes / 1_000_000.0:F1} MB"
-            : $"{bytes / 1000.0:F1} KB";
 
     private void SetField<T>(ref T field, T value, [CallerMemberName] string? name = null)
     {
