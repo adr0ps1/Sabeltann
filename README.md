@@ -2,7 +2,7 @@
 
 <img src="Assets/pirate.svg" width="120" height="120" />
 
-# Sabeltann
+# Sabeltann!
 
 **IPTV player for Windows**
 
