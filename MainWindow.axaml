@@ -280,7 +280,7 @@
                         <!-- Volume button -->
                         <Button Grid.Column="5" x:Name="VolumeBtn" Classes="TransportBtn" Focusable="False"
                                 Command="{Binding ToggleMuteCommand}"
-                                ToolTip.Tip="Volume"
+                                ToolTip.Tip="Volume / click to mute (M)"
                                 PointerEntered="OnVolumeBtnEntered"
                                 PointerExited="OnVolumeBtnExited">
                             <TextBlock Text="{Binding IsMuted, Converter={x:Static vm:MainViewModel.MuteIcon}}"
@@ -309,12 +309,25 @@
                 <!-- Volume slider popup (outside grid, uses popup layer) -->
                 <Popup x:Name="VolumePopup" IsLightDismissEnabled="True"
                        PlacementTarget="{Binding ElementName=VolumeBtn}"
-                       Placement="Top" MinWidth="30" MinHeight="100"
-                       HorizontalOffset="0" VerticalOffset="-4">
-                    <Border Background="#cc000000" CornerRadius="6" Padding="6" MinWidth="30" MinHeight="100">
-                        <Slider Orientation="Vertical" Minimum="0" Maximum="200"
-                                Value="{Binding Volume}" MinWidth="20"
-                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                       Placement="Top" HorizontalOffset="-14" VerticalOffset="4">
+                    <Border Background="#cc000000" CornerRadius="6" Padding="12,10"
+                            PointerEntered="OnVolumePopupEntered"
+                            PointerExited="OnVolumePopupExited">
+                        <StackPanel Orientation="Vertical" Spacing="6">
+                            <TextBlock Text="{Binding Volume}" Foreground="#a6adc8" FontSize="11"
+                                       HorizontalAlignment="Center"/>
+                            <Grid ColumnDefinitions="26,36">
+                                <Canvas Grid.Column="0" Width="26" Height="170">
+                                    <TextBlock Canvas.Top="2"   Canvas.Left="0" Text="200" FontSize="9" Foreground="#6c7086"/>
+                                    <TextBlock Canvas.Top="43"  Canvas.Left="0" Text="150" FontSize="9" Foreground="#6c7086"/>
+                                    <TextBlock Canvas.Top="84"  Canvas.Left="0" Text="100" FontSize="9" Foreground="#6c7086"/>
+                                    <TextBlock Canvas.Top="125" Canvas.Left="0" Text="50"  FontSize="9" Foreground="#6c7086"/>
+                                    <TextBlock Canvas.Top="161" Canvas.Left="0" Text="0"   FontSize="9" Foreground="#6c7086"/>
+                                </Canvas>
+                                <Slider Grid.Column="1" Orientation="Vertical" Minimum="0" Maximum="200"
+                                        Value="{Binding Volume}" Height="170"/>
+                            </Grid>
+                        </StackPanel>
                     </Border>
                 </Popup>
 

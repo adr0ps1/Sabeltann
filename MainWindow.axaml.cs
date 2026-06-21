@@ -16,6 +16,7 @@ public partial class MainWindow : Window
     private readonly PlaybackService _player;
     private readonly UpdateService _updates = new();
     private readonly DispatcherTimer _transportAutoHide;
+    private readonly DispatcherTimer _volumeHideTimer;
     private bool _isFullscreen;
     private bool _updateRestartPending;
 
@@ -34,6 +35,19 @@ public partial class MainWindow : Window
 
         _transportAutoHide = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
         _transportAutoHide.Tick += (_, _) => { TransportBar.Opacity = 0; _transportAutoHide.Stop(); };
+
+        // Transport bar stays visible while hovered; starts countdown when mouse leaves
+        TransportBar.PointerEntered += (_, _) => _transportAutoHide.Stop();
+        TransportBar.PointerExited  += (_, _) => { _transportAutoHide.Stop(); _transportAutoHide.Start(); };
+
+        // Volume popup: 150ms delay bridges the button→popup gap without feeling slow
+        _volumeHideTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+        _volumeHideTimer.Tick += (_, _) => { VolumePopup.IsOpen = false; _volumeHideTimer.Stop(); };
+
+        // When popup opens it captures hits over the button (overlay layer),
+        // so button fires PointerExited and starts the hide timer.
+        // Cancel it immediately — the popup's own PointerEntered will keep it alive.
+        VolumePopup.Opened += (_, _) => { _volumeHideTimer.Stop(); _transportAutoHide.Stop(); };
 
         VideoBorder.PointerMoved += (_, _) => ShowTransport();
 
@@ -180,6 +194,11 @@ public partial class MainWindow : Window
             _vm.TogglePlayPauseCommand.Execute(null);
             e.Handled = true;
         }
+        else if (e.Key == Key.M && e.Source is not TextBox)
+        {
+            _vm.ToggleMuteCommand.Execute(null);
+            e.Handled = true;
+        }
         else if (e.Key == Key.D && e.Source is not TextBox)
         {
             _vm.ShowDebugOverlay = !_vm.ShowDebugOverlay;
@@ -200,20 +219,29 @@ public partial class MainWindow : Window
         _transportAutoHide.Start();
     }
 
-    private void OnVolumeClick(object? sender, RoutedEventArgs e)
-    {
-        _vm.ToggleMuteCommand.Execute(null);
-        VolumePopup.IsOpen = !VolumePopup.IsOpen;
-    }
-
     private void OnVolumeBtnEntered(object? sender, PointerEventArgs e)
     {
+        _volumeHideTimer.Stop();
+        _transportAutoHide.Stop();
         VolumePopup.IsOpen = true;
     }
 
     private void OnVolumeBtnExited(object? sender, PointerEventArgs e)
     {
-        VolumePopup.IsOpen = false;
+        _volumeHideTimer.Stop();
+        _volumeHideTimer.Start();
+    }
+
+    private void OnVolumePopupEntered(object? sender, PointerEventArgs e)
+    {
+        _volumeHideTimer.Stop();
+        _transportAutoHide.Stop();
+    }
+
+    private void OnVolumePopupExited(object? sender, PointerEventArgs e)
+    {
+        _volumeHideTimer.Stop();
+        _volumeHideTimer.Start();
     }
 
     private async void OnLoadM3UUrl(object? sender, RoutedEventArgs e)

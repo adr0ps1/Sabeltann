@@ -205,9 +205,13 @@ public partial class MainViewModel : ObservableObject
     private bool _isMuted;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(VodPositionPercent))]
+    [NotifyPropertyChangedFor(nameof(PositionText))]
     private double _vodPosition;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(VodPositionPercent))]
+    [NotifyPropertyChangedFor(nameof(DurationText))]
     private double _vodDuration = 1;
 
     public double VodPositionPercent
@@ -342,6 +346,13 @@ public partial class MainViewModel : ObservableObject
             ConnectionState = "";
             ShowConnectionOverlay = false;
             ConnectionProgress = 0;
+            var len = _player.Length;
+            if (len > 0) VodDuration = len;
+        };
+        _player.Buffering += (_, pct) =>
+        {
+            ConnectionProgress = pct;
+            ConnectionState = pct < 100 ? $"Buffering... {pct}%" : "Starting playback...";
         };
         _player.Stopped += (_, _) =>
         {
@@ -358,19 +369,10 @@ public partial class MainViewModel : ObservableObject
                 if (len > 0) VodDuration = len;
                 VodPosition = _player.TimeMs;
             }
-
             if (_player?.VideoBitmap is not null)
-            {
                 OnPropertyChanged(nameof(VideoBitmap));
-            }
         };
         _positionTimer.Start();
-
-        player.PlayingStarted += (_, _) =>
-        {
-            var len = _player.Length;
-            if (len > 0) VodDuration = len;
-        };
         DebugStats.SetPlayer(player, this);
     }
 
@@ -779,8 +781,10 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void ToggleMute()
     {
-        _player?.ToggleMute();
-        IsMuted = _player?.IsMuted ?? false;
+        if (_player is null) return;
+        var newMuted = !IsMuted;
+        _player.MuteAudio(newMuted);
+        IsMuted = newMuted;
     }
 
     [RelayCommand]
