@@ -126,6 +126,7 @@ public partial class VodBrowserViewModel : ObservableObject
     private List<VodMovieViewModel> _allXtreamMovies = [];
 
     public event Action<string>? PlayRequested;
+    public event Action<VodMovieViewModel>? DetailRequested;
 
     [ObservableProperty]
     private ObservableCollection<VodMovieViewModel> _movies = [];
@@ -346,7 +347,7 @@ public partial class VodBrowserViewModel : ObservableObject
     private void PlayMovie(VodMovieViewModel? movie)
     {
         if (movie is null) return;
-        PlayRequested?.Invoke(movie.Url);
+        DetailRequested?.Invoke(movie);
     }
 
     [RelayCommand]

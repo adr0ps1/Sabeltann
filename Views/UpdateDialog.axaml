@@ -1,0 +1,51 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Sabeltann.Views.UpdateDialog"
+        Title="Update Available"
+        Width="420" Height="300"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#1e1e2e"
+        Foreground="#cdd6f4">
+
+    <StackPanel Margin="24,20,24,20" Spacing="16">
+
+        <!-- Title -->
+        <TextBlock Text="Update Available" Foreground="#cdd6f4" FontSize="18" FontWeight="Bold"/>
+
+        <!-- Version line -->
+        <TextBlock Foreground="#a6adc8" FontSize="13">
+            <Run Text="{Binding CurrentVersion}"/>
+            <Run Text=" → " Foreground="#6c7086"/>
+            <Run Text="{Binding NewVersion}" Foreground="#a6e3a1" FontWeight="SemiBold"/>
+        </TextBlock>
+
+        <!-- Release notes (if available) -->
+        <StackPanel IsVisible="{Binding HasReleaseNotes}" Spacing="6">
+            <TextBlock Text="What's new:" Foreground="#6c7086" FontSize="11" FontWeight="SemiBold"/>
+            <Border Background="#313244" CornerRadius="6" Padding="10,8" MaxHeight="160">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <TextBlock Text="{Binding ReleaseNotes}" Foreground="#a6adc8" FontSize="12"
+                               TextWrapping="Wrap"/>
+                </ScrollViewer>
+            </Border>
+        </StackPanel>
+
+        <!-- Spacer -->
+        <Grid/>
+
+        <!-- Buttons -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Remind Later" Command="{Binding RemindLaterCommand}"
+                    Background="#313244" Foreground="#a6adc8"
+                    BorderThickness="0" CornerRadius="8" Padding="12,8"/>
+            <Button Content="Install on Exit" Command="{Binding InstallOnExitCommand}"
+                    Background="#313244" Foreground="#89b4fa"
+                    BorderThickness="0" CornerRadius="8" Padding="12,8"/>
+            <Button Content="Install &amp; Restart" Command="{Binding InstallAndRestartCommand}"
+                    Background="#cba6f7" Foreground="#1e1e2e" FontWeight="Bold"
+                    BorderThickness="0" CornerRadius="8" Padding="12,8"/>
+        </StackPanel>
+
+    </StackPanel>
+</Window>

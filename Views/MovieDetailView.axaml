@@ -1,0 +1,105 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Sabeltann.Views.MovieDetailView"
+             Background="#11111b">
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+    <StackPanel MaxWidth="700" HorizontalAlignment="Center" Margin="24,16,24,32" Spacing="16">
+
+      <!-- Back button -->
+      <Button Command="{Binding BackCommand}" Background="Transparent" BorderThickness="0"
+              HorizontalAlignment="Left" Padding="0" Cursor="Hand">
+        <TextBlock Text="← Back" Foreground="#89b4fa" FontSize="13"/>
+      </Button>
+
+      <!-- Hero row: Poster + metadata -->
+      <Grid ColumnDefinitions="200,*" RowDefinitions="Auto" Margin="0,8,0,0">
+
+        <!-- Poster -->
+        <Border Grid.Column="0" Width="200" Height="280" CornerRadius="8"
+                Background="#313244" ClipToBounds="True" VerticalAlignment="Top">
+          <Panel>
+            <TextBlock Text="🎬" FontSize="48" HorizontalAlignment="Center"
+                       VerticalAlignment="Center" Foreground="#6c7086"
+                       IsVisible="{Binding PosterBitmap, Converter={x:Static ObjectConverters.IsNull}}"/>
+            <Image Source="{Binding PosterBitmap}" Stretch="UniformToFill"
+                   IsVisible="{Binding PosterBitmap, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+          </Panel>
+        </Border>
+
+        <!-- Right column: title, year, genre, ratings -->
+        <StackPanel Grid.Column="1" Margin="20,0,0,0" Spacing="8" VerticalAlignment="Top">
+
+          <!-- Title -->
+          <TextBlock Text="{Binding Title}" Foreground="#cdd6f4" FontSize="22"
+                     FontWeight="Bold" TextWrapping="Wrap"/>
+
+          <!-- Year • Runtime • Genre -->
+          <TextBlock Foreground="#a6adc8" FontSize="12" TextWrapping="Wrap">
+            <Run Text="{Binding Year}"/>
+            <Run Text=" • "/>
+            <Run Text="{Binding Runtime}"/>
+            <Run Text=" • "/>
+            <Run Text="{Binding Genre}"/>
+          </TextBlock>
+
+          <!-- Ratings block (visible only if HasRatings) -->
+          <StackPanel IsVisible="{Binding HasRatings}" Spacing="4">
+            <TextBlock Text="{Binding ImdbStars}" FontSize="20" Foreground="#f9e2af"/>
+            <StackPanel Orientation="Horizontal" Spacing="16">
+              <StackPanel>
+                <TextBlock Text="IMDb" Foreground="#6c7086" FontSize="10"/>
+                <TextBlock Foreground="#cdd6f4" FontSize="14">
+                  <Run Text="{Binding ImdbRating}"/><Run Text="/10"/>
+                </TextBlock>
+              </StackPanel>
+              <StackPanel IsVisible="{Binding RottenTomatoes, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                <TextBlock Text="Rotten Tomatoes" Foreground="#6c7086" FontSize="10"/>
+                <TextBlock Text="{Binding RottenTomatoes}" Foreground="#a6e3a1" FontSize="14"/>
+              </StackPanel>
+            </StackPanel>
+          </StackPanel>
+
+          <!-- No ratings note -->
+          <TextBlock Text="Ratings unavailable (no OMDb API key configured)"
+                     Foreground="#6c7086" FontSize="11" FontStyle="Italic"
+                     IsVisible="{Binding !HasRatings}"/>
+
+        </StackPanel>
+      </Grid>
+
+      <!-- Loading indicator -->
+      <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True"
+                   Height="2" Foreground="#cba6f7" Background="Transparent" Margin="0,-8,0,0"/>
+
+      <!-- Plot -->
+      <StackPanel Spacing="4" IsVisible="{Binding Plot, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+        <TextBlock Text="Plot" Foreground="#6c7086" FontSize="11" FontWeight="SemiBold"/>
+        <TextBlock Text="{Binding Plot}" Foreground="#a6adc8" FontSize="13" TextWrapping="Wrap"/>
+      </StackPanel>
+
+      <!-- Director -->
+      <StackPanel Orientation="Horizontal" Spacing="6"
+                  IsVisible="{Binding Director, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+        <TextBlock Text="Director:" Foreground="#6c7086" FontSize="12"/>
+        <TextBlock Text="{Binding Director}" Foreground="#cdd6f4" FontSize="12" TextWrapping="Wrap"/>
+      </StackPanel>
+
+      <!-- Cast -->
+      <StackPanel Orientation="Horizontal" Spacing="6"
+                  IsVisible="{Binding Cast, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+        <TextBlock Text="Cast:" Foreground="#6c7086" FontSize="12"/>
+        <TextBlock Text="{Binding Cast}" Foreground="#cdd6f4" FontSize="12" TextWrapping="Wrap"/>
+      </StackPanel>
+
+      <!-- Play button -->
+      <Button HorizontalAlignment="Center" Margin="0,16,0,0"
+              Padding="32,12" CornerRadius="8"
+              Background="#cba6f7" Foreground="#1e1e2e" FontWeight="Bold" FontSize="15"
+              Command="{Binding $parent[Window].DataContext.PlayFromDetailCommand}"
+              Cursor="Hand">
+        <TextBlock Text="▶  Play Movie"/>
+      </Button>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

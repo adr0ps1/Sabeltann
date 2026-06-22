@@ -14,11 +14,9 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _vm;
     private readonly PlaybackService _player;
-    private readonly UpdateService _updates = new();
     private readonly DispatcherTimer _transportAutoHide;
     private readonly DispatcherTimer _volumeHideTimer;
     private bool _isFullscreen;
-    private bool _updateRestartPending;
 
     public MainWindow()
     {
@@ -40,16 +38,12 @@ public partial class MainWindow : Window
         TransportBar.PointerEntered += (_, _) => _transportAutoHide.Stop();
         TransportBar.PointerExited  += (_, _) => { _transportAutoHide.Stop(); _transportAutoHide.Start(); };
 
-        // Volume popup: 150ms delay bridges the button→popup gap without feeling slow
+        // Volume overlay: 300ms delay bridges the button→overlay gap without feeling slow
         _volumeHideTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
-        _volumeHideTimer.Tick += (_, _) => { VolumePopup.IsOpen = false; _volumeHideTimer.Stop(); };
-
-        // When popup opens it captures hits over the button (overlay layer),
-        // so button fires PointerExited and starts the hide timer.
-        // Cancel it immediately — the popup's own PointerEntered will keep it alive.
-        VolumePopup.Opened += (_, _) => { _volumeHideTimer.Stop(); _transportAutoHide.Stop(); };
+        _volumeHideTimer.Tick += (_, _) => { _vm.ShowVolumePopup = false; _volumeHideTimer.Stop(); };
 
         VideoBorder.PointerMoved += (_, _) => ShowTransport();
+        VideoBorder.PointerPressed += (_, _) => { _vm.ShowVolumePopup = false; _volumeHideTimer.Stop(); };
 
         LoadPirateIcon();
         _vm.LoadLastSession();
@@ -72,22 +66,7 @@ public partial class MainWindow : Window
             Topmost = false;
         };
 
-        _updates.UpdateReady += async version =>
-        {
-            await Dispatcher.UIThread.InvokeAsync(async () =>
-            {
-                _vm.StatusText = $"Update {version} available";
-                var dialog = new UpdateDialog { Version = version };
-                await dialog.ShowDialog(this);
-                if (dialog.RestartRequested)
-                {
-                    _updateRestartPending = true;
-                    _updates.ApplyPendingOnExit(restart: true);
-                    Close();
-                }
-            });
-        };
-        Opened += (_, _) => _ = _updates.CheckAndDownloadAsync();
+        Opened += (_, _) => _ = _vm.CheckForUpdatesCommand.ExecuteAsync(null);
 
         ConnectionPage.LoadM3UFileRequested += OnLoadM3UFile;
         ConnectionPage.LoadM3UUrlRequested += OnLoadM3UUrl;
@@ -202,7 +181,6 @@ public partial class MainWindow : Window
         else if (e.Key == Key.D && e.Source is not TextBox)
         {
             _vm.ShowDebugOverlay = !_vm.ShowDebugOverlay;
-            DebugPopup.IsOpen = _vm.ShowDebugOverlay;
             e.Handled = true;
         }
     }
@@ -223,7 +201,7 @@ public partial class MainWindow : Window
     {
         _volumeHideTimer.Stop();
         _transportAutoHide.Stop();
-        VolumePopup.IsOpen = true;
+        _vm.ShowVolumePopup = true;
     }
 
     private void OnVolumeBtnExited(object? sender, PointerEventArgs e)
@@ -326,8 +304,7 @@ public partial class MainWindow : Window
         _vm.DebugStats.Stop();
         _player.Dispose();
         ImageService.Shutdown();
-        if (!_updateRestartPending)
-            _updates.ApplyPendingOnExit(restart: false);
+        _vm.GetUpdateService().ApplyPendingOnExit(restart: false);
         base.OnClosed(e);
     }
 }

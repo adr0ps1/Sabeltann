@@ -7,6 +7,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sabeltann.Models;
 using Sabeltann.Services;
+using Sabeltann;
+using Sabeltann.Views;
 
 namespace Sabeltann.ViewModels;
 
@@ -16,7 +18,8 @@ public enum ContentMode
     Picker,
     LiveTv,
     Movies,
-    Series
+    Series,
+    MovieDetail
 }
 
 public partial class MainViewModel : ObservableObject
@@ -46,6 +49,9 @@ public partial class MainViewModel : ObservableObject
     private readonly XtreamService _xtream = new();
     private readonly SettingsService _settings = new();
     private readonly ChannelCacheService _cache = new();
+    private readonly UpdateService _updateService = new();
+    private readonly System.Timers.Timer _updateCheckTimer;
+    private SettingsData _settingsData = new();
     private DispatcherTimer? _positionTimer;
     private PlaybackService? _player;
     private List<ChannelListItemViewModel> _allChannels = [];
@@ -73,6 +79,8 @@ public partial class MainViewModel : ObservableObject
     public void ApplySettings(SettingsData data)
     {
         _settings.Save(data);
+        _settingsData = data;
+        _updateService.IncludePrerelease = data.IncludePrerelease;
         Volume = data.DefaultVolume;
     }
 
@@ -145,6 +153,8 @@ public partial class MainViewModel : ObservableObject
     {
         VodBrowser.PlayRequested -= OnVodPlayRequested;
         VodBrowser.PlayRequested += OnVodPlayRequested;
+        VodBrowser.DetailRequested -= OnMovieDetailRequested;
+        VodBrowser.DetailRequested += OnMovieDetailRequested;
         Mode = ContentMode.Movies;
 
         if (_pendingXtreamInfo is not null)
@@ -155,6 +165,19 @@ public partial class MainViewModel : ObservableObject
         {
             VodBrowser.InitializeFromChannels(_movieChannels);
         }
+    }
+
+    private void OnMovieDetailRequested(VodMovieViewModel movie)
+    {
+        Mode = ContentMode.MovieDetail;
+        _ = MovieDetail.LoadAsync(movie);
+    }
+
+    [RelayCommand]
+    private void PlayFromDetail()
+    {
+        if (MovieDetail.PlayUrl is string url)
+            OnVodPlayRequested(url);
     }
 
     public async Task ShowSeriesBrowserAsync()
@@ -181,6 +204,7 @@ public partial class MainViewModel : ObservableObject
             _vodPausePosition = TimeSpan.Zero;
             LogService.Info("Playing VOD", new { url });
             ShowConnectionOverlay = true;
+            ShowBufferingOverlay = true;
             ConnectionState = "Connecting...";
             ConnectionProgress = 0;
             _player?.Play(url);
@@ -263,6 +287,8 @@ public partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsLiveTv))]
     [NotifyPropertyChangedFor(nameof(IsMovies))]
     [NotifyPropertyChangedFor(nameof(IsSeries))]
+    [NotifyPropertyChangedFor(nameof(IsMovieDetail))]
+    [NotifyPropertyChangedFor(nameof(IsVodContent))]
     [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
     [NotifyPropertyChangedFor(nameof(IsCategoryBarVisible))]
     private ContentMode _mode = ContentMode.Welcome;
@@ -278,6 +304,8 @@ public partial class MainViewModel : ObservableObject
     public bool IsLiveTv => Mode == ContentMode.LiveTv;
     public bool IsMovies => Mode == ContentMode.Movies;
     public bool IsSeries => Mode == ContentMode.Series;
+    public bool IsMovieDetail => Mode == ContentMode.MovieDetail;
+    public bool IsVodContent => Mode is ContentMode.Movies or ContentMode.Series;
     public bool ShowChannelGrid => Mode == ContentMode.LiveTv && IsBrowsing;
     public bool IsCategoryBarVisible => Mode == ContentMode.LiveTv;
 
@@ -311,8 +339,12 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _showConnectionOverlay;
 
+    [ObservableProperty]
+    private bool _showBufferingOverlay;
+
     public VodBrowserViewModel VodBrowser { get; } = new();
     public SeriesBrowserViewModel SeriesBrowser { get; } = new();
+    public MovieDetailViewModel MovieDetail { get; } = new(new OMDbService(null));
 
     private XtreamConnectionInfo? _pendingXtreamInfo;
     private M3UPlaylist? _pendingPlaylist;
@@ -323,6 +355,18 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _showDebugOverlay;
+
+    [ObservableProperty]
+    private bool _showVolumePopup;
+
+    [ObservableProperty]
+    private double _updateDownloadProgress;
+
+    [ObservableProperty]
+    private bool _isUpdatePending;
+
+    [ObservableProperty]
+    private string? _updateBadgeText;
 
     public WriteableBitmap? VideoBitmap => _player?.VideoBitmap;
 
@@ -340,11 +384,13 @@ public partial class MainViewModel : ObservableObject
             IsPlaying = false;
             IsPaused = false;
             ShowConnectionOverlay = false;
+            ShowBufferingOverlay = true;
         };
         _player.PlayingStarted += (_, _) =>
         {
             ConnectionState = "";
             ShowConnectionOverlay = false;
+            ShowBufferingOverlay = false;
             ConnectionProgress = 0;
             var len = _player.Length;
             if (len > 0) VodDuration = len;
@@ -353,11 +399,13 @@ public partial class MainViewModel : ObservableObject
         {
             ConnectionProgress = pct;
             ConnectionState = pct < 100 ? $"Buffering... {pct}%" : "Starting playback...";
+            ShowBufferingOverlay = pct < 100;
         };
         _player.Stopped += (_, _) =>
         {
             ConnectionState = "";
             ShowConnectionOverlay = false;
+            ShowBufferingOverlay = false;
             ConnectionProgress = 0;
         };
         _positionTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
@@ -379,6 +427,23 @@ public partial class MainViewModel : ObservableObject
     public MainViewModel()
     {
         DebugStats = new DebugStatsViewModel(null);
+        MovieDetail.BackRequested += () => Mode = ContentMode.Movies;
+
+        _updateService.UpdateReady += version =>
+        {
+            IsUpdatePending = true;
+            UpdateBadgeText = "● Update ready";
+            ShowUpdateDialog(version);
+        };
+
+        _updateCheckTimer = new System.Timers.Timer(TimeSpan.FromHours(6).TotalMilliseconds);
+        _updateCheckTimer.Elapsed += async (_, _) =>
+        {
+            if (_settingsData.CheckForUpdatesEnabled && !_updateService.IsUpdateAvailable)
+                await _updateService.CheckAndDownloadAsync();
+        };
+        _updateCheckTimer.AutoReset = true;
+        _updateCheckTimer.Start();
     }
 
     partial void OnSelectedCategoryChanged(CategoryViewModel? value)
@@ -453,6 +518,7 @@ public partial class MainViewModel : ObservableObject
                 _player.SetVolume(Volume);
                 LogService.Info("Playing channel", new { name = value.Name, url = value.Url });
                 ShowConnectionOverlay = true;
+                ShowBufferingOverlay = true;
                 ConnectionState = "Connecting...";
                 ConnectionProgress = 0;
                 _player.Play(value.Url);
@@ -504,6 +570,8 @@ public partial class MainViewModel : ObservableObject
     public void LoadLastSession()
     {
         var s = _settings.Load();
+        _settingsData = s;
+        _updateService.IncludePrerelease = s.IncludePrerelease;
         Volume = s.DefaultVolume;
         if (!s.AutoLoadLastSession) return;
         if (s.LastSourceType == "url" && !string.IsNullOrEmpty(s.LastSourceUrl))
@@ -857,6 +925,42 @@ public partial class MainViewModel : ObservableObject
         if (Categories.Count > 0)
             SelectedCategory = Categories[0];
     }
+
+    [RelayCommand]
+    private async Task CheckForUpdates()
+    {
+        var progress = new Progress<double>(p => UpdateDownloadProgress = p);
+        await _updateService.CheckAndDownloadAsync(progress);
+        UpdateDownloadProgress = 0;
+    }
+
+    private void ShowUpdateDialog(string newVersion)
+    {
+        Dispatcher.UIThread.Post(async () =>
+        {
+            var vm = new UpdateDialogViewModel
+            {
+                CurrentVersion = _updateService.CurrentVersion ?? "current",
+                NewVersion = newVersion,
+                ReleaseNotes = _updateService.ReleaseNotes,
+                HasReleaseNotes = _updateService.ReleaseNotes is { Length: > 0 }
+            };
+            vm.CloseRequested += () =>
+            {
+                if (vm.Result == UpdateDialogResult.InstallAndRestart)
+                    _updateService.ApplyPendingOnExit(restart: true);
+            };
+            var dialog = new UpdateDialog { DataContext = vm };
+            if (Avalonia.Application.Current?.ApplicationLifetime is
+                Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+                && desktop.MainWindow is { } mainWin)
+            {
+                await dialog.ShowDialog(mainWin);
+            }
+        });
+    }
+
+    public UpdateService GetUpdateService() => _updateService;
 
     private void RestoreLastSessionSelection()
     {
