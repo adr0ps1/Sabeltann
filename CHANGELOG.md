@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.20](https://github.com/adr0ps1/Sabeltann/compare/v0.1.19...v0.1.20) (2026-06-22)
+
+
+### Bug Fixes
+
+* Resolve issues [#33](https://github.com/adr0ps1/Sabeltann/issues/33), [#34](https://github.com/adr0ps1/Sabeltann/issues/34), [#31](https://github.com/adr0ps1/Sabeltann/issues/31), [#35](https://github.com/adr0ps1/Sabeltann/issues/35), [#26](https://github.com/adr0ps1/Sabeltann/issues/26), [#27](https://github.com/adr0ps1/Sabeltann/issues/27) + open source hardening ([#40](https://github.com/adr0ps1/Sabeltann/issues/40)) ([04a4d64](https://github.com/adr0ps1/Sabeltann/commit/04a4d64f36ed68c2bec86c271f8824943dab1a2c))
+
 ## [0.1.19](https://github.com/adr0ps1/Sabeltann/compare/v0.1.18...v0.1.19) (2026-06-20)
 
 
