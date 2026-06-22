@@ -47,6 +47,14 @@
             </Border>
         </StackPanel>
 
+        <StackPanel Spacing="6">
+            <TextBlock Text="Updates" Foreground="#6c7086" FontSize="11" FontWeight="SemiBold"/>
+            <CheckBox x:Name="CheckForUpdatesCheck" Content="Check for updates automatically"
+                      Foreground="#cdd6f4" FontSize="12"/>
+            <CheckBox x:Name="IncludePrereleaseCheck" Content="Include prerelease versions"
+                      Foreground="#cdd6f4" FontSize="12"/>
+        </StackPanel>
+
         <Grid ColumnDefinitions="*,*" ColumnSpacing="8" Margin="0,8,0,0">
             <Button Grid.Column="0" Content="Cancel" Click="OnCancel"
                     Background="#313244" Foreground="#cdd6f4"

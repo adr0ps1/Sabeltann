@@ -15,6 +15,8 @@ public partial class SettingsWindow : Window
         _data = current;
         VolumeSlider.Value = current.DefaultVolume;
         AutoLoadCheck.IsChecked = current.AutoLoadLastSession;
+        CheckForUpdatesCheck.IsChecked = current.CheckForUpdatesEnabled;
+        IncludePrereleaseCheck.IsChecked = current.IncludePrerelease;
         ServerUrlText.Text = serverUrl ?? "Not connected";
         UsernameText.Text = username ?? "-";
         ChannelCountText.Text = $"{channelCount} channels";
@@ -29,6 +31,8 @@ public partial class SettingsWindow : Window
     {
         _data.DefaultVolume = (int)VolumeSlider.Value;
         _data.AutoLoadLastSession = AutoLoadCheck.IsChecked ?? true;
+        _data.CheckForUpdatesEnabled = CheckForUpdatesCheck.IsChecked ?? true;
+        _data.IncludePrerelease = IncludePrereleaseCheck.IsChecked ?? false;
         Close(_data);
     }
 }

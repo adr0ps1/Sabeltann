@@ -48,6 +48,10 @@ public class SettingsData
     public bool AutoLoadLastSession { get; set; } = true;
     public string? LastServerUrl { get; set; }
     public string? LastUsername { get; set; }
+    public string? OmdbApiKey { get; set; }
+    public bool CheckForUpdatesEnabled { get; set; } = true;
+    public bool IncludePrerelease { get; set; } = false;
+    public DateTime? LastUpdateCheck { get; set; }
 }
 
 public class XtreamSettings

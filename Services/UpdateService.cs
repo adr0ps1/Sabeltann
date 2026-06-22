@@ -9,7 +9,7 @@ public sealed class UpdateService
 {
     private const string RepoUrl = "https://github.com/adr0ps1/Sabeltann";
 
-    private readonly UpdateManager _manager;
+    private UpdateManager _manager;
     private UpdateInfo? _pending;
 
     public UpdateService()
@@ -19,23 +19,42 @@ public sealed class UpdateService
 
     public bool IsInstalled => _manager.IsInstalled;
 
+    public string? CurrentVersion => _manager.IsInstalled ? _manager.CurrentVersion?.ToString() : null;
+
+    public bool IsUpdateAvailable { get; private set; }
+
+    public string? ReleaseNotes { get; private set; }
+
+    public bool IncludePrerelease { get; set; }
+
     public event Action<string>? UpdateReady;
 
-    public async Task CheckAndDownloadAsync()
+    public async Task CheckAndDownloadAsync(IProgress<double>? progress = null)
     {
         if (!_manager.IsInstalled)
             return;
 
         try
         {
+            // Reconstruct manager if prerelease flag differs from default
+            _manager = new UpdateManager(new GithubSource(RepoUrl, accessToken: null, prerelease: IncludePrerelease));
+
             var update = await _manager.CheckForUpdatesAsync().ConfigureAwait(false);
             if (update is null)
                 return;
 
+            ReleaseNotes = update.TargetFullRelease.NotesMarkdown;
+
             LogService.Info("Update available", new { version = update.TargetFullRelease.Version.ToString() });
-            await _manager.DownloadUpdatesAsync(update).ConfigureAwait(false);
+
+            Action<int>? onProgress = progress is not null
+                ? pct => progress.Report(pct / 100.0)
+                : null;
+
+            await _manager.DownloadUpdatesAsync(update, onProgress).ConfigureAwait(false);
 
             _pending = update;
+            IsUpdateAvailable = true;
             UpdateReady?.Invoke(update.TargetFullRelease.Version.ToString());
             LogService.Info("Update downloaded, will install on exit");
         }

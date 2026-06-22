@@ -238,8 +238,11 @@ public class PlaybackService : IDisposable
 
     private void RenderFrame()
     {
-        _framePending = 0;
-        if (_disposed || VideoBitmap is null) return;
+        if (_disposed || VideoBitmap is null)
+        {
+            _framePending = 0;
+            return;
+        }
 
         try
         {
@@ -261,6 +264,8 @@ public class PlaybackService : IDisposable
         {
             Console.Error.WriteLine($"RenderFrame error: {ex.Message}");
         }
+
+        _framePending = 0;
 
         FrameRendered?.Invoke();
     }
