@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.1.19](https://github.com/adr0ps1/Sabeltann/compare/v0.1.18...v0.1.19) (2026-06-20)
+
+
+### Bug Fixes
+
+* Trigger workflows ([#38](https://github.com/adr0ps1/Sabeltann/issues/38)) ([984a5e7](https://github.com/adr0ps1/Sabeltann/commit/984a5e79c27e7aa247afc4d63ab948eb66e13507))
+
+## [0.1.18](https://github.com/adr0ps1/Sabeltann/compare/v0.1.17...v0.1.18) (2026-06-20)
+
+
+### Bug Fixes
+
+* ESC in picker mode no longer goes to welcome when connected ([#28](https://github.com/adr0ps1/Sabeltann/issues/28)) ([0483d3b](https://github.com/adr0ps1/Sabeltann/commit/0483d3b94f00b9c04553b29c078424e6adc2bf48))
+* Fixed the media controls except using space to pause, also fixed playback to be visible ([#36](https://github.com/adr0ps1/Sabeltann/issues/36)) ([269c751](https://github.com/adr0ps1/Sabeltann/commit/269c7514118a0df0427923e2c6156aaa9e13e29a))
+* Keyboard shortcuts no longer fire when typing in search TextBox ([#30](https://github.com/adr0ps1/Sabeltann/issues/30)) ([58be983](https://github.com/adr0ps1/Sabeltann/commit/58be983e48f72d2f4a8b54332c58da0c3f2db8ee))
+
 ## [0.1.17](https://github.com/adr0ps1/Sabeltann/compare/v0.1.16...v0.1.17) (2026-06-19)
 
 
