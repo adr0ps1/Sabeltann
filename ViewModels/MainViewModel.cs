@@ -297,6 +297,7 @@ public partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
     [NotifyPropertyChangedFor(nameof(IsCategoryBarVisible))]
     [NotifyPropertyChangedFor(nameof(ShowBackButton))]
+    [NotifyPropertyChangedFor(nameof(ShowCategoryBar))]
     private ContentMode _mode = ContentMode.Welcome;
 
     partial void OnModeChanged(ContentMode value)
@@ -315,6 +316,7 @@ public partial class MainViewModel : ObservableObject
     public bool ShowChannelGrid => Mode == ContentMode.LiveTv && IsBrowsing;
     public bool IsCategoryBarVisible => Mode == ContentMode.LiveTv;
     public bool ShowBackButton => Mode is not ContentMode.Welcome and not ContentMode.Picker;
+    public bool ShowCategoryBar => Mode is ContentMode.Welcome or ContentMode.Picker or ContentMode.LiveTv;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
@@ -394,7 +396,7 @@ public partial class MainViewModel : ObservableObject
             ShowConnectionOverlay = false;
             ShowBufferingOverlay = true;
         };
-        _player.PlayingStarted += (_, _) =>
+        _player.PlayingStarted += (_, _) => Dispatcher.UIThread.Post(() =>
         {
             _awaitingPlayback = false;
             ConnectionState = "";
@@ -403,13 +405,13 @@ public partial class MainViewModel : ObservableObject
             ConnectionProgress = 0;
             var len = _player.Length;
             if (len > 0) VodDuration = len;
-        };
-        _player.Buffering += (_, pct) =>
+        });
+        _player.Buffering += (_, pct) => Dispatcher.UIThread.Post(() =>
         {
             ConnectionProgress = pct;
-            ConnectionState = pct < 100 ? $"Buffering... {pct}%" : "Starting playback...";
+            ConnectionState = pct < 100 ? $"Buffering... {pct}%" : "";
             ShowBufferingOverlay = true;
-        };
+        });
         _player.Stopped += (_, _) => Dispatcher.UIThread.Post(() =>
         {
             if (_awaitingPlayback)

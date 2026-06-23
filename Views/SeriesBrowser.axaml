@@ -5,49 +5,47 @@
              x:Class="Sabeltann.Views.SeriesBrowser">
     <Grid Background="#11111b" RowDefinitions="Auto,Auto,*,Auto">
 
-        <!-- Header -->
-        <Border Grid.Row="0" Padding="12,10" Background="#181825" BorderThickness="0,0,0,1" BorderBrush="#313244">
-            <Grid ColumnDefinitions="Auto,*,Auto">
+        <!-- Combined header + filter bar -->
+        <Border Grid.Row="0" Padding="10,7" Background="#313244" BorderThickness="0,0,0,1" BorderBrush="#45475a">
+            <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto">
                 <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
-                        Width="28" Height="28" Padding="0" Margin="0,0,8,0"
-                        Command="{Binding $parent[Window].DataContext.GoBackToPickerCommand}"
-                        ToolTip.Tip="Back to menu">
+                        Width="28" Height="28" Padding="0" Margin="0,0,6,0"
+                        Command="{Binding $parent[Window].DataContext.GoBackCommand}"
+                        ToolTip.Tip="Go back">
                     <TextBlock Text="←" Foreground="#a6adc8" FontSize="14"
                                VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 </Button>
                 <TextBlock Grid.Column="1" Text="{Binding CurrentShowName, StringFormat='Series: {0}'}"
-                           Foreground="#cdd6f4" FontSize="16" FontWeight="Bold"
-                           VerticalAlignment="Center"
+                           Foreground="#cdd6f4" FontSize="13" FontWeight="SemiBold"
+                           VerticalAlignment="Center" Margin="0,0,12,0"
                            IsVisible="{Binding ShowEpisodes}"/>
                 <TextBlock Grid.Column="1" Text="TV Series"
-                           Foreground="#cdd6f4" FontSize="16" FontWeight="Bold"
-                           VerticalAlignment="Center"
+                           Foreground="#cdd6f4" FontSize="13" FontWeight="SemiBold"
+                           VerticalAlignment="Center" Margin="0,0,12,0"
                            IsVisible="{Binding ShowShows}"/>
-                <Border Grid.Column="2" CornerRadius="10" Background="#313244" Padding="8,2"
-                        VerticalAlignment="Center">
+                <TextBlock Grid.Column="2" Text="Category" VerticalAlignment="Center"
+                           FontSize="11" FontWeight="SemiBold"
+                           Foreground="#a6adc8" Margin="0,0,8,0"
+                           IsVisible="{Binding ShowShows}"/>
+                <ComboBox Grid.Column="3" ItemsSource="{Binding Categories}"
+                          SelectedItem="{Binding SelectedCategory}"
+                          MinWidth="150" FontSize="12" MaxWidth="250"
+                          IsVisible="{Binding ShowShows}"/>
+                <TextBox Grid.Column="4" Text="{Binding SearchText}"
+                         PlaceholderText="Search shows..."
+                         Background="#1e1e2e" Foreground="#cdd6f4"
+                         BorderThickness="1" BorderBrush="#45475a"
+                         FontSize="12" Padding="6,4"
+                         Margin="8,0" VerticalAlignment="Center"
+                         IsVisible="{Binding ShowShows}"/>
+                <Border Grid.Column="5" CornerRadius="10" Background="#313244"
+                        Padding="8,2" Margin="6,0" VerticalAlignment="Center">
                     <TextBlock Text="{Binding StatusText}" Foreground="#a6adc8" FontSize="11"/>
                 </Border>
             </Grid>
         </Border>
 
-        <!-- Filter bar (only visible when browsing shows) -->
-        <Border Grid.Row="1" Padding="12,6" Background="#181825" BorderThickness="0,0,0,1" BorderBrush="#313244"
-                IsVisible="{Binding ShowShows}">
-            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
-                <TextBlock Grid.Column="0" Text="Category" VerticalAlignment="Center"
-                           FontSize="11" FontWeight="SemiBold"
-                           Foreground="#a6adc8" Margin="0,0,8,0"/>
-                <ComboBox Grid.Column="1" ItemsSource="{Binding Categories}"
-                          SelectedItem="{Binding SelectedCategory}"
-                          MinWidth="150" FontSize="12" MaxWidth="250"/>
-                <TextBox Grid.Column="2" Text="{Binding SearchText}"
-                         PlaceholderText="Search shows..."
-                         Background="#1e1e2e" Foreground="#cdd6f4"
-                         BorderThickness="1" BorderBrush="#45475a"
-                         FontSize="12" Padding="6,4"
-                         Margin="12,0" VerticalAlignment="Center"/>
-            </Grid>
-        </Border>
+        <!-- Row 1 intentionally empty (was filter bar, merged into Row 0) -->
 
         <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled">
             <Grid>
