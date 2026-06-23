@@ -128,7 +128,8 @@ public partial class SeriesBrowserViewModel : ObservableObject
         var cat = SelectedCategory ?? "All";
         var query = (SearchText ?? "").Trim().ToLowerInvariant();
 
-        IEnumerable<ChannelListItemViewModel> pool = _allM3uEpisodes;
+        IEnumerable<ChannelListItemViewModel> pool = _allM3uEpisodes
+            .Where(ch => !IsGarbageEntry(ch.Name));
         if (cat != "All")
             pool = pool.Where(ch => (ch.Group ?? "Uncategorized").Equals(cat, StringComparison.OrdinalIgnoreCase));
 
@@ -312,4 +313,8 @@ public partial class SeriesBrowserViewModel : ObservableObject
     {
         IsShowingEpisodes = false;
     }
+
+    private static bool IsGarbageEntry(string name) =>
+        name.StartsWith("ItEGr", StringComparison.OrdinalIgnoreCase) ||
+        name.StartsWith("ltEGr", StringComparison.OrdinalIgnoreCase);
 }

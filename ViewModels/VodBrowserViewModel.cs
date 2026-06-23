@@ -215,7 +215,8 @@ public partial class VodBrowserViewModel : ObservableObject
         var query = (SearchText ?? "").Trim().ToLowerInvariant();
         var cat = SelectedCategory ?? "All";
 
-        IEnumerable<ChannelListItemViewModel> pool = _allM3uMovies;
+        IEnumerable<ChannelListItemViewModel> pool = _allM3uMovies
+            .Where(ch => !IsGarbageEntry(ch.Name));
         if (cat != "All")
             pool = pool.Where(ch => (ch.Group ?? "Uncategorized").Equals(cat, StringComparison.OrdinalIgnoreCase));
 
@@ -367,6 +368,10 @@ public partial class VodBrowserViewModel : ObservableObject
     {
         CurrentView = VodViewMode.Series;
     }
+
+    private static bool IsGarbageEntry(string name) =>
+        name.StartsWith("ItEGr", StringComparison.OrdinalIgnoreCase) ||
+        name.StartsWith("ltEGr", StringComparison.OrdinalIgnoreCase);
 }
 
 public enum VodViewMode

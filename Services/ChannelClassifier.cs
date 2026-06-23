@@ -5,9 +5,9 @@ namespace Sabeltann.Services;
 
 public static class ChannelClassifier
 {
-    // S1E1 through S9999E9999 — supports multi-digit seasons like S2025E113
+    // S1E1 through S9999E999999 — also handles S01.E01, S01-E01, S01_E01
     private static readonly Regex SeasonEpisode = new(
-        @"\bS(\d{1,4})\s*E(\d{1,4})\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        @"\bS(\d{1,4})[\s._-]*E(\d{1,6})\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Regex EpisodeNum = new(
         @"\b(?:Episode|Ep|Part)\s*\d+\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
