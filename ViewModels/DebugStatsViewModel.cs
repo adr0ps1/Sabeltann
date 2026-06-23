@@ -34,6 +34,15 @@ public class DebugStatsViewModel : INotifyPropertyChanged
     private int _volume;
     public int Volume { get => _volume; set => SetField(ref _volume, value); }
 
+    private string _inputBitrate = "-";
+    public string InputBitrate { get => _inputBitrate; set => SetField(ref _inputBitrate, value); }
+
+    private string _demuxBitrate = "-";
+    public string DemuxBitrate { get => _demuxBitrate; set => SetField(ref _demuxBitrate, value); }
+
+    private string _lostFrames = "-";
+    public string LostFrames { get => _lostFrames; set => SetField(ref _lostFrames, value); }
+
     public DebugStatsViewModel(PlaybackService? player)
     {
         _player = player;
@@ -59,11 +68,30 @@ public class DebugStatsViewModel : INotifyPropertyChanged
             Position = _player.TimeMs > 0 ? FormatTime(_player.TimeMs) : "-";
             Duration = _player.Length > 0 ? FormatTime(_player.Length) : "??:??";
             Volume = _mainVm?.Volume ?? 0;
+
+            var stats = _player?.GetStats();
+            if (stats is { } s)
+            {
+                InputBitrate = FormatBitrate(s.InputBitrate);
+                DemuxBitrate = FormatBitrate(s.DemuxBitrate);
+                LostFrames = s.LostPictures > 0 ? s.LostPictures.ToString() : "-";
+            }
+            else
+            {
+                InputBitrate = DemuxBitrate = LostFrames = "-";
+            }
         }
         catch (Exception ex)
         {
             LogService.Error("DebugStats refresh failed", new { ex.Message, ex.GetType().Name });
         }
+    }
+
+    private static string FormatBitrate(float bitsPerSec)
+    {
+        if (bitsPerSec <= 0) return "-";
+        var kb = bitsPerSec / 1024f;
+        return kb >= 1024 ? $"{kb / 1024:F2} MB/s" : $"{kb:F1} KB/s";
     }
 
     private static string FormatTime(double ms)
