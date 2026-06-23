@@ -7,6 +7,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\Sabeltann.ico</ApplicationIcon>
     <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>Sabeltann</RootNamespace>
     <AssemblyName Condition="'$(Configuration)'=='Debug'">SabeltannDevelopment</AssemblyName>
     <AssemblyName Condition="'$(Configuration)'!='Debug'">Sabeltann</AssemblyName>

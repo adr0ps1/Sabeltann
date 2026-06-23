@@ -177,7 +177,10 @@ public partial class MainViewModel : ObservableObject
     private void PlayFromDetail()
     {
         if (MovieDetail.PlayUrl is string url)
+        {
+            Mode = ContentMode.Movies;
             OnVodPlayRequested(url);
+        }
     }
 
     public async Task ShowSeriesBrowserAsync()
@@ -207,6 +210,8 @@ public partial class MainViewModel : ObservableObject
             ShowBufferingOverlay = true;
             ConnectionState = "Connecting...";
             ConnectionProgress = 0;
+            _awaitingPlayback = true;
+            _player?.ClearBitmap();
             _player?.Play(url);
             DebugStats.SetUrl(url);
             IsPlaying = true;
@@ -291,6 +296,8 @@ public partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsVodContent))]
     [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
     [NotifyPropertyChangedFor(nameof(IsCategoryBarVisible))]
+    [NotifyPropertyChangedFor(nameof(ShowBackButton))]
+    [NotifyPropertyChangedFor(nameof(ShowCategoryBar))]
     private ContentMode _mode = ContentMode.Welcome;
 
     partial void OnModeChanged(ContentMode value)
@@ -308,6 +315,8 @@ public partial class MainViewModel : ObservableObject
     public bool IsVodContent => Mode is ContentMode.Movies or ContentMode.Series;
     public bool ShowChannelGrid => Mode == ContentMode.LiveTv && IsBrowsing;
     public bool IsCategoryBarVisible => Mode == ContentMode.LiveTv;
+    public bool ShowBackButton => Mode is not ContentMode.Welcome and not ContentMode.Picker;
+    public bool ShowCategoryBar => Mode is ContentMode.Welcome or ContentMode.Picker or ContentMode.LiveTv;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
@@ -350,6 +359,7 @@ public partial class MainViewModel : ObservableObject
     private M3UPlaylist? _pendingPlaylist;
     private string? _currentPlayingUrl;
     private TimeSpan _vodPausePosition;
+    private bool _awaitingPlayback;
 
     public event Action? ToggleFullscreenRequested;
 
@@ -386,28 +396,39 @@ public partial class MainViewModel : ObservableObject
             ShowConnectionOverlay = false;
             ShowBufferingOverlay = true;
         };
-        _player.PlayingStarted += (_, _) =>
+        _player.PlayingStarted += (_, _) => Dispatcher.UIThread.Post(() =>
         {
+            _awaitingPlayback = false;
             ConnectionState = "";
             ShowConnectionOverlay = false;
             ShowBufferingOverlay = false;
             ConnectionProgress = 0;
             var len = _player.Length;
             if (len > 0) VodDuration = len;
-        };
-        _player.Buffering += (_, pct) =>
+        });
+        _player.Buffering += (_, pct) => Dispatcher.UIThread.Post(() =>
         {
             ConnectionProgress = pct;
-            ConnectionState = pct < 100 ? $"Buffering... {pct}%" : "Starting playback...";
-            ShowBufferingOverlay = pct < 100;
-        };
-        _player.Stopped += (_, _) =>
+            ConnectionState = pct < 100 ? $"Buffering... {pct}%" : "";
+            ShowBufferingOverlay = true;
+        });
+        _player.Stopped += (_, _) => Dispatcher.UIThread.Post(() =>
         {
-            ConnectionState = "";
-            ShowConnectionOverlay = false;
-            ShowBufferingOverlay = false;
-            ConnectionProgress = 0;
-        };
+            if (_awaitingPlayback)
+            {
+                // Stream failed before playing — keep overlay visible with error
+                ConnectionState = "Stream unavailable";
+                ShowBufferingOverlay = true;
+                _awaitingPlayback = false;
+            }
+            else
+            {
+                ConnectionState = "";
+                ShowConnectionOverlay = false;
+                ShowBufferingOverlay = false;
+                ConnectionProgress = 0;
+            }
+        });
         _positionTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _positionTimer.Tick += (_, _) =>
         {
@@ -521,6 +542,8 @@ public partial class MainViewModel : ObservableObject
                 ShowBufferingOverlay = true;
                 ConnectionState = "Connecting...";
                 ConnectionProgress = 0;
+                _awaitingPlayback = true;
+                _player?.ClearBitmap();
                 _player.Play(value.Url);
                 DebugStats.SetUrl(value.Url);
                 IsPlaying = true;
@@ -746,6 +769,31 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void GoBack()
+    {
+        if (IsPlaying || IsPaused)
+        {
+            StopPlayback();
+        }
+        else if (Mode == ContentMode.MovieDetail)
+        {
+            Mode = ContentMode.Movies;
+        }
+        else
+        {
+            Mode = ContentMode.Picker;
+            IsBrowsing = false;
+            FilteredChannels.Clear();
+            Categories.Clear();
+            SelectedChannel = null;
+            _player?.Stop();
+            IsPlaying = false;
+            IsPaused = false;
+            StatusText = "Ready";
+        }
+    }
+
+    [RelayCommand]
     private void StopPlayback()
     {
         LogService.Info("StopPlayback called", new { mode = Mode.ToString(), isPlaying = IsPlaying, isPaused = IsPaused });
@@ -755,6 +803,10 @@ public partial class MainViewModel : ObservableObject
         SelectedChannel = null;
         VodPosition = 0;
         VodDuration = 1;
+        ShowBufferingOverlay = false;
+        ShowConnectionOverlay = false;
+        _awaitingPlayback = false;
+        _player?.ClearBitmap();
 
         if (Mode == ContentMode.LiveTv)
         {

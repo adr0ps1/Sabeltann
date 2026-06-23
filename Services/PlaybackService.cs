@@ -124,6 +124,38 @@ public class PlaybackService : IDisposable
     public int CurrentSubtitleTrack => _mediaPlayer.Spu;
     public void SetSubtitleTrack(int id) => _mediaPlayer.SetSpu(id);
 
+    /// <summary>
+    /// Zeros the video surface so the last decoded frame doesn't linger when switching streams.
+    /// Safe to call from any thread; posts to the UI thread if the bitmap exists.
+    /// </summary>
+    public void ClearBitmap()
+    {
+        var bitmap = VideoBitmap;
+        if (bitmap is null) return;
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            var b = VideoBitmap;
+            if (b is null) return;
+            try
+            {
+                using var locked = b.Lock();
+                unsafe
+                {
+                    var ptr = (byte*)locked.Address.ToPointer();
+                    var byteCount = locked.RowBytes * locked.Size.Height;
+                    new Span<byte>(ptr, (int)byteCount).Clear();
+                }
+            }
+            catch { }
+        }, DispatcherPriority.Render);
+    }
+
+    /// <summary>
+    /// Returns the current LibVLC media statistics, or null if no media is active.
+    /// </summary>
+    public MediaStats? GetStats() => _mediaPlayer.Media?.Statistics;
+
     public void Dispose()
     {
         if (_disposed) return;

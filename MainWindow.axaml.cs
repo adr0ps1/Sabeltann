@@ -128,7 +128,7 @@ public partial class MainWindow : Window
         }
         else
         {
-            MainGrid.RowDefinitions[0].Height = new GridLength(44);
+            MainGrid.RowDefinitions[0].Height = new GridLength(0);
             MainGrid.RowDefinitions[1].Height = GridLength.Auto;
             MainGrid.RowDefinitions[3].Height = new GridLength(28);
         }
@@ -152,14 +152,19 @@ public partial class MainWindow : Window
             _vm.StatusText = "Ready";
             e.Handled = true;
         }
+        else if (e.Key == Key.Escape && _vm.Mode == ContentMode.MovieDetail)
+        {
+            _vm.MovieDetail.BackCommand.Execute(null);
+            e.Handled = true;
+        }
         else if (e.Key == Key.Escape && _vm.Mode == ContentMode.LiveTv)
         {
-            _vm.GoBackToPickerCommand.Execute(null);
+            _vm.GoBackCommand.Execute(null);
             e.Handled = true;
         }
         else if (e.Key == Key.Escape && (_vm.Mode == ContentMode.Movies || _vm.Mode == ContentMode.Series))
         {
-            _vm.GoBackToPickerCommand.Execute(null);
+            _vm.GoBackCommand.Execute(null);
             e.Handled = true;
         }
         else if (e.Key == Key.F && e.Source is not TextBox)

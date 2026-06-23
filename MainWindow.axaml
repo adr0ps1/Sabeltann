@@ -37,7 +37,7 @@
         <vm:MainViewModel/>
     </Design.DataContext>
 
-    <Grid x:Name="MainGrid" RowDefinitions="44,Auto,*,28">
+    <Grid x:Name="MainGrid" RowDefinitions="0,Auto,*,28">
 
         <Grid x:Name="TitleBar" Grid.Row="0" ColumnDefinitions="Auto,Auto,*,Auto" Background="#181825">
             <Grid Grid.Column="0" ColumnDefinitions="Auto,Auto" Background="#181825">
@@ -89,16 +89,34 @@
         </Grid>
 
         <Border x:Name="CategoryBar" Grid.Row="1" Padding="10,7" Background="#313244"
-                IsVisible="{Binding IsCategoryBarVisible}">
-            <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto">
-                <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
+                IsVisible="{Binding ShowCategoryBar}">
+            <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto">
+                <!-- Col 0: File menu -->
+                <Menu Grid.Column="0" Background="#313244" Foreground="#cdd6f4"
+                      FontSize="13" VerticalAlignment="Center" Margin="0,0,4,0">
+                    <MenuItem Header="_File">
+                        <MenuItem Header="Load M3U URL..." Click="OnLoadM3UUrl"/>
+                        <MenuItem Header="Load M3U File..." Click="OnLoadM3UFile"/>
+                        <Separator/>
+                        <MenuItem Header="Xtream Login..." Click="OnXtreamLogin"/>
+                        <Separator/>
+                        <MenuItem Header="_Settings..." Click="OnSettings"/>
+                        <Separator/>
+                        <MenuItem Header="E_xit" Click="OnExit"/>
+                    </MenuItem>
+                </Menu>
+                <!-- Col 1: Back button -->
+                <Button Grid.Column="1" Background="Transparent" BorderThickness="0"
                         Width="28" Height="28" Padding="0" Margin="0,0,8,0"
-                        Command="{Binding GoBackToPickerCommand}"
-                        ToolTip.Tip="Back to menu">
+                        Command="{Binding GoBackCommand}"
+                        IsVisible="{Binding ShowBackButton}"
+                        ToolTip.Tip="Go back">
                     <TextBlock Text="←" Foreground="#a6adc8" FontSize="14"
                                VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 </Button>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <!-- Col 2: Category (Live TV only) -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                            IsVisible="{Binding IsLiveTv}">
                     <TextBlock Text="Category" VerticalAlignment="Center"
                                FontSize="11" FontWeight="SemiBold"
                                Foreground="#a6adc8" LetterSpacing="1"/>
@@ -107,31 +125,53 @@
                               DisplayMemberBinding="{Binding Name}"
                               MinWidth="150" FontSize="12"/>
                 </StackPanel>
-                <ToggleButton Grid.Column="2" IsChecked="{Binding ShowFavoritesOnly}"
+                <!-- Col 3: Favorites toggle (Live TV only) -->
+                <ToggleButton Grid.Column="3" IsChecked="{Binding ShowFavoritesOnly}"
                               Background="Transparent" BorderThickness="0"
                               Margin="6,0,0,0" Padding="4,0"
                               VerticalAlignment="Center"
                               IsVisible="{Binding IsLiveTv}">
                     <TextBlock Text="★" Foreground="#f9e2af" FontSize="13"/>
                 </ToggleButton>
-                <TextBox Grid.Column="3" Text="{Binding SearchText}"
+                <!-- Col 4: Search (Live TV only, fills remaining space) -->
+                <TextBox Grid.Column="4" Text="{Binding SearchText}"
                          PlaceholderText="Search channels..."
                          Background="#1e1e2e" Foreground="#cdd6f4"
                          BorderThickness="1" BorderBrush="#45475a"
                          FontSize="12" Padding="6,4"
-                         Margin="8,0" VerticalAlignment="Center"/>
-                <ToggleButton Grid.Column="4" IsChecked="{Binding ShowDebugOverlay}"
+                         Margin="8,0" VerticalAlignment="Center"
+                         IsVisible="{Binding IsLiveTv}"/>
+                <!-- Col 5: Connection status -->
+                <Border Grid.Column="5" IsVisible="{Binding ShowConnectionOverlay}"
+                        VerticalAlignment="Center" Margin="0,0,8,0">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="{Binding ConnectionState}" Foreground="#a6e3a1" FontSize="11"/>
+                        <TextBlock Text="{Binding ConnectionProgress, StringFormat='{}{0}%'}" Foreground="#6c7086" FontSize="11"/>
+                    </StackPanel>
+                </Border>
+                <!-- Col 6: DEBUG toggle -->
+                <ToggleButton Grid.Column="6" IsChecked="{Binding ShowDebugOverlay}"
                               Background="Transparent" BorderThickness="0"
                               Margin="4,0" Padding="6,2"
                               VerticalAlignment="Center">
                     <TextBlock Text="DEBUG" Foreground="#f38ba8" FontSize="9" FontWeight="Bold"
                                LetterSpacing="1"/>
                 </ToggleButton>
-                <Border Grid.Column="5" CornerRadius="10" Background="#313244" 
-                        Padding="8,2" Margin="6,0" VerticalAlignment="Center">
+                <!-- Col 7: Channel count (Live TV only) -->
+                <Border Grid.Column="7" CornerRadius="10" Background="#313244"
+                        Padding="8,2" Margin="6,0" VerticalAlignment="Center"
+                        IsVisible="{Binding IsLiveTv}">
                     <TextBlock Text="{Binding ChannelCount, StringFormat='{}{0} channels'}"
                                Foreground="#a6adc8" FontSize="11"/>
                 </Border>
+                <!-- Col 8: Update button -->
+                <Button Grid.Column="8" Command="{Binding CheckForUpdatesCommand}"
+                        Background="Transparent" BorderThickness="0"
+                        VerticalAlignment="Center"
+                        ToolTip.Tip="Check for Updates"
+                        Padding="6,2" Focusable="False">
+                    <TextBlock Text="↑" Foreground="#6c7086" FontSize="14"/>
+                </Button>
             </Grid>
         </Border>
 
@@ -242,7 +282,7 @@
                 <!-- Buffering / error overlay -->
                 <Border ZIndex="5"
                         IsVisible="{Binding ShowBufferingOverlay}"
-                        Background="#aa11111b"
+                        Background="#f011111b"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
@@ -375,8 +415,8 @@
                         IsVisible="{Binding ShowDebugOverlay}"
                         Background="#cc11111b"
                         CornerRadius="8"
-                        Padding="10"
-                        MinWidth="220">
+                        Padding="14,12"
+                        Width="380">
                     <StackPanel Spacing="3" DataContext="{Binding DebugStats}">
                         <TextBlock Text="Debug Info" Foreground="#cba6f7" FontSize="13" FontWeight="Bold" Margin="0,0,0,4"/>
                         <Grid ColumnDefinitions="80,*">
@@ -402,6 +442,18 @@
                         <Grid ColumnDefinitions="80,*">
                             <TextBlock Grid.Column="0" Text="Volume" Foreground="#6c7086" FontSize="11"/>
                             <TextBlock Grid.Column="1" Text="{Binding Volume}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="80,*">
+                            <TextBlock Grid.Column="0" Text="Input" Foreground="#6c7086" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding InputBitrate}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="80,*">
+                            <TextBlock Grid.Column="0" Text="Demux" Foreground="#6c7086" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding DemuxBitrate}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="80,*">
+                            <TextBlock Grid.Column="0" Text="Dropped" Foreground="#6c7086" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding LostFrames}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
                         </Grid>
                         <Grid ColumnDefinitions="80,*">
                             <TextBlock Grid.Column="0" Text="URL" Foreground="#6c7086" FontSize="11" VerticalAlignment="Center"/>
