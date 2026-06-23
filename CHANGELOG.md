@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.21](https://github.com/adr0ps1/Sabeltann/compare/v0.1.20...v0.1.21) (2026-06-23)
+
+
+### Bug Fixes
+
+* Popup overlays, buffering UI, VOD progress, movie detail page, polished auto-update, repo hardening ([#48](https://github.com/adr0ps1/Sabeltann/issues/48)) ([d8dae58](https://github.com/adr0ps1/Sabeltann/commit/d8dae5838aa9889e80c0999868f683c1af41b146))
+
 ## [0.1.20](https://github.com/adr0ps1/Sabeltann/compare/v0.1.19...v0.1.20) (2026-06-22)
 
 
