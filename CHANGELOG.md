@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.22](https://github.com/adr0ps1/Sabeltann/compare/v0.1.21...v0.1.22) (2026-06-28)
+
+
+### Features
+
+* Research/iptv features ([#52](https://github.com/adr0ps1/Sabeltann/issues/52)) ([b21f9dd](https://github.com/adr0ps1/Sabeltann/commit/b21f9dd8c81985d16392ff28cebec8e55f1b3da5))
+
+
+### Documentation
+
+* Add IPTV player feature research ([#50](https://github.com/adr0ps1/Sabeltann/issues/50)) ([d8dd7e3](https://github.com/adr0ps1/Sabeltann/commit/d8dd7e33312edb242d979d9c50c7f97223cb54ec))
+
 ## [0.1.21](https://github.com/adr0ps1/Sabeltann/compare/v0.1.20...v0.1.21) (2026-06-23)
 
 
