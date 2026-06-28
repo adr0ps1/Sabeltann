@@ -171,16 +171,36 @@ public partial class MainViewModel : ObservableObject
     {
         Mode = ContentMode.MovieDetail;
         _ = MovieDetail.LoadAsync(movie);
+        MovieDetail.SetResume(TryGetResumeMs(movie.Url));
     }
 
     [RelayCommand]
-    private void PlayFromDetail()
+    private void PlayFromStart()
     {
         if (MovieDetail.PlayUrl is string url)
         {
             Mode = ContentMode.Movies;
-            OnVodPlayRequested(url);
+            PlayVod(url, resume: false);
         }
+    }
+
+    [RelayCommand]
+    private void ResumeFromDetail()
+    {
+        if (MovieDetail.PlayUrl is string url)
+        {
+            Mode = ContentMode.Movies;
+            PlayVod(url, resume: true);
+        }
+    }
+
+    /// <summary>Returns the saved resume position for a VOD url, or null if none is worth resuming.</summary>
+    private long? TryGetResumeMs(string? url)
+    {
+        if (url is not null && _settingsData.VodProgress.TryGetValue(url, out var saved)
+            && saved.PositionMs > 30_000 && saved.PositionMs < saved.DurationMs * 0.95)
+            return saved.PositionMs;
+        return null;
     }
 
     public async Task ShowSeriesBrowserAsync()
@@ -199,10 +219,16 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    private void OnVodPlayRequested(string url)
+    // Grid/episode play auto-resumes; the detail page passes an explicit choice via PlayVod.
+    private void OnVodPlayRequested(string url) => PlayVod(url, resume: true);
+
+    private void PlayVod(string url, bool resume)
     {
         try
         {
+            SaveVodProgress();           // persist the title we're leaving
+            _isCurrentVod = true;
+            _resumeToMs = resume ? TryGetResumeMs(url) ?? 0 : 0;
             _currentPlayingUrl = url;
             _vodPausePosition = TimeSpan.Zero;
             LogService.Info("Playing VOD", new { url });
@@ -211,6 +237,9 @@ public partial class MainViewModel : ObservableObject
             ConnectionState = "Connecting...";
             ConnectionProgress = 0;
             _awaitingPlayback = true;
+            _awaitingSince = DateTime.UtcNow;
+            _playbackRequested = true;
+            _playStartFrames = _player?.FramesDecoded ?? 0;
             _player?.ClearBitmap();
             _player?.Play(url);
             DebugStats.SetUrl(url);
@@ -360,6 +389,12 @@ public partial class MainViewModel : ObservableObject
     private string? _currentPlayingUrl;
     private TimeSpan _vodPausePosition;
     private bool _awaitingPlayback;
+    private DateTime _awaitingSince;
+    private bool _playbackRequested;
+    private int _playStartFrames;
+    private bool _isCurrentVod;
+    private double _resumeToMs;
+    private const double PlaybackTimeoutSeconds = 15;
 
     public event Action? ToggleFullscreenRequested;
 
@@ -405,12 +440,29 @@ public partial class MainViewModel : ObservableObject
             ConnectionProgress = 0;
             var len = _player.Length;
             if (len > 0) VodDuration = len;
+            if (_resumeToMs > 0)
+            {
+                _player.SetPosition(TimeSpan.FromMilliseconds(_resumeToMs));
+                StatusText = $"Resuming from {FormatTime(_resumeToMs)}";
+                _resumeToMs = 0;
+            }
         });
         _player.Buffering += (_, pct) => Dispatcher.UIThread.Post(() =>
         {
             ConnectionProgress = pct;
-            ConnectionState = pct < 100 ? $"Buffering... {pct}%" : "";
-            ShowBufferingOverlay = true;
+            // VLC emits Buffering both before AND after Playing (seeks, refills). 100 = done:
+            // clear the overlay here, otherwise the indeterminate bar sticks over live video
+            // since Playing won't re-fire after a seek or a mid-stream refill.
+            if (pct >= 100)
+            {
+                ConnectionState = "";
+                ShowBufferingOverlay = false;
+            }
+            else
+            {
+                ConnectionState = $"Buffering... {pct}%";
+                ShowBufferingOverlay = true;
+            }
         });
         _player.Stopped += (_, _) => Dispatcher.UIThread.Post(() =>
         {
@@ -437,6 +489,23 @@ public partial class MainViewModel : ObservableObject
                 var len = _player.Length;
                 if (len > 0) VodDuration = len;
                 VodPosition = _player.TimeMs;
+            }
+            // Watchdog: dead streams often fire Playing (connection opened) but never decode
+            // a single video frame, so event-based signals can't catch them. Key off actual
+            // frames: if none have decoded within the timeout, surface the failure ourselves.
+            if (_playbackRequested && (DateTime.UtcNow - _awaitingSince).TotalSeconds > PlaybackTimeoutSeconds)
+            {
+                _playbackRequested = false;
+                if (_player is null || _player.FramesDecoded <= _playStartFrames)
+                {
+                    LogService.Warn("Playback watchdog: no frames decoded, stream unavailable");
+                    _player?.Stop();
+                    _awaitingPlayback = false;
+                    ConnectionState = "Stream unavailable";
+                    ShowConnectionOverlay = false;
+                    ShowBufferingOverlay = true;
+                    IsPlaying = false;
+                }
             }
             if (_player?.VideoBitmap is not null)
                 OnPropertyChanged(nameof(VideoBitmap));
@@ -534,6 +603,9 @@ public partial class MainViewModel : ObservableObject
             if (value is not null && _player is not null && !string.IsNullOrEmpty(value.Url))
             {
                 IsBrowsing = false;
+                SaveVodProgress();
+                _isCurrentVod = false;
+                _resumeToMs = 0;
                 _currentPlayingUrl = value.Url;
                 _vodPausePosition = TimeSpan.Zero;
                 _player.SetVolume(Volume);
@@ -543,6 +615,9 @@ public partial class MainViewModel : ObservableObject
                 ConnectionState = "Connecting...";
                 ConnectionProgress = 0;
                 _awaitingPlayback = true;
+                _awaitingSince = DateTime.UtcNow;
+                _playbackRequested = true;
+                _playStartFrames = _player?.FramesDecoded ?? 0;
                 _player?.ClearBitmap();
                 _player.Play(value.Url);
                 DebugStats.SetUrl(value.Url);
@@ -608,6 +683,36 @@ public partial class MainViewModel : ObservableObject
                 Username = s.LastXtream.Username,
                 Password = s.LastXtream.Password
             });
+    }
+
+    /// <summary>
+    /// Persists the current VOD's playback position so it can be resumed next time.
+    /// Call before switching streams or on exit. Near-finished titles are dropped so
+    /// they restart instead of resuming at the credits.
+    /// ponytail: only saved on switch/close, not continuously — a crash mid-play loses
+    /// the latest position. Add a periodic flush if that matters.
+    /// </summary>
+    public void SaveVodProgress()
+    {
+        if (!_isCurrentVod || string.IsNullOrEmpty(_currentPlayingUrl)) return;
+        double pos = VodPosition, dur = VodDuration;
+        if (dur <= 1 || pos <= 0) return;
+        var url = _currentPlayingUrl;
+        _settingsData = MergeAndSave(s =>
+        {
+            if (pos >= dur * 0.95)
+                s.VodProgress.Remove(url);
+            else
+                s.VodProgress[url] = new VodProgressEntry
+                {
+                    PositionMs = (long)pos, DurationMs = (long)dur, UpdatedAt = DateTime.UtcNow
+                };
+            // ponytail: cap history at 200, evict oldest. Raise if users want longer memory.
+            if (s.VodProgress.Count > 200)
+                foreach (var k in s.VodProgress.OrderBy(e => e.Value.UpdatedAt)
+                             .Take(s.VodProgress.Count - 200).Select(e => e.Key).ToList())
+                    s.VodProgress.Remove(k);
+        });
     }
 
     private SettingsData MergeAndSave(Action<SettingsData> update)
@@ -797,6 +902,7 @@ public partial class MainViewModel : ObservableObject
     private void StopPlayback()
     {
         LogService.Info("StopPlayback called", new { mode = Mode.ToString(), isPlaying = IsPlaying, isPaused = IsPaused });
+        SaveVodProgress();           // persist position before we zero it below
         _player?.Stop();
         IsPlaying = false;
         IsPaused = false;
@@ -806,6 +912,7 @@ public partial class MainViewModel : ObservableObject
         ShowBufferingOverlay = false;
         ShowConnectionOverlay = false;
         _awaitingPlayback = false;
+        _playbackRequested = false;
         _player?.ClearBitmap();
 
         if (Mode == ContentMode.LiveTv)

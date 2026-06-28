@@ -52,6 +52,14 @@ public class SettingsData
     public bool CheckForUpdatesEnabled { get; set; } = true;
     public bool IncludePrerelease { get; set; } = false;
     public DateTime? LastUpdateCheck { get; set; }
+    public Dictionary<string, VodProgressEntry> VodProgress { get; set; } = [];
+}
+
+public class VodProgressEntry
+{
+    public long PositionMs { get; set; }
+    public long DurationMs { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }
 
 public class XtreamSettings
