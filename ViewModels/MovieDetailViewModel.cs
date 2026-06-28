@@ -53,7 +53,30 @@ public partial class MovieDetailViewModel : ObservableObject
 
     public string? PlayUrl { get; private set; }
 
+    [ObservableProperty]
+    private bool _canResume;
+
+    [ObservableProperty]
+    private string? _resumeText;
+
     public event Action? BackRequested;
+
+    /// <summary>Sets the resume affordance from a saved position (null hides the Resume button).</summary>
+    public void SetResume(long? positionMs)
+    {
+        CanResume = positionMs is not null;
+        ResumeText = positionMs is long ms
+            ? $"▶  Resume from {FormatTime(ms)}"
+            : null;
+    }
+
+    private static string FormatTime(long ms)
+    {
+        var t = TimeSpan.FromMilliseconds(ms);
+        return t.TotalHours >= 1
+            ? $"{t.Hours:D2}:{t.Minutes:D2}:{t.Seconds:D2}"
+            : $"{t.Minutes:D2}:{t.Seconds:D2}";
+    }
 
     public string ImdbStars => BuildStars(ImdbRating);
 

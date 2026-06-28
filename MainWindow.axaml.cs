@@ -306,6 +306,7 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        _vm.SaveVodProgress();
         _vm.DebugStats.Stop();
         _player.Dispose();
         ImageService.Shutdown();
