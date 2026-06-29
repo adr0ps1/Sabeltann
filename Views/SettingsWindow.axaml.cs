@@ -17,6 +17,7 @@ public partial class SettingsWindow : Window
         AutoLoadCheck.IsChecked = current.AutoLoadLastSession;
         CheckForUpdatesCheck.IsChecked = current.CheckForUpdatesEnabled;
         IncludePrereleaseCheck.IsChecked = current.IncludePrerelease;
+        OmdbKeyText.Text = current.OmdbApiKey ?? "";
         ServerUrlText.Text = serverUrl ?? "Not connected";
         UsernameText.Text = username ?? "-";
         ChannelCountText.Text = $"{channelCount} channels";
@@ -33,6 +34,8 @@ public partial class SettingsWindow : Window
         _data.AutoLoadLastSession = AutoLoadCheck.IsChecked ?? true;
         _data.CheckForUpdatesEnabled = CheckForUpdatesCheck.IsChecked ?? true;
         _data.IncludePrerelease = IncludePrereleaseCheck.IsChecked ?? false;
+        var key = OmdbKeyText.Text?.Trim();
+        _data.OmdbApiKey = string.IsNullOrEmpty(key) ? null : key;
         Close(_data);
     }
 }

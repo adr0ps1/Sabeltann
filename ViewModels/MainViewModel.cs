@@ -82,6 +82,9 @@ public partial class MainViewModel : ObservableObject
         _settingsData = data;
         _updateService.IncludePrerelease = data.IncludePrerelease;
         Volume = data.DefaultVolume;
+        MovieDetail.SetOmdbKey(data.OmdbApiKey);
+        VodBrowser.SetOmdbKey(data.OmdbApiKey);
+        SeriesBrowser.SetOmdbKey(data.OmdbApiKey);
     }
 
     public void SetSearchResults(string query)
@@ -165,13 +168,27 @@ public partial class MainViewModel : ObservableObject
         {
             VodBrowser.InitializeFromChannels(_movieChannels);
         }
+
+        VodBrowser.RefreshContinueWatching(_settingsData.VodProgress);
     }
+
+    // Where back/stop should return after the detail card — Movies or Series.
+    private ContentMode _detailReturnMode = ContentMode.Movies;
 
     private void OnMovieDetailRequested(VodMovieViewModel movie)
     {
+        _detailReturnMode = ContentMode.Movies;
         Mode = ContentMode.MovieDetail;
         _ = MovieDetail.LoadAsync(movie);
         MovieDetail.SetResume(TryGetResumeMs(movie.Url));
+    }
+
+    private void OnEpisodeDetailRequested(EpisodeDetail ep)
+    {
+        _detailReturnMode = ContentMode.Series;
+        Mode = ContentMode.MovieDetail;
+        _ = MovieDetail.LoadEpisodeAsync(ep.ShowName, ep.Year, ep.Label, ep.Url, ep.Poster);
+        MovieDetail.SetResume(TryGetResumeMs(ep.Url));
     }
 
     [RelayCommand]
@@ -179,7 +196,7 @@ public partial class MainViewModel : ObservableObject
     {
         if (MovieDetail.PlayUrl is string url)
         {
-            Mode = ContentMode.Movies;
+            Mode = _detailReturnMode;
             PlayVod(url, resume: false);
         }
     }
@@ -189,7 +206,7 @@ public partial class MainViewModel : ObservableObject
     {
         if (MovieDetail.PlayUrl is string url)
         {
-            Mode = ContentMode.Movies;
+            Mode = _detailReturnMode;
             PlayVod(url, resume: true);
         }
     }
@@ -205,8 +222,8 @@ public partial class MainViewModel : ObservableObject
 
     public async Task ShowSeriesBrowserAsync()
     {
-        SeriesBrowser.PlayRequested -= OnVodPlayRequested;
-        SeriesBrowser.PlayRequested += OnVodPlayRequested;
+        SeriesBrowser.EpisodeDetailRequested -= OnEpisodeDetailRequested;
+        SeriesBrowser.EpisodeDetailRequested += OnEpisodeDetailRequested;
         Mode = ContentMode.Series;
 
         if (_pendingXtreamInfo is not null)
@@ -361,6 +378,12 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private int _currentSubtitleTrack = -1;
+
+    // ponytail: audio tracks reuse SubtitleTrackItem — same (id, name) shape.
+    public ObservableCollection<SubtitleTrackItem> AudioTrackItems { get; } = [];
+
+    [ObservableProperty]
+    private int _currentAudioTrack = -1;
 
     [ObservableProperty]
     private bool _showFavoritesOnly;
@@ -517,7 +540,7 @@ public partial class MainViewModel : ObservableObject
     public MainViewModel()
     {
         DebugStats = new DebugStatsViewModel(null);
-        MovieDetail.BackRequested += () => Mode = ContentMode.Movies;
+        MovieDetail.BackRequested += () => Mode = _detailReturnMode;
 
         _updateService.UpdateReady += version =>
         {
@@ -628,6 +651,10 @@ public partial class MainViewModel : ObservableObject
                 foreach (var t in _player.GetSubtitleTracks())
                     SubtitleTrackItems.Add(new SubtitleTrackItem(t.Id, t.Name));
                 CurrentSubtitleTrack = _player.CurrentSubtitleTrack;
+                AudioTrackItems.Clear();
+                foreach (var t in _player.GetAudioTracks())
+                    AudioTrackItems.Add(new SubtitleTrackItem(t.Id, t.Name));
+                CurrentAudioTrack = _player.CurrentAudioTrack;
                 StatusText = $"Playing: {value.Name}";
                 MergeAndSave(s => s.LastChannelUrl = value.Url);
             }
@@ -663,6 +690,23 @@ public partial class MainViewModel : ObservableObject
         ShowSubtitlePopup = false;
     }
 
+    public void RefreshAudioTracks()
+    {
+        if (_player is null || !IsPlaying) return;
+        AudioTrackItems.Clear();
+        foreach (var t in _player.GetAudioTracks())
+            AudioTrackItems.Add(new SubtitleTrackItem(t.Id, t.Name));
+        CurrentAudioTrack = _player.CurrentAudioTrack;
+    }
+
+    [RelayCommand]
+    private void SelectAudio(int id)
+    {
+        if (_player is null) return;
+        _player.SetAudioTrack(id);
+        CurrentAudioTrack = id;
+    }
+
     partial void OnVolumeChanged(int value) => _player?.SetVolume(value);
 
     public void LoadLastSession()
@@ -671,6 +715,9 @@ public partial class MainViewModel : ObservableObject
         _settingsData = s;
         _updateService.IncludePrerelease = s.IncludePrerelease;
         Volume = s.DefaultVolume;
+        MovieDetail.SetOmdbKey(s.OmdbApiKey);
+        VodBrowser.SetOmdbKey(s.OmdbApiKey);
+        SeriesBrowser.SetOmdbKey(s.OmdbApiKey);
         if (!s.AutoLoadLastSession) return;
         if (s.LastSourceType == "url" && !string.IsNullOrEmpty(s.LastSourceUrl))
             _ = LoadM3UFromUrlAsync(s.LastSourceUrl);
@@ -882,7 +929,7 @@ public partial class MainViewModel : ObservableObject
         }
         else if (Mode == ContentMode.MovieDetail)
         {
-            Mode = ContentMode.Movies;
+            Mode = _detailReturnMode;
         }
         else
         {
@@ -923,6 +970,8 @@ public partial class MainViewModel : ObservableObject
         else
         {
             StatusText = "Ready";
+            if (Mode == ContentMode.Movies)
+                VodBrowser.RefreshContinueWatching(_settingsData.VodProgress);
         }
     }
 

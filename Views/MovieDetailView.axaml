@@ -2,8 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Sabeltann.Views.MovieDetailView"
              Background="#11111b">
-  <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-    <StackPanel MaxWidth="700" HorizontalAlignment="Center" Margin="24,16,24,32" Spacing="16">
+  <!-- Viewbox scales the whole card (poster + text) to fill the window, capped so it
+       doesn't over-zoom on large monitors. -->
+  <Viewbox Stretch="Uniform" MaxWidth="1200" Margin="32">
+    <StackPanel Width="780" Spacing="18">
 
       <!-- Back button -->
       <Button Command="{Binding BackCommand}" Background="Transparent" BorderThickness="0"
@@ -12,10 +14,10 @@
       </Button>
 
       <!-- Hero row: Poster + metadata -->
-      <Grid ColumnDefinitions="200,*" RowDefinitions="Auto" Margin="0,8,0,0">
+      <Grid ColumnDefinitions="240,*" RowDefinitions="Auto" Margin="0,8,0,0">
 
         <!-- Poster -->
-        <Border Grid.Column="0" Width="200" Height="280" CornerRadius="8"
+        <Border Grid.Column="0" Width="240" Height="340" CornerRadius="8"
                 Background="#313244" ClipToBounds="True" VerticalAlignment="Top">
           <Panel>
             <TextBlock Text="🎬" FontSize="48" HorizontalAlignment="Center"
@@ -27,11 +29,16 @@
         </Border>
 
         <!-- Right column: title, year, genre, ratings -->
-        <StackPanel Grid.Column="1" Margin="20,0,0,0" Spacing="8" VerticalAlignment="Top">
+        <StackPanel Grid.Column="1" Margin="24,0,0,0" Spacing="8" VerticalAlignment="Top">
 
           <!-- Title -->
-          <TextBlock Text="{Binding Title}" Foreground="#cdd6f4" FontSize="22"
+          <TextBlock Text="{Binding Title}" Foreground="#cdd6f4" FontSize="26"
                      FontWeight="Bold" TextWrapping="Wrap"/>
+
+          <!-- Episode label (series only) -->
+          <TextBlock Text="{Binding EpisodeLabel}" Foreground="#cba6f7" FontSize="14"
+                     FontWeight="SemiBold" TextWrapping="Wrap"
+                     IsVisible="{Binding EpisodeLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
           <!-- Year • Runtime • Genre -->
           <TextBlock Foreground="#a6adc8" FontSize="12" TextWrapping="Wrap">
@@ -42,10 +49,10 @@
             <Run Text="{Binding Genre}"/>
           </TextBlock>
 
-          <!-- Ratings block (visible only if HasRatings) -->
-          <StackPanel IsVisible="{Binding HasRatings}" Spacing="4">
-            <TextBlock Text="{Binding ImdbStars}" FontSize="20" Foreground="#f9e2af"/>
-            <StackPanel Orientation="Horizontal" Spacing="16">
+          <!-- Stars: from IMDb or the provider's own rating -->
+          <StackPanel IsVisible="{Binding HasStars}" Spacing="4">
+            <TextBlock Text="{Binding Stars}" FontSize="20" Foreground="#f9e2af"/>
+            <StackPanel Orientation="Horizontal" Spacing="16" IsVisible="{Binding HasRatings}">
               <StackPanel>
                 <TextBlock Text="IMDb" Foreground="#6c7086" FontSize="10"/>
                 <TextBlock Foreground="#cdd6f4" FontSize="14">
@@ -62,7 +69,32 @@
           <!-- No ratings note -->
           <TextBlock Text="Ratings unavailable (no OMDb API key configured)"
                      Foreground="#6c7086" FontSize="11" FontStyle="Italic"
-                     IsVisible="{Binding !HasRatings}"/>
+                     IsVisible="{Binding !HasStars}"/>
+
+          <!-- Language (spoken) -->
+          <StackPanel Orientation="Horizontal" Spacing="6"
+                      IsVisible="{Binding Language, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock Text="Language:" Foreground="#6c7086" FontSize="12"/>
+            <TextBlock Text="{Binding Language}" Foreground="#cdd6f4" FontSize="12" TextWrapping="Wrap"/>
+          </StackPanel>
+
+          <!-- Play actions: anchored under the metadata, left-aligned (hero CTA) -->
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Left"
+                      Spacing="10" Margin="0,12,0,0">
+            <Button Padding="24,11" CornerRadius="8"
+                    Background="#cba6f7" Foreground="#1e1e2e" FontWeight="Bold" FontSize="14"
+                    IsVisible="{Binding CanResume}"
+                    Command="{Binding $parent[Window].DataContext.ResumeFromDetailCommand}"
+                    Cursor="Hand">
+              <TextBlock Text="{Binding ResumeText}"/>
+            </Button>
+            <Button Padding="24,11" CornerRadius="8"
+                    Background="#45475a" Foreground="#cdd6f4" FontWeight="Bold" FontSize="14"
+                    Command="{Binding $parent[Window].DataContext.PlayFromStartCommand}"
+                    Cursor="Hand">
+              <TextBlock Text="▶  Play from start"/>
+            </Button>
+          </StackPanel>
 
         </StackPanel>
       </Grid>
@@ -71,8 +103,9 @@
       <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True"
                    Height="2" Foreground="#cba6f7" Background="Transparent" Margin="0,-8,0,0"/>
 
-      <!-- Plot -->
-      <StackPanel Spacing="4" IsVisible="{Binding Plot, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+      <!-- Plot (capped reading width so lines stay legible on wide windows) -->
+      <StackPanel Spacing="4" HorizontalAlignment="Left" MaxWidth="900"
+                  IsVisible="{Binding Plot, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
         <TextBlock Text="Plot" Foreground="#6c7086" FontSize="11" FontWeight="SemiBold"/>
         <TextBlock Text="{Binding Plot}" Foreground="#a6adc8" FontSize="13" TextWrapping="Wrap"/>
       </StackPanel>
@@ -91,24 +124,6 @@
         <TextBlock Text="{Binding Cast}" Foreground="#cdd6f4" FontSize="12" TextWrapping="Wrap"/>
       </StackPanel>
 
-      <!-- Play buttons -->
-      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
-                  Spacing="12" Margin="0,16,0,0">
-        <Button Padding="32,12" CornerRadius="8"
-                Background="#cba6f7" Foreground="#1e1e2e" FontWeight="Bold" FontSize="15"
-                IsVisible="{Binding CanResume}"
-                Command="{Binding $parent[Window].DataContext.ResumeFromDetailCommand}"
-                Cursor="Hand">
-          <TextBlock Text="{Binding ResumeText}"/>
-        </Button>
-        <Button Padding="32,12" CornerRadius="8"
-                Background="#45475a" Foreground="#cdd6f4" FontWeight="Bold" FontSize="15"
-                Command="{Binding $parent[Window].DataContext.PlayFromStartCommand}"
-                Cursor="Hand">
-          <TextBlock Text="▶  Play from start"/>
-        </Button>
-      </StackPanel>
-
     </StackPanel>
-  </ScrollViewer>
+  </Viewbox>
 </UserControl>

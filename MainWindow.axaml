@@ -250,6 +250,7 @@
                 <Button Background="#44000000" BorderThickness="0" CornerRadius="8"
                         Width="32" Height="32" HorizontalAlignment="Right" VerticalAlignment="Top"
                         Margin="8" Padding="0" IsVisible="{Binding ShowVideo}"
+                        Opacity="{Binding #TransportBar.Opacity}"
                         Command="{Binding StopPlaybackCommand}" ZIndex="10">
                     <TextBlock Text="✕" Foreground="#f38ba8" FontSize="16" FontWeight="Bold"
                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -304,7 +305,7 @@
                         HorizontalAlignment="Stretch" VerticalAlignment="Bottom" ZIndex="10"
                         PointerEntered="OnTransportEntered"
                         PointerExited="OnTransportExited">
-                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto" VerticalAlignment="Center">
+                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto" VerticalAlignment="Center">
 
                         <!-- Play/Pause -->
                         <Button Grid.Column="0" Classes="TransportBtn" Focusable="False"
@@ -359,16 +360,32 @@
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Button>
 
-                        <!-- Subtitles -->
+                        <!-- Audio track -->
                         <Button Grid.Column="6" Classes="TransportBtn" Focusable="False"
+                                ToolTip.Tip="Audio track / language"
+                                Click="OnAudioClick">
+                            <TextBlock Text="🔊" Foreground="#89b4fa" FontSize="15"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
+
+                        <!-- Subtitles -->
+                        <Button Grid.Column="7" Classes="TransportBtn" Focusable="False"
                                 ToolTip.Tip="Subtitles"
                                 Click="OnCcClick">
                             <TextBlock Text="CC" Foreground="#89b4fa" FontSize="13" FontWeight="Bold"
                                        VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
 
+                        <!-- Pop-out (windowed, chrome hidden) -->
+                        <Button Grid.Column="8" Classes="TransportBtn" Focusable="False"
+                                Click="OnPopoutClick"
+                                ToolTip.Tip="Pop-out player — hide bars (Esc to exit)">
+                            <TextBlock Text="🗗" Foreground="#89b4fa" FontSize="16"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
+
                         <!-- Fullscreen -->
-                        <Button Grid.Column="7" Classes="TransportBtn" Focusable="False"
+                        <Button Grid.Column="9" Classes="TransportBtn" Focusable="False"
                                 Command="{Binding FullscreenCommand}"
                                 ToolTip.Tip="Fullscreen (F)">
                             <TextBlock Text="⛶" Foreground="#89b4fa" FontSize="18"

@@ -17,6 +17,7 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _transportAutoHide;
     private readonly DispatcherTimer _volumeHideTimer;
     private bool _isFullscreen;
+    private bool _isPopout;
 
     public MainWindow()
     {
@@ -27,6 +28,7 @@ public partial class MainWindow : Window
         _vm.SetPlayer(_player);
         _player.FrameRendered += () => VideoImage?.InvalidateVisual();
         _vm.ToggleFullscreenRequested += ToggleFullscreen;
+        _vm.PropertyChanged += OnVmPropertyChanged;
         DataContext = _vm;
 
         KeyDown += OnKeyDown;
@@ -115,28 +117,48 @@ public partial class MainWindow : Window
     {
         _isFullscreen = WindowState != WindowState.FullScreen;
         WindowState = _isFullscreen ? WindowState.FullScreen : WindowState.Normal;
+        UpdateChrome();
+    }
 
-        TitleBar.IsVisible = !_isFullscreen;
-        MainMenu.IsVisible = !_isFullscreen;
-        StatusBar.IsVisible = !_isFullscreen;
+    private void OnPopoutClick(object? sender, RoutedEventArgs e) => TogglePopout();
 
-        if (_isFullscreen)
+    // When playback ends, leave pop-out so the bars (and their controls) come back.
+    private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainViewModel.ShowVideo) && !_vm.ShowVideo && _isPopout)
         {
-            MainGrid.RowDefinitions[0].Height = new GridLength(0);
-            MainGrid.RowDefinitions[1].Height = new GridLength(0);
-            MainGrid.RowDefinitions[3].Height = new GridLength(0);
+            _isPopout = false;
+            UpdateChrome();
         }
-        else
-        {
-            MainGrid.RowDefinitions[0].Height = new GridLength(0);
-            MainGrid.RowDefinitions[1].Height = GridLength.Auto;
-            MainGrid.RowDefinitions[3].Height = new GridLength(28);
-        }
+    }
+
+    /// <summary>Windowed pop-out: hides the top/bottom bars like fullscreen but keeps the window framed.</summary>
+    private void TogglePopout()
+    {
+        _isPopout = !_isPopout;
+        UpdateChrome();
+    }
+
+    /// <summary>Top/bottom chrome is hidden when either fullscreen or pop-out is active.</summary>
+    private void UpdateChrome()
+    {
+        var hide = _isFullscreen || _isPopout;
+        TitleBar.IsVisible = !hide;
+        MainMenu.IsVisible = !hide;
+        StatusBar.IsVisible = !hide;
+        MainGrid.RowDefinitions[0].Height = new GridLength(0);
+        MainGrid.RowDefinitions[1].Height = hide ? new GridLength(0) : GridLength.Auto;
+        MainGrid.RowDefinitions[3].Height = hide ? new GridLength(0) : new GridLength(28);
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape && (_vm.IsPlaying || _vm.IsPaused))
+        if (e.Key == Key.Escape && _isPopout)
+        {
+            TogglePopout();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape && (_vm.IsPlaying || _vm.IsPaused))
         {
             _vm.StopPlaybackCommand.Execute(null);
             e.Handled = true;
@@ -291,6 +313,26 @@ public partial class MainWindow : Window
             if (t.Id != -1)
                 AddItem(t.Name, t.Id);
         }
+        menu.Open(btn);
+    }
+
+    private void OnAudioClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn) return;
+        _vm.RefreshAudioTracks();
+        var menu = new ContextMenu();
+        foreach (var t in _vm.AudioTrackItems)
+        {
+            var mi = new MenuItem { Header = t.Name, Tag = t.Id };
+            mi.Click += (_, _) =>
+            {
+                _vm.SelectAudioCommand.Execute(t.Id);
+                menu.Close();
+            };
+            menu.Items.Add(mi);
+        }
+        if (menu.Items.Count == 0)
+            menu.Items.Add(new MenuItem { Header = "No audio tracks", IsEnabled = false });
         menu.Open(btn);
     }
 

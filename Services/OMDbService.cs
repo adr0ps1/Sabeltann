@@ -13,7 +13,8 @@ public record OMDbResult(
     string? Plot,
     string? Actors,
     string? Director,
-    string? PosterUrl
+    string? PosterUrl,
+    string? Language
 );
 
 public sealed class OMDbService
@@ -27,6 +28,9 @@ public sealed class OMDbService
         WriteIndented = false,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
+
+    // ponytail: shared cap so a screenful of poster lookups doesn't burst the API at once.
+    private static readonly SemaphoreSlim NetThrottle = new(4, 4);
 
     private readonly string? _apiKey;
     private readonly HttpClient _http;
@@ -49,6 +53,7 @@ public sealed class OMDbService
 
         var url = $"http://www.omdbapi.com/?apikey={_apiKey}&t={Uri.EscapeDataString(title)}&y={year ?? ""}&plot=full";
 
+        await NetThrottle.WaitAsync(ct);
         try
         {
             using var response = await _http.GetAsync(url, ct);
@@ -69,6 +74,7 @@ public sealed class OMDbService
             string? actors = GetStringOrNull(root, "Actors");
             string? director = GetStringOrNull(root, "Director");
             string? poster = GetStringOrNull(root, "Poster");
+            string? language = GetStringOrNull(root, "Language");
 
             string? rottenTomatoes = null;
             if (root.TryGetProperty("Ratings", out var ratingsEl) &&
@@ -94,7 +100,8 @@ public sealed class OMDbService
                 Plot: NormalizeNa(plot),
                 Actors: NormalizeNa(actors),
                 Director: NormalizeNa(director),
-                PosterUrl: NormalizeNa(poster)
+                PosterUrl: NormalizeNa(poster),
+                Language: NormalizeNa(language)
             );
 
             WriteCache(cacheKey, result);
@@ -104,6 +111,10 @@ public sealed class OMDbService
         {
             LogService.Error("OMDbService.FetchAsync failed", new { title, error = ex.Message });
             return null;
+        }
+        finally
+        {
+            NetThrottle.Release();
         }
     }
 

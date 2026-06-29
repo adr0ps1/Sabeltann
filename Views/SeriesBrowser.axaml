@@ -61,6 +61,7 @@
                             <DataTemplate DataType="{x:Type vm:SeriesShowViewModel}">
                                 <Button Background="#181825" BorderThickness="1" BorderBrush="#313244"
                                         CornerRadius="12" Padding="0" Margin="6,6" Width="180"
+                                        EffectiveViewportChanged="OnCoverViewport"
                                         Command="{Binding #Root.DataContext.SelectShowCommand}"
                                         CommandParameter="{Binding .}">
                                     <StackPanel>
