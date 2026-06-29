@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.23](https://github.com/adr0ps1/Sabeltann/compare/v0.1.22...v0.1.23) (2026-06-29)
+
+
+### Features
+
+* VOD continue-watching, richer movie detail, audio tracks, pop-out player ([#56](https://github.com/adr0ps1/Sabeltann/issues/56)) ([c1167a4](https://github.com/adr0ps1/Sabeltann/commit/c1167a4efedafd60f022b1e822c8c083668b05db))
+
 ## [0.1.22](https://github.com/adr0ps1/Sabeltann/compare/v0.1.21...v0.1.22) (2026-06-28)
 
 
