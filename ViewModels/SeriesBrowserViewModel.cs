@@ -46,8 +46,9 @@ public partial class SeriesBrowserViewModel : ObservableObject
     private XtreamConnectionInfo? _xtreamInfo;
 
     private List<ChannelListItemViewModel> _allM3uEpisodes = [];
+    private SeriesShowViewModel? _currentShow;
 
-    public event Action<string>? PlayRequested;
+    public event Action<EpisodeDetail>? EpisodeDetailRequested;
 
     [ObservableProperty]
     private ObservableCollection<SeriesShowViewModel> _shows = [];
@@ -207,6 +208,7 @@ public partial class SeriesBrowserViewModel : ObservableObject
     private async Task SelectShow(SeriesShowViewModel? show)
     {
         if (show is null) return;
+        _currentShow = show;
         IsShowingEpisodes = true;
         CurrentShowName = show.Name;
 
@@ -305,7 +307,13 @@ public partial class SeriesBrowserViewModel : ObservableObject
     private void SelectEpisode(VodEpisodeViewModel? episode)
     {
         if (episode?.Url is null) return;
-        PlayRequested?.Invoke(episode.Url);
+        // Show the detail card (series poster/metadata via OMDb) instead of playing immediately.
+        EpisodeDetailRequested?.Invoke(new EpisodeDetail(
+            _currentShow?.Name ?? CurrentShowName,
+            _currentShow?.Year,
+            episode.Display,
+            episode.Url,
+            _currentShow?.Cover));
     }
 
     [RelayCommand]
@@ -318,3 +326,6 @@ public partial class SeriesBrowserViewModel : ObservableObject
         name.StartsWith("ItEGr", StringComparison.OrdinalIgnoreCase) ||
         name.StartsWith("ltEGr", StringComparison.OrdinalIgnoreCase);
 }
+
+/// <summary>Context passed to the detail card when an episode is selected.</summary>
+public record EpisodeDetail(string ShowName, string? Year, string Label, string Url, string? Poster);

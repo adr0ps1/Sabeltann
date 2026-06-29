@@ -171,11 +171,23 @@ public partial class MainViewModel : ObservableObject
         VodBrowser.RefreshContinueWatching(_settingsData.VodProgress);
     }
 
+    // Where back/stop should return after the detail card — Movies or Series.
+    private ContentMode _detailReturnMode = ContentMode.Movies;
+
     private void OnMovieDetailRequested(VodMovieViewModel movie)
     {
+        _detailReturnMode = ContentMode.Movies;
         Mode = ContentMode.MovieDetail;
         _ = MovieDetail.LoadAsync(movie);
         MovieDetail.SetResume(TryGetResumeMs(movie.Url));
+    }
+
+    private void OnEpisodeDetailRequested(EpisodeDetail ep)
+    {
+        _detailReturnMode = ContentMode.Series;
+        Mode = ContentMode.MovieDetail;
+        _ = MovieDetail.LoadEpisodeAsync(ep.ShowName, ep.Year, ep.Label, ep.Url, ep.Poster);
+        MovieDetail.SetResume(TryGetResumeMs(ep.Url));
     }
 
     [RelayCommand]
@@ -183,7 +195,7 @@ public partial class MainViewModel : ObservableObject
     {
         if (MovieDetail.PlayUrl is string url)
         {
-            Mode = ContentMode.Movies;
+            Mode = _detailReturnMode;
             PlayVod(url, resume: false);
         }
     }
@@ -193,7 +205,7 @@ public partial class MainViewModel : ObservableObject
     {
         if (MovieDetail.PlayUrl is string url)
         {
-            Mode = ContentMode.Movies;
+            Mode = _detailReturnMode;
             PlayVod(url, resume: true);
         }
     }
@@ -209,8 +221,8 @@ public partial class MainViewModel : ObservableObject
 
     public async Task ShowSeriesBrowserAsync()
     {
-        SeriesBrowser.PlayRequested -= OnVodPlayRequested;
-        SeriesBrowser.PlayRequested += OnVodPlayRequested;
+        SeriesBrowser.EpisodeDetailRequested -= OnEpisodeDetailRequested;
+        SeriesBrowser.EpisodeDetailRequested += OnEpisodeDetailRequested;
         Mode = ContentMode.Series;
 
         if (_pendingXtreamInfo is not null)
@@ -527,7 +539,7 @@ public partial class MainViewModel : ObservableObject
     public MainViewModel()
     {
         DebugStats = new DebugStatsViewModel(null);
-        MovieDetail.BackRequested += () => Mode = ContentMode.Movies;
+        MovieDetail.BackRequested += () => Mode = _detailReturnMode;
 
         _updateService.UpdateReady += version =>
         {
@@ -915,7 +927,7 @@ public partial class MainViewModel : ObservableObject
         }
         else if (Mode == ContentMode.MovieDetail)
         {
-            Mode = ContentMode.Movies;
+            Mode = _detailReturnMode;
         }
         else
         {

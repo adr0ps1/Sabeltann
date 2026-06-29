@@ -17,6 +17,10 @@ public partial class MovieDetailViewModel : ObservableObject
     [ObservableProperty]
     private string _title = "";
 
+    /// <summary>Set for series episodes (e.g. "S01E03 · Pilot"); null for movies.</summary>
+    [ObservableProperty]
+    private string? _episodeLabel;
+
     [ObservableProperty]
     private string? _year;
 
@@ -100,6 +104,7 @@ public partial class MovieDetailViewModel : ObservableObject
     {
         // Set local-data properties immediately
         Title = movie.Name;
+        EpisodeLabel = null;
         Year = movie.Year;
         Plot = movie.Plot;
         Director = null;
@@ -109,30 +114,10 @@ public partial class MovieDetailViewModel : ObservableObject
         PlayUrl = movie.Url;
 
         IsLoading = true;
-
         string? omdbPosterUrl = null;
-
         try
         {
-            var result = await _omdb.FetchAsync(movie.Name, movie.Year, ct);
-            if (result is not null)
-            {
-                ImdbRating = result.ImdbRating;
-                RottenTomatoes = result.RottenTomatoes;
-                Runtime = result.Runtime;
-                Genre = result.Genre;
-                Director = result.Director;
-                Cast = result.Actors;
-                Language = result.Language;
-                if (!string.IsNullOrEmpty(result.Plot))
-                    Plot = result.Plot;
-                omdbPosterUrl = result.PosterUrl;
-                HasRatings = true;
-            }
-            else
-            {
-                HasRatings = false;
-            }
+            omdbPosterUrl = ApplyOmdbResult(await _omdb.FetchAsync(movie.Name, movie.Year, ct));
         }
         catch (Exception ex)
         {
@@ -144,20 +129,82 @@ public partial class MovieDetailViewModel : ObservableObject
             IsLoading = false;
         }
 
-        // Load poster: prefer OMDb poster, fall back to movie poster
-        var posterUrl = !string.IsNullOrEmpty(omdbPosterUrl) ? omdbPosterUrl : movie.Poster;
-        if (!string.IsNullOrEmpty(posterUrl))
+        await LoadPosterAsync(omdbPosterUrl, movie.Poster, ct);
+    }
+
+    /// <summary>Loads a series episode card: OMDb metadata/poster are matched by the show name.</summary>
+    public async Task LoadEpisodeAsync(string showName, string? year, string episodeLabel,
+        string playUrl, string? fallbackPoster, CancellationToken ct = default)
+    {
+        Title = showName;
+        EpisodeLabel = episodeLabel;
+        Year = year;
+        Plot = null;
+        Director = null;
+        Cast = null;
+        Language = null;
+        Genre = null;
+        Runtime = null;
+        ImdbRating = null;
+        RottenTomatoes = null;
+        LocalRating = null;
+        HasRatings = false;
+        PosterBitmap = null;
+        PlayUrl = playUrl;
+
+        IsLoading = true;
+        string? omdbPosterUrl = null;
+        try
         {
-            try
-            {
-                var bytes = await _http.GetByteArrayAsync(posterUrl, ct);
-                using var ms = new System.IO.MemoryStream(bytes);
-                PosterBitmap = new Bitmap(ms);
-            }
-            catch (Exception ex)
-            {
-                LogService.Error("MovieDetailViewModel.LoadAsync poster download failed", new { posterUrl, error = ex.Message });
-            }
+            omdbPosterUrl = ApplyOmdbResult(await _omdb.FetchAsync(showName, year, ct));
+        }
+        catch (Exception ex)
+        {
+            LogService.Error("MovieDetailViewModel.LoadEpisodeAsync OMDb fetch failed", new { showName, error = ex.Message });
+            HasRatings = false;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+
+        await LoadPosterAsync(omdbPosterUrl, fallbackPoster, ct);
+    }
+
+    /// <summary>Applies OMDb fields and returns its poster URL (null when there's no result).</summary>
+    private string? ApplyOmdbResult(OMDbResult? result)
+    {
+        if (result is null)
+        {
+            HasRatings = false;
+            return null;
+        }
+        ImdbRating = result.ImdbRating;
+        RottenTomatoes = result.RottenTomatoes;
+        Runtime = result.Runtime;
+        Genre = result.Genre;
+        Director = result.Director;
+        Cast = result.Actors;
+        Language = result.Language;
+        if (!string.IsNullOrEmpty(result.Plot))
+            Plot = result.Plot;
+        HasRatings = true;
+        return result.PosterUrl;
+    }
+
+    private async Task LoadPosterAsync(string? omdbPosterUrl, string? fallback, CancellationToken ct)
+    {
+        var posterUrl = !string.IsNullOrEmpty(omdbPosterUrl) ? omdbPosterUrl : fallback;
+        if (string.IsNullOrEmpty(posterUrl)) return;
+        try
+        {
+            var bytes = await _http.GetByteArrayAsync(posterUrl, ct);
+            using var ms = new System.IO.MemoryStream(bytes);
+            PosterBitmap = new Bitmap(ms);
+        }
+        catch (Exception ex)
+        {
+            LogService.Error("MovieDetailViewModel poster download failed", new { posterUrl, error = ex.Message });
         }
     }
 

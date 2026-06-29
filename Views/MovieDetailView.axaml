@@ -35,6 +35,11 @@
           <TextBlock Text="{Binding Title}" Foreground="#cdd6f4" FontSize="26"
                      FontWeight="Bold" TextWrapping="Wrap"/>
 
+          <!-- Episode label (series only) -->
+          <TextBlock Text="{Binding EpisodeLabel}" Foreground="#cba6f7" FontSize="14"
+                     FontWeight="SemiBold" TextWrapping="Wrap"
+                     IsVisible="{Binding EpisodeLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
           <!-- Year • Runtime • Genre -->
           <TextBlock Foreground="#a6adc8" FontSize="12" TextWrapping="Wrap">
             <Run Text="{Binding Year}"/>
