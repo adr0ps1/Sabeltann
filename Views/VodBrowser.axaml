@@ -36,7 +36,48 @@
             </Grid>
         </Border>
 
-        <!-- Row 1 intentionally empty (was filter bar, merged into Row 0) -->
+        <!-- Continue Watching strip -->
+        <StackPanel Grid.Row="1" Margin="16,10,16,0" Spacing="6"
+                    IsVisible="{Binding ShowContinueWatching}">
+            <TextBlock Text="Continue Watching" Foreground="#cdd6f4" FontSize="13" FontWeight="SemiBold"/>
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding ContinueWatching}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:VodMovieViewModel}">
+                            <Button Background="#181825" BorderThickness="1" BorderBrush="#313244"
+                                    CornerRadius="10" Padding="0" Margin="0,0,10,4" Width="120"
+                                    EffectiveViewportChanged="OnPosterViewport"
+                                    Command="{Binding #Root.DataContext.ResumeMovieCommand}"
+                                    CommandParameter="{Binding .}">
+                                <StackPanel>
+                                    <Border Height="150" Background="#313244" CornerRadius="10,10,0,0">
+                                        <Grid>
+                                            <Image Source="{Binding PosterSrc}" Stretch="UniformToFill"
+                                                   HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                                            <TextBlock Text="{Binding Initial}"
+                                                       Foreground="#6c7086" FontSize="32" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       IsVisible="{Binding PosterSrc, Converter={x:Static vm:MainViewModel.ImgFallback}}"/>
+                                            <ProgressBar Maximum="1" Value="{Binding ProgressFraction}"
+                                                         Height="4" VerticalAlignment="Bottom"
+                                                         Foreground="#cba6f7" Background="#80313244"/>
+                                        </Grid>
+                                    </Border>
+                                    <TextBlock Text="{Binding Name}" Foreground="#cdd6f4" FontSize="11"
+                                               FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                               Margin="8,6,8,8"/>
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </StackPanel>
 
         <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled">
             <WrapPanel Margin="16,12">
@@ -50,6 +91,7 @@
                         <DataTemplate DataType="{x:Type vm:VodMovieViewModel}">
                             <Button Background="#181825" BorderThickness="1" BorderBrush="#313244"
                                     CornerRadius="12" Padding="0" Margin="6,6" Width="160"
+                                    EffectiveViewportChanged="OnPosterViewport"
                                     Command="{Binding #Root.DataContext.PlayMovieCommand}"
                                     CommandParameter="{Binding .}">
                                 <StackPanel>

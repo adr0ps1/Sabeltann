@@ -99,6 +99,9 @@ public class PlaybackService : IDisposable
     {
         _currentMedia?.Dispose();
         _currentMedia = null;
+        // A paused decoder can swallow Stop() with custom video callbacks; resume first.
+        if (_mediaPlayer.State == VLCState.Paused)
+            _mediaPlayer.SetPause(false);
         _mediaPlayer.Stop();
         FreeBuffer();
     }
@@ -123,6 +126,17 @@ public class PlaybackService : IDisposable
 
     public int CurrentSubtitleTrack => _mediaPlayer.Spu;
     public void SetSubtitleTrack(int id) => _mediaPlayer.SetSpu(id);
+
+    public List<(int Id, string Name)> GetAudioTracks()
+    {
+        var tracks = _mediaPlayer.AudioTrackDescription;
+        return tracks is null
+            ? []
+            : tracks.Where(t => t.Id != -1).Select(t => (t.Id, t.Name)).ToList();
+    }
+
+    public int CurrentAudioTrack => _mediaPlayer.AudioTrack;
+    public void SetAudioTrack(int id) => _mediaPlayer.SetAudioTrack(id);
 
     /// <summary>
     /// Zeros the video surface so the last decoded frame doesn't linger when switching streams.

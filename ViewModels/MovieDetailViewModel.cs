@@ -8,8 +8,11 @@ namespace Sabeltann;
 
 public partial class MovieDetailViewModel : ObservableObject
 {
-    private readonly OMDbService _omdb;
+    private OMDbService _omdb;
     private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(15) };
+
+    /// <summary>Rebuilds the OMDb client when the user changes the API key in settings.</summary>
+    public void SetOmdbKey(string? apiKey) => _omdb = new OMDbService(apiKey);
 
     [ObservableProperty]
     private string _title = "";
@@ -33,10 +36,16 @@ public partial class MovieDetailViewModel : ObservableObject
     private string? _genre;
 
     [ObservableProperty]
+    private string? _language;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Stars))]
+    [NotifyPropertyChangedFor(nameof(HasStars))]
     private string? _localRating;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ImdbStars))]
+    [NotifyPropertyChangedFor(nameof(Stars))]
+    [NotifyPropertyChangedFor(nameof(HasStars))]
     private string? _imdbRating;
 
     [ObservableProperty]
@@ -78,7 +87,9 @@ public partial class MovieDetailViewModel : ObservableObject
             : $"{t.Minutes:D2}:{t.Seconds:D2}";
     }
 
-    public string ImdbStars => BuildStars(ImdbRating);
+    /// <summary>5-star rendering from IMDb (preferred) or the provider's own rating.</summary>
+    public string Stars => BuildStars(ImdbRating ?? LocalRating);
+    public bool HasStars => Stars.Length > 0;
 
     public MovieDetailViewModel(OMDbService omdb)
     {
@@ -93,6 +104,7 @@ public partial class MovieDetailViewModel : ObservableObject
         Plot = movie.Plot;
         Director = null;
         Cast = null;
+        Language = null;
         LocalRating = movie.Rating;
         PlayUrl = movie.Url;
 
@@ -111,6 +123,7 @@ public partial class MovieDetailViewModel : ObservableObject
                 Genre = result.Genre;
                 Director = result.Director;
                 Cast = result.Actors;
+                Language = result.Language;
                 if (!string.IsNullOrEmpty(result.Plot))
                     Plot = result.Plot;
                 omdbPosterUrl = result.PosterUrl;
