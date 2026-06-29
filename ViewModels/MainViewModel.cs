@@ -84,6 +84,7 @@ public partial class MainViewModel : ObservableObject
         Volume = data.DefaultVolume;
         MovieDetail.SetOmdbKey(data.OmdbApiKey);
         VodBrowser.SetOmdbKey(data.OmdbApiKey);
+        SeriesBrowser.SetOmdbKey(data.OmdbApiKey);
     }
 
     public void SetSearchResults(string query)
@@ -716,6 +717,7 @@ public partial class MainViewModel : ObservableObject
         Volume = s.DefaultVolume;
         MovieDetail.SetOmdbKey(s.OmdbApiKey);
         VodBrowser.SetOmdbKey(s.OmdbApiKey);
+        SeriesBrowser.SetOmdbKey(s.OmdbApiKey);
         if (!s.AutoLoadLastSession) return;
         if (s.LastSourceType == "url" && !string.IsNullOrEmpty(s.LastSourceUrl))
             _ = LoadM3UFromUrlAsync(s.LastSourceUrl);

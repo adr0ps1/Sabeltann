@@ -20,6 +20,9 @@ public partial class SeriesShowViewModel : ObservableObject
     [ObservableProperty]
     private Bitmap? _coverSrc;
 
+    public OMDbService? Omdb { get; set; }
+    private bool _omdbRequested;
+
     public string Initial => Name.Length > 0 ? Name[..1].ToUpperInvariant() : "?";
 
     public string Subtitle => Year is not null
@@ -38,6 +41,29 @@ public partial class SeriesShowViewModel : ObservableObject
         if (bmp is not null)
             CoverSrc = bmp;
     }
+
+    /// <summary>Swaps in the correct OMDb series poster, fetched lazily when the card is shown.</summary>
+    public void RequestOmdbCover()
+    {
+        if (_omdbRequested || Omdb is null) return;
+        _omdbRequested = true;
+        _ = LoadOmdbCoverAsync();
+    }
+
+    private async Task LoadOmdbCoverAsync()
+    {
+        try
+        {
+            var result = await Omdb!.FetchAsync(Name, Year);
+            var bmp = await ImageService.LoadAsync(result?.PosterUrl);
+            if (bmp is not null)
+                CoverSrc = bmp;
+        }
+        catch (Exception ex)
+        {
+            LogService.Warn("OMDb series cover load failed", new { Name, error = ex.Message });
+        }
+    }
 }
 
 public partial class SeriesBrowserViewModel : ObservableObject
@@ -47,6 +73,10 @@ public partial class SeriesBrowserViewModel : ObservableObject
 
     private List<ChannelListItemViewModel> _allM3uEpisodes = [];
     private SeriesShowViewModel? _currentShow;
+    private OMDbService _omdb = new(null);
+
+    /// <summary>Rebuilds the OMDb client when the user changes the API key in settings.</summary>
+    public void SetOmdbKey(string? apiKey) => _omdb = new OMDbService(apiKey);
 
     public event Action<EpisodeDetail>? EpisodeDetailRequested;
 
@@ -159,7 +189,8 @@ public partial class SeriesBrowserViewModel : ObservableObject
                 Name = g.Key,
                 Count = g.Count(),
                 Episodes = episodes,
-                Cover = episodes.FirstOrDefault()?.Logo
+                Cover = episodes.FirstOrDefault()?.Logo,
+                Omdb = _omdb
             };
             show.BeginLoadCover();
             Shows.Add(show);
@@ -189,7 +220,8 @@ public partial class SeriesBrowserViewModel : ObservableObject
                     Name = s.Name,
                     Year = s.Year,
                     SeriesId = s.SeriesId,
-                    Cover = s.Cover
+                    Cover = s.Cover,
+                    Omdb = _omdb
                 };
                 show.BeginLoadCover();
                 Shows.Add(show);
@@ -221,6 +253,27 @@ public partial class SeriesBrowserViewModel : ObservableObject
         else
         {
             BuildM3uSeasonGroups(show.Episodes);
+        }
+
+        // One OMDb lookup per opened show: the series poster replaces every episode thumbnail.
+        _ = ApplyOmdbEpisodePostersAsync(show.Name, show.Year,
+            SeasonGroups.SelectMany(g => g.Episodes).ToList());
+    }
+
+    private async Task ApplyOmdbEpisodePostersAsync(string showName, string? year, List<VodEpisodeViewModel> episodes)
+    {
+        if (episodes.Count == 0) return;
+        try
+        {
+            var result = await _omdb.FetchAsync(showName, year);
+            var bmp = await ImageService.LoadAsync(result?.PosterUrl);
+            if (bmp is null) return;
+            foreach (var ep in episodes)
+                ep.PosterSrc = bmp;
+        }
+        catch (Exception ex)
+        {
+            LogService.Warn("OMDb episode posters load failed", new { showName, error = ex.Message });
         }
     }
 
