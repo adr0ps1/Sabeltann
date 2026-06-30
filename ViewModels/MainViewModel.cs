@@ -82,9 +82,14 @@ public partial class MainViewModel : ObservableObject
         _settingsData = data;
         _updateService.IncludePrerelease = data.IncludePrerelease;
         Volume = data.DefaultVolume;
-        MovieDetail.SetOmdbKey(data.OmdbApiKey);
-        VodBrowser.SetOmdbKey(data.OmdbApiKey);
-        SeriesBrowser.SetOmdbKey(data.OmdbApiKey);
+        ApplyOmdbKey(data.OmdbApiKey);
+    }
+
+    private void ApplyOmdbKey(string? key)
+    {
+        MovieDetail.SetOmdbKey(key);
+        VodBrowser.SetOmdbKey(key);
+        SeriesBrowser.SetOmdbKey(key);
     }
 
     public void SetSearchResults(string query)
@@ -345,12 +350,6 @@ public partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(ShowBackButton))]
     [NotifyPropertyChangedFor(nameof(ShowCategoryBar))]
     private ContentMode _mode = ContentMode.Welcome;
-
-    partial void OnModeChanged(ContentMode value)
-    {
-        // The category dropdown and search only apply to Live TV mode.
-        // Movies/Series have their own dedicated browsers.
-    }
 
     public bool IsWelcome => Mode == ContentMode.Welcome;
     public bool IsPicker => Mode == ContentMode.Picker;

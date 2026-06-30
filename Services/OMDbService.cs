@@ -32,7 +32,7 @@ public sealed class OMDbService
     // ponytail: shared cap so a screenful of poster lookups doesn't burst the API at once.
     private static readonly SemaphoreSlim NetThrottle = new(4, 4);
 
-    private readonly string? _apiKey;
+    private string? _apiKey;
     private readonly HttpClient _http;
 
     public OMDbService(string? apiKey)
@@ -40,6 +40,9 @@ public sealed class OMDbService
         _apiKey = apiKey;
         _http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
     }
+
+    /// <summary>Updates the key in place so existing holders pick it up (no instance churn).</summary>
+    public void SetApiKey(string? apiKey) => _apiKey = apiKey;
 
     public async Task<OMDbResult?> FetchAsync(string title, string? year, CancellationToken ct = default)
     {

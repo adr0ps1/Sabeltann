@@ -8,11 +8,10 @@ namespace Sabeltann;
 
 public partial class MovieDetailViewModel : ObservableObject
 {
-    private OMDbService _omdb;
+    private readonly OMDbService _omdb;
     private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(15) };
 
-    /// <summary>Rebuilds the OMDb client when the user changes the API key in settings.</summary>
-    public void SetOmdbKey(string? apiKey) => _omdb = new OMDbService(apiKey);
+    public void SetOmdbKey(string? apiKey) => _omdb.SetApiKey(apiKey);
 
     [ObservableProperty]
     private string _title = "";
@@ -102,7 +101,6 @@ public partial class MovieDetailViewModel : ObservableObject
 
     public async Task LoadAsync(VodMovieViewModel movie, CancellationToken ct = default)
     {
-        // Set local-data properties immediately
         Title = movie.Name;
         EpisodeLabel = null;
         Year = movie.Year;

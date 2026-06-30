@@ -65,6 +65,13 @@ public static class ImageService
         }
     }
 
+    /// <summary>Loads <paramref name="url"/> and hands the decoded bitmap to <paramref name="set"/>; no-op if it didn't decode.</summary>
+    public static async Task LoadInto(string? url, Action<Bitmap> set, CancellationToken ct = default)
+    {
+        var bmp = await LoadAsync(url, ct);
+        if (bmp is not null) set(bmp);
+    }
+
     private static async Task<Bitmap?> LoadInternalAsync(string url, CancellationToken ct)
     {
         await Throttle.WaitAsync(ct);

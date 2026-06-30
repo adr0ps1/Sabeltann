@@ -43,7 +43,7 @@ public partial class VodMovieViewModel : ObservableObject
         Rating = movie.Rating;
         Url = $"{serverUrl.TrimEnd('/')}/movie/{username}/{password}/{movie.StreamId}.{movie.Extension ?? "mp4"}";
         _omdb = omdb;
-        _ = LoadImageAsync(Poster);
+        _ = ImageService.LoadInto(Poster, b => PosterSrc = b);
     }
 
     public VodMovieViewModel(string name, string directUrl, string? logoUrl = null, OMDbService? omdb = null)
@@ -52,7 +52,7 @@ public partial class VodMovieViewModel : ObservableObject
         Url = directUrl;
         _omdb = omdb;
         if (logoUrl is not null)
-            _ = LoadImageAsync(logoUrl);
+            _ = ImageService.LoadInto(logoUrl, b => PosterSrc = b);
     }
 
     /// <summary>
@@ -71,21 +71,12 @@ public partial class VodMovieViewModel : ObservableObject
         try
         {
             var result = await _omdb!.FetchAsync(Name, Year);
-            var bmp = await ImageService.LoadAsync(result?.PosterUrl);
-            if (bmp is not null)
-                PosterSrc = bmp;
+            await ImageService.LoadInto(result?.PosterUrl, b => PosterSrc = b);
         }
         catch (Exception ex)
         {
             LogService.Warn("OMDb poster load failed", new { Name, error = ex.Message });
         }
-    }
-
-    private async Task LoadImageAsync(string? url)
-    {
-        var bmp = await ImageService.LoadAsync(url);
-        if (bmp is not null)
-            PosterSrc = bmp;
     }
 }
 
@@ -132,14 +123,7 @@ public partial class VodEpisodeViewModel : ObservableObject
         Title = ep.Title;
         Url = ep.Url;
         if (logoUrl is not null)
-            _ = LoadImageAsync(logoUrl);
-    }
-
-    private async Task LoadImageAsync(string? url)
-    {
-        var bmp = await ImageService.LoadAsync(url);
-        if (bmp is not null)
-            PosterSrc = bmp;
+            _ = ImageService.LoadInto(logoUrl, b => PosterSrc = b);
     }
 }
 
@@ -157,10 +141,9 @@ public partial class VodBrowserViewModel : ObservableObject
 
     private readonly XtreamService _xtream = new();
     private XtreamConnectionInfo? _connectionInfo;
-    private OMDbService _omdb = new(null);
+    private readonly OMDbService _omdb = new(null);
 
-    /// <summary>Rebuilds the OMDb client when the user changes the API key in settings.</summary>
-    public void SetOmdbKey(string? apiKey) => _omdb = new OMDbService(apiKey);
+    public void SetOmdbKey(string? apiKey) => _omdb.SetApiKey(apiKey);
 
     private List<ChannelListItemViewModel> _allM3uMovies = [];
     private List<VodMovieViewModel> _allXtreamMovies = [];
@@ -264,7 +247,7 @@ public partial class VodBrowserViewModel : ObservableObject
         var cat = SelectedCategory ?? "All";
 
         IEnumerable<ChannelListItemViewModel> pool = _allM3uMovies
-            .Where(ch => !IsGarbageEntry(ch.Name));
+            .Where(ch => !ChannelClassifier.IsGarbageEntry(ch.Name));
         if (cat != "All")
             pool = pool.Where(ch => (ch.Group ?? "Uncategorized").Equals(cat, StringComparison.OrdinalIgnoreCase));
 
@@ -493,10 +476,6 @@ public partial class VodBrowserViewModel : ObservableObject
         s = Regex.Replace(s, @"[^a-z0-9]+", " ");          // keeps title numbers (sequels) and years
         return s.Trim();
     }
-
-    private static bool IsGarbageEntry(string name) =>
-        name.StartsWith("ItEGr", StringComparison.OrdinalIgnoreCase) ||
-        name.StartsWith("ltEGr", StringComparison.OrdinalIgnoreCase);
 }
 
 public enum VodViewMode

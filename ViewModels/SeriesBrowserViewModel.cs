@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Text.RegularExpressions;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -32,14 +31,7 @@ public partial class SeriesShowViewModel : ObservableObject
     public void BeginLoadCover()
     {
         if (Cover is not null)
-            _ = LoadCoverAsync();
-    }
-
-    private async Task LoadCoverAsync()
-    {
-        var bmp = await ImageService.LoadAsync(Cover);
-        if (bmp is not null)
-            CoverSrc = bmp;
+            _ = ImageService.LoadInto(Cover, b => CoverSrc = b);
     }
 
     /// <summary>Swaps in the correct OMDb series poster, fetched lazily when the card is shown.</summary>
@@ -55,9 +47,7 @@ public partial class SeriesShowViewModel : ObservableObject
         try
         {
             var result = await Omdb!.FetchAsync(Name, Year);
-            var bmp = await ImageService.LoadAsync(result?.PosterUrl);
-            if (bmp is not null)
-                CoverSrc = bmp;
+            await ImageService.LoadInto(result?.PosterUrl, b => CoverSrc = b);
         }
         catch (Exception ex)
         {
@@ -73,10 +63,9 @@ public partial class SeriesBrowserViewModel : ObservableObject
 
     private List<ChannelListItemViewModel> _allM3uEpisodes = [];
     private SeriesShowViewModel? _currentShow;
-    private OMDbService _omdb = new(null);
+    private readonly OMDbService _omdb = new(null);
 
-    /// <summary>Rebuilds the OMDb client when the user changes the API key in settings.</summary>
-    public void SetOmdbKey(string? apiKey) => _omdb = new OMDbService(apiKey);
+    public void SetOmdbKey(string? apiKey) => _omdb.SetApiKey(apiKey);
 
     public event Action<EpisodeDetail>? EpisodeDetailRequested;
 
@@ -160,7 +149,7 @@ public partial class SeriesBrowserViewModel : ObservableObject
         var query = (SearchText ?? "").Trim().ToLowerInvariant();
 
         IEnumerable<ChannelListItemViewModel> pool = _allM3uEpisodes
-            .Where(ch => !IsGarbageEntry(ch.Name));
+            .Where(ch => !ChannelClassifier.IsGarbageEntry(ch.Name));
         if (cat != "All")
             pool = pool.Where(ch => (ch.Group ?? "Uncategorized").Equals(cat, StringComparison.OrdinalIgnoreCase));
 
@@ -266,10 +255,11 @@ public partial class SeriesBrowserViewModel : ObservableObject
         try
         {
             var result = await _omdb.FetchAsync(showName, year);
-            var bmp = await ImageService.LoadAsync(result?.PosterUrl);
-            if (bmp is null) return;
-            foreach (var ep in episodes)
-                ep.PosterSrc = bmp;
+            await ImageService.LoadInto(result?.PosterUrl, b =>
+            {
+                foreach (var ep in episodes)
+                    ep.PosterSrc = b;
+            });
         }
         catch (Exception ex)
         {
@@ -311,9 +301,7 @@ public partial class SeriesBrowserViewModel : ObservableObject
     private void BuildM3uSeasonGroups(List<ChannelListItemViewModel> episodes)
     {
         var groups = episodes
-            .Select(ep => (Ep: ep,
-                Match: Regex.Match(ep.Name, @"S(\d{1,2})", RegexOptions.IgnoreCase)))
-            .Select(x => (x.Ep, Season: x.Match.Success ? int.Parse(x.Match.Groups[1].Value) : 1))
+            .Select(ep => (Ep: ep, Season: ChannelClassifier.ParseSeasonNumber(ep.Name)))
             .GroupBy(x => x.Season)
             .OrderBy(g => g.Key);
 
@@ -321,7 +309,7 @@ public partial class SeriesBrowserViewModel : ObservableObject
         {
             var ordered = g.OrderBy(x => x.Ep.Name).ToList();
             var parsed = ordered
-                .Select(x => (x.Ep, EpNum: TryExtractEpisodeNum(x.Ep.Name)))
+                .Select(x => (x.Ep, EpNum: ChannelClassifier.ParseEpisodeNumber(x.Ep.Name)))
                 .OrderBy(x => x.EpNum ?? int.MaxValue)
                 .ThenBy(x => x.Ep.Name);
 
@@ -342,19 +330,6 @@ public partial class SeriesBrowserViewModel : ObservableObject
         }
     }
 
-    private static int? TryExtractEpisodeNum(string name)
-    {
-        var m = Regex.Match(name, @"S\d{1,2}E(\d{1,3})", RegexOptions.IgnoreCase);
-        if (m.Success) return int.Parse(m.Groups[1].Value);
-
-        m = Regex.Match(name, @"\b(\d{1,2})x(\d{1,3})\b", RegexOptions.IgnoreCase);
-        if (m.Success) return int.Parse(m.Groups[2].Value);
-
-        m = Regex.Match(name, @"\b(?:Episode|Ep|Part)\s*(\d+)\b", RegexOptions.IgnoreCase);
-        if (m.Success) return int.Parse(m.Groups[1].Value);
-
-        return null;
-    }
 
     [RelayCommand]
     private void SelectEpisode(VodEpisodeViewModel? episode)
@@ -374,10 +349,6 @@ public partial class SeriesBrowserViewModel : ObservableObject
     {
         IsShowingEpisodes = false;
     }
-
-    private static bool IsGarbageEntry(string name) =>
-        name.StartsWith("ItEGr", StringComparison.OrdinalIgnoreCase) ||
-        name.StartsWith("ltEGr", StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>Context passed to the detail card when an episode is selected.</summary>
