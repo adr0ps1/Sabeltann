@@ -23,6 +23,41 @@ public static class ChannelClassifier
     private static readonly Regex HasYear = new(
         @"(?<!\d)(19|20)\d{2}(?!\d)");
 
+    // Number-extraction variants (capture groups) for season grouping / episode ordering.
+    private static readonly Regex SeasonNum = new(
+        @"S(\d{1,2})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex SeasonEpisodeNum = new(
+        @"S\d{1,2}E(\d{1,3})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex AltEpisodeNum = new(
+        @"\b(\d{1,2})x(\d{1,3})\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex EpisodeWord = new(
+        @"\b(?:Episode|Ep|Part)\s*(\d+)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    /// <summary>Season number from an "S03" marker; 1 when absent.</summary>
+    public static int ParseSeasonNumber(string name)
+    {
+        var m = SeasonNum.Match(name);
+        return m.Success ? int.Parse(m.Groups[1].Value) : 1;
+    }
+
+    /// <summary>Episode number from SxxExx, NxM, or "Episode N"; null if none.</summary>
+    public static int? ParseEpisodeNumber(string name)
+    {
+        var m = SeasonEpisodeNum.Match(name);
+        if (m.Success) return int.Parse(m.Groups[1].Value);
+
+        m = AltEpisodeNum.Match(name);
+        if (m.Success) return int.Parse(m.Groups[2].Value);
+
+        m = EpisodeWord.Match(name);
+        return m.Success ? int.Parse(m.Groups[1].Value) : null;
+    }
+
+    /// <summary>Provider artifact rows ("ItEGr…"/"ltEGr…") that should never reach the UI.</summary>
+    public static bool IsGarbageEntry(string name) =>
+        name.StartsWith("ItEGr", StringComparison.OrdinalIgnoreCase) ||
+        name.StartsWith("ltEGr", StringComparison.OrdinalIgnoreCase);
+
     public static ChannelType Classify(Channel channel)
     {
         var name = channel.Name ?? "";
