@@ -165,9 +165,7 @@ public class PlaybackService : IDisposable
         }, DispatcherPriority.Render);
     }
 
-    /// <summary>
-    /// Returns the current LibVLC media statistics, or null if no media is active.
-    /// </summary>
+    /// <summary>Current LibVLC media statistics, or null if no media is active.</summary>
     public MediaStats? GetStats() => _mediaPlayer.Media?.Statistics;
 
     public void Dispose()

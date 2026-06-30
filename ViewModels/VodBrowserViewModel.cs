@@ -157,10 +157,9 @@ public partial class VodBrowserViewModel : ObservableObject
 
     private readonly XtreamService _xtream = new();
     private XtreamConnectionInfo? _connectionInfo;
-    private OMDbService _omdb = new(null);
+    private readonly OMDbService _omdb = new(null);
 
-    /// <summary>Rebuilds the OMDb client when the user changes the API key in settings.</summary>
-    public void SetOmdbKey(string? apiKey) => _omdb = new OMDbService(apiKey);
+    public void SetOmdbKey(string? apiKey) => _omdb.SetApiKey(apiKey);
 
     private List<ChannelListItemViewModel> _allM3uMovies = [];
     private List<VodMovieViewModel> _allXtreamMovies = [];

@@ -73,10 +73,9 @@ public partial class SeriesBrowserViewModel : ObservableObject
 
     private List<ChannelListItemViewModel> _allM3uEpisodes = [];
     private SeriesShowViewModel? _currentShow;
-    private OMDbService _omdb = new(null);
+    private readonly OMDbService _omdb = new(null);
 
-    /// <summary>Rebuilds the OMDb client when the user changes the API key in settings.</summary>
-    public void SetOmdbKey(string? apiKey) => _omdb = new OMDbService(apiKey);
+    public void SetOmdbKey(string? apiKey) => _omdb.SetApiKey(apiKey);
 
     public event Action<EpisodeDetail>? EpisodeDetailRequested;
 
