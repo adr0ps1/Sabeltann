@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+PackageIdentifier: adr0ps1.Sabeltann
+PackageVersion: 0.1.23
+PackageLocale: en-US
+Publisher: Adrian (adr0ps1)
+PublisherUrl: https://github.com/adr0ps1
+PublisherSupportUrl: https://github.com/adr0ps1/Sabeltann/issues
+PackageName: Sabeltann
+PackageUrl: https://github.com/adr0ps1/Sabeltann
+License: GPL-3.0
+LicenseUrl: https://github.com/adr0ps1/Sabeltann/blob/main/LICENSE
+Copyright: Copyright (C) 2024 Adrian
+ShortDescription: Windows IPTV player supporting M3U playlists and Xtream Codes
+Description: Sabeltann is a Windows desktop application for watching live TV, movies, and series from IPTV providers. It supports M3U URLs and files, Xtream Codes API, and uses LibVLC for hardware-accelerated playback with D3D11VA. Sabeltann does not host, provide, or endorse any specific IPTV streams or content — all playlists and sources are supplied by the user.
+Tags:
+  - iptv
+  - iptv-player
+  - m3u
+  - xtream-codes
+  - vlc
+  - tv
+  - media-player
+  - avalonia
+  - iptv-app
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

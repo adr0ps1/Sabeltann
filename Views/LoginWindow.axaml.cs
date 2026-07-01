@@ -1,4 +1,5 @@
 
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Controls;
 
@@ -11,6 +12,12 @@ public partial class LoginWindow : Window
     public LoginWindow()
     {
         InitializeComponent();
+    }
+
+    private void OnChromeDrag(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            BeginMoveDrag(e);
     }
 
     private void OnLogin(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.LogicalTree;
 using Sabeltann.ViewModels;
 
 namespace Sabeltann.Views;
@@ -10,6 +12,17 @@ public partial class VodBrowser : UserControl
     public VodBrowser()
     {
         InitializeComponent();
+    }
+
+    // Remove a card from the Continue Watching strip. A menu popup doesn't reliably inherit
+    // the item DataContext, so resolve the movie from the item's DataContext or, failing that,
+    // the owning ContextMenu's PlacementTarget.
+    private void OnRemoveContinueWatching(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuItem mi) return;
+        var movie = mi.DataContext as VodMovieViewModel
+                    ?? (mi.FindLogicalAncestorOfType<ContextMenu>()?.PlacementTarget as Control)?.DataContext as VodMovieViewModel;
+        movie?.OnRemove?.Invoke(movie);
     }
 
     /// <summary>

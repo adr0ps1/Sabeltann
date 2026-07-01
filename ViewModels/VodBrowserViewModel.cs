@@ -30,6 +30,9 @@ public partial class VodMovieViewModel : ObservableObject
     public double? Progress { get; set; }
     public double ProgressFraction => Progress ?? 0;
 
+    /// <summary>Set by the Continue Watching strip so a row's context menu can remove it.</summary>
+    public Action<VodMovieViewModel>? OnRemove { get; set; }
+
     public string Initial => Name.Length > 0 ? Name[..1].ToUpperInvariant() : "?";
     public string YearDisplay => Year is not null ? $"({Year})" : "";
 
@@ -150,6 +153,7 @@ public partial class VodBrowserViewModel : ObservableObject
 
     public event Action<string>? PlayRequested;
     public event Action<VodMovieViewModel>? DetailRequested;
+    public event Action<string>? RemoveFromContinueWatchingRequested;
 
     [ObservableProperty]
     private ObservableCollection<VodMovieViewModel> _movies = [];
@@ -412,6 +416,7 @@ public partial class VodBrowserViewModel : ObservableObject
             var vm = ResolveMovie(url);
             if (vm is null) continue;
             vm.Progress = entry.DurationMs > 0 ? (double)entry.PositionMs / entry.DurationMs : null;
+            vm.OnRemove = m => RemoveFromContinueWatchingRequested?.Invoke(m.Url);
             ContinueWatching.Add(vm);
             if (ContinueWatching.Count >= max) break;
         }

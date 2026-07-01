@@ -9,13 +9,18 @@
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
         x:Class="Sabeltann.MainWindow"
         Title="Sabeltann - IPTV Player"
-        Background="#1e1e2e">
+        Width="960" Height="560"
+        WindowStartupLocation="CenterScreen"
+        WindowDecorations="None"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent">
 
     <Window.Resources>
         <c:BoolToColorConverter x:Key="StarColorConverter"/>
     </Window.Resources>
 
     <Window.Styles>
+        <!-- Video transport buttons (bottom media-controls bar) -->
         <Style Selector="Button.TransportBtn">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -25,11 +30,113 @@
             <Setter Property="Margin" Value="1"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Style Selector="^:pointerover">
-                <Setter Property="Background" Value="#ffffff15"/>
+                <Setter Property="Background" Value="#22FFFFFF"/>
             </Style>
             <Style Selector="^:pressed">
-                <Setter Property="Background" Value="#ffffff25"/>
+                <Setter Property="Background" Value="#33FFFFFF"/>
             </Style>
+        </Style>
+
+        <!-- Toolbar ghost / pill button -->
+        <Style Selector="Button.Pill">
+            <Setter Property="Background" Value="{StaticResource Surface2}"/>
+            <Setter Property="Foreground" Value="{StaticResource Text}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="{StaticResource Surface2}"/>
+                <Setter Property="BorderBrush" Value="#3A3F4A"/>
+            </Style>
+        </Style>
+
+        <!-- Amber primary button -->
+        <Style Selector="Button.Primary">
+            <Setter Property="Background" Value="{StaticResource Accent}"/>
+            <Setter Property="Foreground" Value="{StaticResource AccentText}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Segmented tab -->
+        <Style Selector="ToggleButton.Tab">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource Sub}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style Selector="^:checked /template/ ContentPresenter">
+                <Setter Property="Background" Value="{StaticResource AccentSoft}"/>
+                <Setter Property="TextElement.Foreground" Value="{StaticResource Accent}"/>
+            </Style>
+        </Style>
+
+        <!-- Vertical divider -->
+        <Style Selector="Border.Divider">
+            <Setter Property="Width" Value="1"/>
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="Background" Value="{StaticResource Line}"/>
+            <Setter Property="Margin" Value="6,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Mono count pill -->
+        <Style Selector="Border.CountPill">
+            <Setter Property="Background" Value="{StaticResource Surface2}"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="8,3"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Window caption buttons -->
+        <Style Selector="Button.WinBtn">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#8B909B"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="{StaticResource Surface2}"/>
+                <Setter Property="TextElement.Foreground" Value="{StaticResource Text}"/>
+            </Style>
+        </Style>
+        <Style Selector="Button.WinClose:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource Danger}"/>
+            <Setter Property="TextElement.Foreground" Value="#FFFFFF"/>
+        </Style>
+
+        <!-- File menu pill + flyout theming -->
+        <Style Selector="Menu.FileMenu">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+        <Style Selector="Menu.FileMenu > MenuItem">
+            <Setter Property="Background" Value="{StaticResource Surface2}"/>
+            <Setter Property="Foreground" Value="{StaticResource Text}"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="FontSize" Value="12.5"/>
+        </Style>
+        <Style Selector="MenuItem">
+            <Setter Property="Foreground" Value="{StaticResource Text}"/>
+        </Style>
+        <Style Selector="MenuItem:selected /template/ Border#PART_LayoutRoot">
+            <Setter Property="Background" Value="{StaticResource Surface2}"/>
         </Style>
     </Window.Styles>
 
@@ -37,144 +144,215 @@
         <vm:MainViewModel/>
     </Design.DataContext>
 
-    <Grid x:Name="MainGrid" RowDefinitions="0,Auto,*,28">
+    <Panel>
+    <Border CornerRadius="12" Background="{StaticResource Bg}" ClipToBounds="True">
+    <Grid x:Name="MainGrid" RowDefinitions="40,54,*">
 
-        <Grid x:Name="TitleBar" Grid.Row="0" ColumnDefinitions="Auto,Auto,*,Auto" Background="#181825">
-            <Grid Grid.Column="0" ColumnDefinitions="Auto,Auto" Background="#181825">
-            <Border Padding="14,0,12,0" Background="#181825">
-                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                    <Border Width="24" Height="24" CornerRadius="6" Background="#cba6f7">
-                        <TextBlock Text="☠" Foreground="#1e1e2e" FontSize="13"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <TextBlock Text="SABELTANN" Foreground="#cdd6f4" FontSize="12"
-                               FontWeight="Bold" LetterSpacing="2" VerticalAlignment="Center"/>
+        <!-- ============ Title bar (custom chrome) ============ -->
+        <Grid x:Name="TitleBar" Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto"
+              Background="{StaticResource TitleBar}" PointerPressed="OnTitleBarPressed">
+            <Border Grid.Column="0" Grid.ColumnSpan="4" Background="Transparent" BorderBrush="{StaticResource Line2}"
+                    BorderThickness="0,0,0,1" IsHitTestVisible="False"/>
+
+            <!-- Left: logo + wordmark + connection cluster -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" Margin="12,0"
+                        VerticalAlignment="Center">
+                <Border Width="22" Height="22" CornerRadius="6" Background="{StaticResource Accent}">
+                    <TextBlock Text="☠" Foreground="{StaticResource AccentText}" FontSize="13"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock Text="SABELTANN" Foreground="#CFD3DC" FontSize="11"
+                           FontFamily="Consolas" FontWeight="SemiBold" LetterSpacing="2.5"
+                           VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="6,0,0,0">
+                    <Ellipse Width="7" Height="7"
+                             Fill="{Binding IsConnected, Converter={x:Static vm:MainViewModel.ConnDot}}"/>
+                    <TextBlock Text="{Binding ConnectionHost}" Foreground="#7C828F" FontSize="11"/>
                 </StackPanel>
-            </Border>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
-                        Margin="4,0,0,0">
-                <Ellipse Width="8" Height="8" Margin="0,0,6,0"
-                         Fill="{Binding IsConnected, Converter={x:Static vm:MainViewModel.ConnDot}}"/>
-                <TextBlock Text="{Binding ConnectionLabel}" Foreground="#6c7086" FontSize="11"/>
             </StackPanel>
-            </Grid>
-            <Menu x:Name="MainMenu" Grid.Column="1" Background="#181825" Foreground="#cdd6f4"
-                  FontSize="13">
-                <MenuItem Header="_File">
-                    <MenuItem Header="Load M3U URL..." Click="OnLoadM3UUrl"/>
-                    <MenuItem Header="Load M3U File..." Click="OnLoadM3UFile"/>
-                    <Separator/>
-                    <MenuItem Header="Xtream Login..." Click="OnXtreamLogin"/>
-                    <Separator/>
-                    <MenuItem Header="_Settings..." Click="OnSettings"/>
-                    <Separator/>
-                    <MenuItem Header="E_xit" Click="OnExit"/>
-                </MenuItem>
-            </Menu>
-            <Border Grid.Column="2" IsVisible="{Binding ShowConnectionOverlay}"
-                    VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,8,0">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <TextBlock Text="{Binding ConnectionState}" Foreground="#a6e3a1" FontSize="11"/>
-                    <TextBlock Text="{Binding ConnectionProgress, StringFormat='{}{0}%'}" Foreground="#6c7086" FontSize="11"/>
-                </StackPanel>
-            </Border>
-            <Button Grid.Column="3" Command="{Binding CheckForUpdatesCommand}"
-                    Background="Transparent" BorderThickness="0"
-                    VerticalAlignment="Center"
-                    ToolTip.Tip="Check for Updates"
-                    Padding="6,2"
-                    Focusable="False">
-                <TextBlock Text="↑" Foreground="#6c7086" FontSize="14"/>
-            </Button>
+
+            <!-- Center: transient connection progress -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right"
+                        Margin="0,0,10,0" VerticalAlignment="Center"
+                        IsVisible="{Binding ShowConnectionOverlay}">
+                <TextBlock Text="{Binding ConnectionState}" Foreground="{StaticResource Good}" FontSize="11"/>
+                <TextBlock Text="{Binding ConnectionProgress, StringFormat='{}{0}%'}" Foreground="{StaticResource Muted}" FontSize="11"/>
+            </StackPanel>
+
+            <!-- Update affordance (relocated from removed status bar) -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center"
+                        Margin="0,0,4,0">
+                <TextBlock Text="{Binding UpdateBadgeText}" Foreground="{StaticResource Good}" FontSize="11"
+                           VerticalAlignment="Center" IsVisible="{Binding IsUpdatePending}"/>
+                <ProgressBar Value="{Binding UpdateDownloadProgress}" Maximum="1.0" Height="2" MinWidth="50"
+                             Foreground="{StaticResource Accent}" Background="{StaticResource Line}"
+                             VerticalAlignment="Center" IsVisible="{Binding IsUpdatePending}"/>
+                <Button Command="{Binding CheckForUpdatesCommand}" Classes="WinBtn"
+                        FontFamily="Segoe UI" FontSize="13" ToolTip.Tip="Check for Updates"
+                        Focusable="False" Content="↑"/>
+            </StackPanel>
+
+            <!-- Window caption buttons (Segoe Fluent Icons: minimize / maximize / close) -->
+            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Top">
+                <Button Classes="WinBtn" Content="&#xE921;" Click="OnMinimize" ToolTip.Tip="Minimize"/>
+                <Button Classes="WinBtn" Content="&#xE922;" Click="OnMaximizeRestore" ToolTip.Tip="Maximize"/>
+                <Button Classes="WinBtn WinClose" Content="&#xE8BB;" Click="OnCloseWindow" ToolTip.Tip="Close"/>
+            </StackPanel>
         </Grid>
 
-        <Border x:Name="CategoryBar" Grid.Row="1" Padding="10,7" Background="#313244"
-                IsVisible="{Binding ShowCategoryBar}">
-            <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto">
-                <!-- Col 0: File menu -->
-                <Menu Grid.Column="0" Background="#313244" Foreground="#cdd6f4"
-                      FontSize="13" VerticalAlignment="Center" Margin="0,0,4,0">
-                    <MenuItem Header="_File">
-                        <MenuItem Header="Load M3U URL..." Click="OnLoadM3UUrl"/>
-                        <MenuItem Header="Load M3U File..." Click="OnLoadM3UFile"/>
-                        <Separator/>
-                        <MenuItem Header="Xtream Login..." Click="OnXtreamLogin"/>
-                        <Separator/>
-                        <MenuItem Header="_Settings..." Click="OnSettings"/>
-                        <Separator/>
-                        <MenuItem Header="E_xit" Click="OnExit"/>
-                    </MenuItem>
-                </Menu>
-                <!-- Col 1: Back button -->
-                <Button Grid.Column="1" Background="Transparent" BorderThickness="0"
-                        Width="28" Height="28" Padding="0" Margin="0,0,8,0"
-                        Command="{Binding GoBackCommand}"
-                        IsVisible="{Binding ShowBackButton}"
-                        ToolTip.Tip="Go back">
-                    <TextBlock Text="←" Foreground="#a6adc8" FontSize="14"
-                               VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                </Button>
-                <!-- Col 2: Category (Live TV only) -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
-                            IsVisible="{Binding IsLiveTv}">
-                    <TextBlock Text="Category" VerticalAlignment="Center"
-                               FontSize="11" FontWeight="SemiBold"
-                               Foreground="#a6adc8" LetterSpacing="1"/>
-                    <ComboBox ItemsSource="{Binding Categories}"
-                              SelectedItem="{Binding SelectedCategory}"
-                              DisplayMemberBinding="{Binding Name}"
-                              MinWidth="150" FontSize="12"/>
+        <!-- ============ Morphing toolbar ============ -->
+        <Border x:Name="Toolbar" Grid.Row="1" Background="{StaticResource Surface}"
+                BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="12,0">
+            <Grid ColumnDefinitions="Auto,*">
+
+                <!-- Left zone: File menu (browsing) OR back arrow (detail/playback) -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Spacing="6">
+                    <Menu Classes="FileMenu" IsVisible="{Binding ShowFileMenu}" VerticalAlignment="Center">
+                        <MenuItem Header="☰ File">
+                            <MenuItem Header="Load M3U URL..." Click="OnLoadM3UUrl"/>
+                            <MenuItem Header="Load M3U File..." Click="OnLoadM3UFile"/>
+                            <Separator/>
+                            <MenuItem Header="Xtream Login..." Click="OnXtreamLogin"/>
+                            <Separator/>
+                            <MenuItem Header="Settings..." Click="OnSettings"/>
+                            <Separator/>
+                            <MenuItem Header="Exit" Click="OnExit"/>
+                        </MenuItem>
+                    </Menu>
+                    <Button Classes="Pill" Width="34" Padding="0" Height="34"
+                            Command="{Binding GoBackCommand}" IsVisible="{Binding ShowToolbarBack}"
+                            ToolTip.Tip="Back" Content="←"
+                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                 </StackPanel>
-                <!-- Col 3: Favorites toggle (Live TV only) -->
-                <ToggleButton Grid.Column="3" IsChecked="{Binding ShowFavoritesOnly}"
-                              Background="Transparent" BorderThickness="0"
-                              Margin="6,0,0,0" Padding="4,0"
-                              VerticalAlignment="Center"
-                              IsVisible="{Binding IsLiveTv}">
-                    <TextBlock Text="★" Foreground="#f9e2af" FontSize="13"/>
-                </ToggleButton>
-                <!-- Col 4: Search (Live TV only, fills remaining space) -->
-                <TextBox Grid.Column="4" Text="{Binding SearchText}"
-                         PlaceholderText="Search channels..."
-                         Background="#1e1e2e" Foreground="#cdd6f4"
-                         BorderThickness="1" BorderBrush="#45475a"
-                         FontSize="12" Padding="6,4"
-                         Margin="8,0" VerticalAlignment="Center"
-                         IsVisible="{Binding IsLiveTv}"/>
-                <!-- Col 5: Connection status -->
-                <Border Grid.Column="5" IsVisible="{Binding ShowConnectionOverlay}"
-                        VerticalAlignment="Center" Margin="0,0,8,0">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <TextBlock Text="{Binding ConnectionState}" Foreground="#a6e3a1" FontSize="11"/>
-                        <TextBlock Text="{Binding ConnectionProgress, StringFormat='{}{0}%'}" Foreground="#6c7086" FontSize="11"/>
+
+                <!-- Right zone: per-mode content (stacked, one visible at a time) -->
+                <!-- ponytail: opacity-only morph fade; literal 5px slide skipped (fragile to bind). -->
+                <Grid x:Name="ToolbarContent" Grid.Column="1" Margin="10,0,0,0">
+                    <Grid.Transitions>
+                        <Transitions>
+                            <DoubleTransition Property="Opacity" Duration="0:0:0.22" Easing="CubicEaseOut"/>
+                        </Transitions>
+                    </Grid.Transitions>
+
+                    <!-- Welcome -->
+                    <Grid IsVisible="{Binding IsWelcome}" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                        <TextBlock Grid.Column="0" Text="No source connected" Foreground="{StaticResource Muted}"
+                                   FontSize="12.5" VerticalAlignment="Center"/>
+                        <Button Grid.Column="2" Classes="Primary" Content="＋ Connect a source"
+                                Click="OnLoadM3UUrl"/>
+                    </Grid>
+
+                    <!-- Picker -->
+                    <Grid IsVisible="{Binding IsPicker}" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                        <TextBlock Grid.Column="0" Text="Choose what to watch" Foreground="#CFD3DC"
+                                   FontSize="12.5" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="{Binding ConnectionLabel}" Foreground="{StaticResource Muted}"
+                                   FontFamily="Consolas" FontSize="11.5" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Live TV -->
+                    <Grid IsVisible="{Binding ShowLiveBar}"
+                          ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2">
+                            <ToggleButton Classes="Tab" IsChecked="True" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
+                            <ToggleButton Classes="Tab" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
+                            <ToggleButton Classes="Tab" Content="⊞ Series" Command="{Binding SwitchToSeriesCommand}"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" Classes="Divider"/>
+                        <ComboBox Grid.Column="2" ItemsSource="{Binding Categories}"
+                                  SelectedItem="{Binding SelectedCategory}"
+                                  DisplayMemberBinding="{Binding Name}" MinWidth="150" FontSize="12"
+                                  VerticalAlignment="Center"/>
+                        <ToggleButton Grid.Column="3" IsChecked="{Binding ShowFavoritesOnly}" Classes="Tab"
+                                      Content="★" Margin="4,0" ToolTip.Tip="Favorites only"/>
+                        <TextBox Grid.Column="5" Text="{Binding SearchText}" PlaceholderText="⌕ Search channels…"
+                                 Background="{StaticResource InputBg}" Foreground="{StaticResource Text}"
+                                 BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8"
+                                 FontSize="12" Padding="8,5" Margin="8,0" VerticalAlignment="Center"/>
+                        <Border Grid.Column="6" Classes="CountPill">
+                            <TextBlock Text="{Binding ChannelCount, StringFormat='{}{0} ch'}"
+                                       Foreground="{StaticResource Sub}" FontFamily="Consolas" FontSize="11"/>
+                        </Border>
+                    </Grid>
+
+                    <!-- Movies -->
+                    <Grid IsVisible="{Binding ShowMoviesBar}"
+                          ColumnDefinitions="Auto,Auto,Auto,*,Auto" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2">
+                            <ToggleButton Classes="Tab" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
+                            <ToggleButton Classes="Tab" IsChecked="True" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
+                            <ToggleButton Classes="Tab" Content="⊞ Series" Command="{Binding SwitchToSeriesCommand}"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" Classes="Divider"/>
+                        <ComboBox Grid.Column="2" ItemsSource="{Binding VodBrowser.Categories}"
+                                  SelectedItem="{Binding VodBrowser.SelectedCategory}"
+                                  MinWidth="150" MaxWidth="230" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="3" Text="{Binding VodBrowser.SearchText}" PlaceholderText="⌕ Search movies…"
+                                 Background="{StaticResource InputBg}" Foreground="{StaticResource Text}"
+                                 BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8"
+                                 FontSize="12" Padding="8,5" Margin="8,0" VerticalAlignment="Center"/>
+                        <Border Grid.Column="4" Classes="CountPill">
+                            <TextBlock Text="{Binding VodBrowser.StatusText}"
+                                       Foreground="{StaticResource Sub}" FontFamily="Consolas" FontSize="11"/>
+                        </Border>
+                    </Grid>
+
+                    <!-- Series -->
+                    <Grid IsVisible="{Binding ShowSeriesBar}"
+                          ColumnDefinitions="Auto,Auto,Auto,*,Auto" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2">
+                            <ToggleButton Classes="Tab" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
+                            <ToggleButton Classes="Tab" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
+                            <ToggleButton Classes="Tab" IsChecked="True" Content="⊞ Series" Command="{Binding SwitchToSeriesCommand}"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" Classes="Divider"/>
+                        <ComboBox Grid.Column="2" ItemsSource="{Binding SeriesBrowser.Categories}"
+                                  SelectedItem="{Binding SeriesBrowser.SelectedCategory}"
+                                  MinWidth="150" MaxWidth="230" FontSize="12" VerticalAlignment="Center"
+                                  IsVisible="{Binding SeriesBrowser.ShowShows}"/>
+                        <TextBox Grid.Column="3" Text="{Binding SeriesBrowser.SearchText}" PlaceholderText="⌕ Search shows…"
+                                 Background="{StaticResource InputBg}" Foreground="{StaticResource Text}"
+                                 BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8"
+                                 FontSize="12" Padding="8,5" Margin="8,0" VerticalAlignment="Center"
+                                 IsVisible="{Binding SeriesBrowser.ShowShows}"/>
+                        <Border Grid.Column="4" Classes="CountPill">
+                            <TextBlock Text="{Binding SeriesBrowser.StatusText}"
+                                       Foreground="{StaticResource Sub}" FontFamily="Consolas" FontSize="11"/>
+                        </Border>
+                    </Grid>
+
+                    <!-- Movie/Series detail -->
+                    <Grid IsVisible="{Binding ShowDetailBar}" ColumnDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center">
+                        <TextBlock Grid.Column="0" Text="{Binding MovieDetail.Title}" Foreground="{StaticResource TextStrong}"
+                                   FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" MaxWidth="360"/>
+                        <Button Grid.Column="2" Classes="Pill" Content="{Binding MovieDetail.ResumeText}"
+                                Command="{Binding ResumeFromDetailCommand}" Margin="0,0,8,0"
+                                IsVisible="{Binding MovieDetail.CanResume}"/>
+                        <Button Grid.Column="3" Classes="Primary" Content="▶ Play"
+                                Command="{Binding PlayFromStartCommand}"/>
+                    </Grid>
+
+                    <!-- Playback (left info only; controls live in the bottom media bar) -->
+                    <StackPanel IsVisible="{Binding ShowPlaybackBar}" Orientation="Horizontal" Spacing="10"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="{Binding CurrentPlayingTitle}" Foreground="{StaticResource TextStrong}"
+                                   FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" MaxWidth="420"/>
+                        <Border CornerRadius="5" Padding="7,2" VerticalAlignment="Center"
+                                Background="{StaticResource Live}" IsVisible="{Binding !IsCurrentVod}">
+                            <TextBlock Text="LIVE" Foreground="#FFFFFF" FontFamily="Consolas" FontSize="10" FontWeight="SemiBold"/>
+                        </Border>
+                        <Border CornerRadius="5" Padding="7,2" VerticalAlignment="Center"
+                                Background="{StaticResource Accent}" IsVisible="{Binding IsCurrentVod}">
+                            <TextBlock Text="VOD" Foreground="{StaticResource AccentText}" FontFamily="Consolas" FontSize="10" FontWeight="SemiBold"/>
+                        </Border>
                     </StackPanel>
-                </Border>
-                <!-- Col 6: DEBUG toggle -->
-                <ToggleButton Grid.Column="6" IsChecked="{Binding ShowDebugOverlay}"
-                              Background="Transparent" BorderThickness="0"
-                              Margin="4,0" Padding="6,2"
-                              VerticalAlignment="Center">
-                    <TextBlock Text="DEBUG" Foreground="#f38ba8" FontSize="9" FontWeight="Bold"
-                               LetterSpacing="1"/>
-                </ToggleButton>
-                <!-- Col 7: Channel count (Live TV only) -->
-                <Border Grid.Column="7" CornerRadius="10" Background="#313244"
-                        Padding="8,2" Margin="6,0" VerticalAlignment="Center"
-                        IsVisible="{Binding IsLiveTv}">
-                    <TextBlock Text="{Binding ChannelCount, StringFormat='{}{0} channels'}"
-                               Foreground="#a6adc8" FontSize="11"/>
-                </Border>
-                <!-- Col 8: Update button -->
-                <Button Grid.Column="8" Command="{Binding CheckForUpdatesCommand}"
-                        Background="Transparent" BorderThickness="0"
-                        VerticalAlignment="Center"
-                        ToolTip.Tip="Check for Updates"
-                        Padding="6,2" Focusable="False">
-                    <TextBlock Text="↑" Foreground="#6c7086" FontSize="14"/>
-                </Button>
+                </Grid>
             </Grid>
         </Border>
 
+        <!-- ============ Content ============ -->
         <Grid x:Name="ContentGrid" Grid.Row="2" ColumnDefinitions="*">
 
             <Grid Grid.Column="0">
@@ -202,220 +380,201 @@
                     </ListBox.ItemsPanel>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <Border Padding="0" Margin="2,2" Background="#181825"
-                                    CornerRadius="10" BorderThickness="1" BorderBrush="#313244"
-                                    Width="200" Height="140">
-                                <Grid RowDefinitions="*,Auto">
-                                    <Button Grid.Row="0" Background="Transparent" BorderThickness="0"
-                                            CornerRadius="10,10,0,0" Padding="0"
+                            <Border Padding="11" Margin="4" Background="{StaticResource Surface}"
+                                    CornerRadius="11" BorderThickness="1" BorderBrush="{StaticResource Line}"
+                                    Width="175" Height="66">
+                                <Grid ColumnDefinitions="38,*" ColumnSpacing="10">
+                                    <Button Grid.Column="0" Grid.ColumnSpan="2" Background="Transparent"
+                                            BorderThickness="0" Padding="0"
                                             HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
                                             Command="{Binding $parent[Window].DataContext.SelectChannelCommand}"
                                             CommandParameter="{Binding .}">
-                                        <Border Background="#313244" CornerRadius="10,10,0,0">
-                                            <Grid>
-                                                <Image Source="{Binding LogoSrc}" Stretch="UniformToFill"
-                                                       HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-                                                <Border Width="40" Height="40" CornerRadius="10"
-                                                        Background="{Binding Name, Converter={x:Static vm:MainViewModel.HashColor}}"
-                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                        IsVisible="{Binding LogoSrc, Converter={x:Static vm:MainViewModel.ImgFallback}}">
+                                        <Grid ColumnDefinitions="38,*" ColumnSpacing="10">
+                                            <Border Grid.Column="0" Width="38" Height="38" CornerRadius="8"
+                                                    Background="{Binding Name, Converter={x:Static vm:MainViewModel.HashColor}}"
+                                                    VerticalAlignment="Center">
+                                                <Grid>
+                                                    <Image Source="{Binding LogoSrc}" Stretch="UniformToFill"/>
                                                     <TextBlock Text="{Binding Name, Converter={x:Static vm:MainViewModel.FirstChar}}"
-                                                               Foreground="#cdd6f4" FontSize="16" FontWeight="Bold"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                <Button Background="Transparent" BorderThickness="0"
-                                                        Width="28" Height="28" Padding="0"
-                                                        HorizontalAlignment="Right" VerticalAlignment="Top"
-                                                        Command="{Binding $parent[Window].DataContext.ToggleFavoriteCommand}"
-                                                        CommandParameter="{Binding .}">
-                                                    <TextBlock Text="★" FontSize="14"
-                                                               Foreground="{Binding IsFavorite, Converter={StaticResource StarColorConverter}}"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Button>
-                                            </Grid>
-                                        </Border>
+                                                               Foreground="{StaticResource Text}" FontSize="15" FontWeight="SemiBold"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                               IsVisible="{Binding LogoSrc, Converter={x:Static vm:MainViewModel.ImgFallback}}"/>
+                                                </Grid>
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="{StaticResource Text}"
+                                                       FontSize="13" VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                        </Grid>
                                     </Button>
-                                    <TextBlock Grid.Row="1" Text="{Binding Name}" Foreground="#cdd6f4" FontSize="11"
-                                               TextTrimming="CharacterEllipsis" Margin="8,4"/>
+                                    <Button Grid.Column="1" Background="Transparent" BorderThickness="0"
+                                            Width="26" Height="26" Padding="0"
+                                            HorizontalAlignment="Right" VerticalAlignment="Top"
+                                            Command="{Binding $parent[Window].DataContext.ToggleFavoriteCommand}"
+                                            CommandParameter="{Binding .}">
+                                        <TextBlock Text="★" FontSize="13"
+                                                   Foreground="{Binding IsFavorite, Converter={StaticResource StarColorConverter}}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Button>
                                 </Grid>
                             </Border>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <Border x:Name="VideoBorder" Background="#11111b" IsVisible="{Binding ShowVideo}" ZIndex="1">
+                <Border x:Name="VideoBorder" Background="#0B0C0F" IsVisible="{Binding ShowVideo}" ZIndex="1">
                     <Image x:Name="VideoImage" Source="{Binding VideoBitmap}" Stretch="Uniform" />
                 </Border>
-
-                <Button Background="#44000000" BorderThickness="0" CornerRadius="8"
-                        Width="32" Height="32" HorizontalAlignment="Right" VerticalAlignment="Top"
-                        Margin="8" Padding="0" IsVisible="{Binding ShowVideo}"
-                        Opacity="{Binding #TransportBar.Opacity}"
-                        Command="{Binding StopPlaybackCommand}" ZIndex="10">
-                    <TextBlock Text="✕" Foreground="#f38ba8" FontSize="16" FontWeight="Bold"
-                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Button>
 
                 <views:ConnectionPage x:Name="ConnectionPage" IsVisible="{Binding IsWelcome}"/>
 
                 <views:ContentPicker x:Name="ContentPicker" IsVisible="{Binding IsPicker}"/>
-                <Border IsVisible="{Binding IsMovies}" Background="#11111b">
+                <Border IsVisible="{Binding IsMovies}" Background="{StaticResource Bg}">
                     <views:VodBrowser DataContext="{Binding VodBrowser}"/>
                 </Border>
-                <Border IsVisible="{Binding IsSeries}" Background="#11111b">
+                <Border IsVisible="{Binding IsSeries}" Background="{StaticResource Bg}">
                     <views:SeriesBrowser DataContext="{Binding SeriesBrowser}"/>
                 </Border>
-                <Border IsVisible="{Binding IsMovieDetail}" Background="#11111b">
+                <Border IsVisible="{Binding IsMovieDetail}" Background="{StaticResource Bg}">
                     <views:MovieDetailView DataContext="{Binding MovieDetail}"/>
                 </Border>
 
-                <!-- Pause overlay -->
+                <!-- Pause overlay: amber ring + play glyph -->
                 <Border x:Name="PauseOverlay" IsVisible="{Binding IsPaused}" ZIndex="10"
-                        Background="#8811111b" CornerRadius="0" Padding="0">
+                        Background="#990B0C0F">
+                    <Border Width="64" Height="64" CornerRadius="32" Background="{StaticResource Accent}"
+                            HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Text="▶" Foreground="{StaticResource AccentText}" FontSize="26"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </Border>
+
+                <!-- Casting overlay -->
+                <Border x:Name="CastOverlay" IsVisible="{Binding IsCasting}" ZIndex="9"
+                        IsHitTestVisible="False" Background="#CC0B0C0F">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16">
-                        <TextBlock Text="⏸" Foreground="#cdd6f4" FontSize="48"
+                        <TextBlock Text="📺" FontSize="48" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Chromecasting…" Foreground="{StaticResource Text}" FontSize="18"
                                    HorizontalAlignment="Center"/>
-                        <TextBlock Text="Paused" Foreground="#a6adc8" FontSize="18"
+                        <TextBlock Text="{Binding CastTargetName}" Foreground="{StaticResource Sub}" FontSize="14"
                                    HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
 
                 <!-- Buffering / error overlay -->
-                <Border ZIndex="5"
-                        IsVisible="{Binding ShowBufferingOverlay}"
-                        Background="#f011111b"
-                        HorizontalAlignment="Stretch"
-                        VerticalAlignment="Stretch">
+                <Border ZIndex="5" IsVisible="{Binding ShowBufferingOverlay}" Background="#F00B0C0F"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
-                        <ProgressBar IsIndeterminate="True"
-                                     MinWidth="220"
-                                     Height="4"
-                                     Foreground="#cba6f7"
-                                     Background="#313244"/>
-                        <TextBlock Text="{Binding ConnectionState}"
-                                   Foreground="#cdd6f4"
-                                   FontSize="14"
-                                   HorizontalAlignment="Center"/>
+                        <ProgressBar IsIndeterminate="True" MinWidth="220" Height="4"
+                                     Foreground="{StaticResource Accent}" Background="{StaticResource Line}"/>
+                        <TextBlock Text="{Binding ConnectionState}" Foreground="{StaticResource Text}"
+                                   FontSize="14" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
 
-                <!-- Transport bar (bottom overlay) -->
+                <!-- Bottom media-controls bar (kept, recolored) -->
                 <Border x:Name="TransportBar" IsVisible="{Binding ShowVideo}" Opacity="0"
-                        Background="#cc000000" Padding="8,6"
+                        Background="#CC101216" Padding="8,6"
                         HorizontalAlignment="Stretch" VerticalAlignment="Bottom" ZIndex="10"
-                        PointerEntered="OnTransportEntered"
-                        PointerExited="OnTransportExited">
-                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto" VerticalAlignment="Center">
+                        PointerEntered="OnTransportEntered" PointerExited="OnTransportExited">
+                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto,Auto,Auto" VerticalAlignment="Center">
 
-                        <!-- Play/Pause -->
                         <Button Grid.Column="0" Classes="TransportBtn" Focusable="False"
                                 Command="{Binding TogglePlayPauseCommand}">
-                            <TextBlock Text="{Binding PlayPauseSymbol}" Foreground="#cdd6f4" FontSize="18"
+                            <TextBlock Text="{Binding PlayPauseSymbol}" Foreground="{StaticResource Text}" FontSize="18"
                                        VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
 
-                        <!-- Stop -->
                         <Button Grid.Column="1" Classes="TransportBtn" Focusable="False"
-                                Command="{Binding StopCommand}">
-                            <TextBlock Text="⏹" Foreground="#f38ba8" FontSize="15"
+                                Command="{Binding StopPlaybackCommand}">
+                            <TextBlock Text="⏹" Foreground="{StaticResource Danger}" FontSize="15"
                                        VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
 
-                        <!-- Rewind -->
                         <Button Grid.Column="2" Classes="TransportBtn" Focusable="False"
-                                Command="{Binding RewindCommand}"
-                                ToolTip.Tip="Rewind 10s">
-                            <TextBlock Text="⏪" Foreground="#a6adc8" FontSize="15"
+                                Command="{Binding RewindCommand}" ToolTip.Tip="Rewind 10s">
+                            <TextBlock Text="⏪" Foreground="{StaticResource Sub}" FontSize="15"
                                        VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
 
-                        <!-- Forward -->
                         <Button Grid.Column="3" Classes="TransportBtn" Focusable="False"
-                                Command="{Binding ForwardCommand}"
-                                ToolTip.Tip="Forward 10s">
-                            <TextBlock Text="⏩" Foreground="#a6adc8" FontSize="15"
+                                Command="{Binding ForwardCommand}" ToolTip.Tip="Forward 10s">
+                            <TextBlock Text="⏩" Foreground="{StaticResource Sub}" FontSize="15"
                                        VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
 
-                        <!-- Progress bar + time -->
                         <Grid Grid.Column="4" ColumnDefinitions="*,Auto" VerticalAlignment="Center" Margin="0,0,8,0"
                               IsVisible="{Binding IsVodContent}">
-                            <Slider Grid.Column="0" Minimum="0" Maximum="1"
-                                    Value="{Binding VodPositionPercent}"
-                                    VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Grid.Column="1" VerticalAlignment="Center"
-                                       Foreground="#a6adc8" FontSize="11">
+                            <Slider Grid.Column="0" Minimum="0" Maximum="1" Value="{Binding VodPositionPercent}"
+                                    Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Foreground="{StaticResource Sub}" FontSize="11">
                                 <Run Text="{Binding PositionText}"/><Run Text=" / "/><Run Text="{Binding DurationText}"/>
                             </TextBlock>
                         </Grid>
 
-                        <!-- Volume button -->
                         <Button Grid.Column="5" x:Name="VolumeBtn" Classes="TransportBtn" Focusable="False"
-                                Command="{Binding ToggleMuteCommand}"
-                                ToolTip.Tip="Volume / click to mute (M)"
-                                PointerEntered="OnVolumeBtnEntered"
-                                PointerExited="OnVolumeBtnExited">
+                                Command="{Binding ToggleMuteCommand}" ToolTip.Tip="Volume / click to mute (M)"
+                                PointerEntered="OnVolumeBtnEntered" PointerExited="OnVolumeBtnExited">
                             <TextBlock Text="{Binding IsMuted, Converter={x:Static vm:MainViewModel.MuteIcon}}"
-                                       Foreground="#a6adc8" FontSize="16"
+                                       Foreground="{StaticResource Sub}" FontSize="16"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Button>
 
-                        <!-- Audio track -->
                         <Button Grid.Column="6" Classes="TransportBtn" Focusable="False"
-                                ToolTip.Tip="Audio track / language"
-                                Click="OnAudioClick">
-                            <TextBlock Text="🔊" Foreground="#89b4fa" FontSize="15"
+                                ToolTip.Tip="Audio track / language" Click="OnAudioClick">
+                            <TextBlock Text="🔊" Foreground="{StaticResource Info}" FontSize="15"
                                        VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
 
-                        <!-- Subtitles -->
                         <Button Grid.Column="7" Classes="TransportBtn" Focusable="False"
-                                ToolTip.Tip="Subtitles"
-                                Click="OnCcClick">
-                            <TextBlock Text="CC" Foreground="#89b4fa" FontSize="13" FontWeight="Bold"
+                                ToolTip.Tip="Subtitles" Click="OnCcClick">
+                            <TextBlock Text="CC" Foreground="{StaticResource Info}" FontSize="13" FontWeight="Bold"
                                        VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
 
-                        <!-- Pop-out (windowed, chrome hidden) -->
                         <Button Grid.Column="8" Classes="TransportBtn" Focusable="False"
-                                Click="OnPopoutClick"
-                                ToolTip.Tip="Pop-out player — hide bars (Esc to exit)">
-                            <TextBlock Text="🗗" Foreground="#89b4fa" FontSize="16"
+                                ToolTip.Tip="Cast to device" Click="OnCastClick">
+                            <TextBlock Text="📺"
+                                       Foreground="{Binding IsCasting, Converter={x:Static vm:MainViewModel.CastIcon}}"
+                                       FontSize="15" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
+
+                        <ToggleButton Grid.Column="9" IsChecked="{Binding ShowDebugOverlay}" Classes="TransportBtn"
+                                      Focusable="False" ToolTip.Tip="Debug overlay (D)">
+                            <TextBlock Text="DEBUG" Foreground="{StaticResource Accent}" FontFamily="Consolas"
+                                       FontSize="9" FontWeight="Bold" LetterSpacing="1"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </ToggleButton>
+
+                        <Button Grid.Column="10" Classes="TransportBtn" Focusable="False"
+                                Click="OnPopoutClick" ToolTip.Tip="Pop-out player — hide bars (Esc to exit)">
+                            <TextBlock Text="🗗" Foreground="{StaticResource Info}" FontSize="16"
                                        VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
 
-                        <!-- Fullscreen -->
-                        <Button Grid.Column="9" Classes="TransportBtn" Focusable="False"
-                                Command="{Binding FullscreenCommand}"
-                                ToolTip.Tip="Fullscreen (F)">
-                            <TextBlock Text="⛶" Foreground="#89b4fa" FontSize="18"
+                        <Button Grid.Column="11" Classes="TransportBtn" Focusable="False"
+                                Command="{Binding FullscreenCommand}" ToolTip.Tip="Fullscreen (F)">
+                            <TextBlock Text="⛶" Foreground="{StaticResource Info}" FontSize="18"
                                        VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
                     </Grid>
                 </Border>
 
-                <!-- Volume slider overlay (in-window, ZIndex layer) -->
-                <Border x:Name="VolumeOverlay"
-                        ZIndex="20"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Bottom"
-                        Margin="0,0,80,52"
-                        IsVisible="{Binding ShowVolumePopup}"
-                        Background="#cc000000"
-                        CornerRadius="6"
-                        Padding="12,10"
-                        PointerEntered="OnVolumePopupEntered"
-                        PointerExited="OnVolumePopupExited">
+                <!-- Volume slider overlay -->
+                <Border x:Name="VolumeOverlay" ZIndex="20" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                        Margin="0,0,80,52" IsVisible="{Binding ShowVolumePopup}"
+                        Background="#CC101216" CornerRadius="8" Padding="12,10"
+                        PointerEntered="OnVolumePopupEntered" PointerExited="OnVolumePopupExited">
                     <StackPanel Orientation="Vertical" Spacing="6">
-                        <TextBlock Text="{Binding Volume}" Foreground="#a6adc8" FontSize="11"
+                        <TextBlock Text="{Binding Volume}" Foreground="{StaticResource Sub}" FontSize="11"
                                    HorizontalAlignment="Center"/>
                         <Grid ColumnDefinitions="26,36">
                             <Canvas Grid.Column="0" Width="26" Height="170">
-                                <TextBlock Canvas.Top="2"   Canvas.Left="0" Text="200" FontSize="9" Foreground="#6c7086"/>
-                                <TextBlock Canvas.Top="43"  Canvas.Left="0" Text="150" FontSize="9" Foreground="#6c7086"/>
-                                <TextBlock Canvas.Top="84"  Canvas.Left="0" Text="100" FontSize="9" Foreground="#6c7086"/>
-                                <TextBlock Canvas.Top="125" Canvas.Left="0" Text="50"  FontSize="9" Foreground="#6c7086"/>
-                                <TextBlock Canvas.Top="161" Canvas.Left="0" Text="0"   FontSize="9" Foreground="#6c7086"/>
+                                <TextBlock Canvas.Top="2"   Canvas.Left="0" Text="200" FontSize="9" Foreground="{StaticResource Muted}"/>
+                                <TextBlock Canvas.Top="43"  Canvas.Left="0" Text="150" FontSize="9" Foreground="{StaticResource Muted}"/>
+                                <TextBlock Canvas.Top="84"  Canvas.Left="0" Text="100" FontSize="9" Foreground="{StaticResource Muted}"/>
+                                <TextBlock Canvas.Top="125" Canvas.Left="0" Text="50"  FontSize="9" Foreground="{StaticResource Muted}"/>
+                                <TextBlock Canvas.Top="161" Canvas.Left="0" Text="0"   FontSize="9" Foreground="{StaticResource Muted}"/>
                             </Canvas>
                             <Slider Grid.Column="1" Orientation="Vertical" Minimum="0" Maximum="200"
                                     Value="{Binding Volume}" Height="170"/>
@@ -423,78 +582,60 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Debug stats overlay (in-window, ZIndex layer) -->
-                <Border x:Name="DebugOverlay"
-                        ZIndex="20"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Bottom"
-                        Margin="0,0,8,52"
-                        IsVisible="{Binding ShowDebugOverlay}"
-                        Background="#cc11111b"
-                        CornerRadius="8"
-                        Padding="14,12"
-                        Width="380">
+                <!-- Debug stats overlay -->
+                <Border x:Name="DebugOverlay" ZIndex="20" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                        Margin="0,0,8,52" IsVisible="{Binding ShowDebugOverlay}"
+                        Background="#D9101216" BorderBrush="{StaticResource Line}" BorderThickness="1"
+                        CornerRadius="9" Padding="14,12" Width="250">
                     <StackPanel Spacing="3" DataContext="{Binding DebugStats}">
-                        <TextBlock Text="Debug Info" Foreground="#cba6f7" FontSize="13" FontWeight="Bold" Margin="0,0,0,4"/>
-                        <Grid ColumnDefinitions="80,*">
-                            <TextBlock Grid.Column="0" Text="State" Foreground="#6c7086" FontSize="11"/>
-                            <TextBlock Grid.Column="1" Text="{Binding State}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                        <TextBlock Text="DEBUG" Foreground="{StaticResource Accent}" FontFamily="Consolas"
+                                   FontSize="12" FontWeight="Bold" LetterSpacing="1" Margin="0,0,0,4"/>
+                        <Grid ColumnDefinitions="90,*">
+                            <TextBlock Grid.Column="0" Text="State" Foreground="{StaticResource Muted}" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding State}" Foreground="{StaticResource Text}" FontSize="11" HorizontalAlignment="Right"/>
                         </Grid>
-                        <Grid ColumnDefinitions="80,*">
-                            <TextBlock Grid.Column="0" Text="Resolution" Foreground="#6c7086" FontSize="11"/>
-                            <TextBlock Grid.Column="1" Text="{Binding Resolution}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                        <Grid ColumnDefinitions="90,*">
+                            <TextBlock Grid.Column="0" Text="Resolution" Foreground="{StaticResource Muted}" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Resolution}" Foreground="{StaticResource Text}" FontSize="11" HorizontalAlignment="Right"/>
                         </Grid>
-                        <Grid ColumnDefinitions="80,*">
-                            <TextBlock Grid.Column="0" Text="Frames" Foreground="#6c7086" FontSize="11"/>
-                            <TextBlock Grid.Column="1" Text="{Binding Frames}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                        <Grid ColumnDefinitions="90,*">
+                            <TextBlock Grid.Column="0" Text="Input bitrate" Foreground="{StaticResource Muted}" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding InputBitrate}" Foreground="{StaticResource Text}" FontSize="11" HorizontalAlignment="Right"/>
                         </Grid>
-                        <Grid ColumnDefinitions="80,*">
-                            <TextBlock Grid.Column="0" Text="Position" Foreground="#6c7086" FontSize="11"/>
-                            <TextBlock Grid.Column="1" Text="{Binding Position}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
+                        <Grid ColumnDefinitions="90,*">
+                            <TextBlock Grid.Column="0" Text="Frames" Foreground="{StaticResource Muted}" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Frames}" Foreground="{StaticResource Text}" FontSize="11" HorizontalAlignment="Right"/>
                         </Grid>
-                        <Grid ColumnDefinitions="80,*">
-                            <TextBlock Grid.Column="0" Text="Duration" Foreground="#6c7086" FontSize="11"/>
-                            <TextBlock Grid.Column="1" Text="{Binding Duration}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
-                        </Grid>
-                        <Grid ColumnDefinitions="80,*">
-                            <TextBlock Grid.Column="0" Text="Volume" Foreground="#6c7086" FontSize="11"/>
-                            <TextBlock Grid.Column="1" Text="{Binding Volume}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
-                        </Grid>
-                        <Grid ColumnDefinitions="80,*">
-                            <TextBlock Grid.Column="0" Text="Input" Foreground="#6c7086" FontSize="11"/>
-                            <TextBlock Grid.Column="1" Text="{Binding InputBitrate}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
-                        </Grid>
-                        <Grid ColumnDefinitions="80,*">
-                            <TextBlock Grid.Column="0" Text="Demux" Foreground="#6c7086" FontSize="11"/>
-                            <TextBlock Grid.Column="1" Text="{Binding DemuxBitrate}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
-                        </Grid>
-                        <Grid ColumnDefinitions="80,*">
-                            <TextBlock Grid.Column="0" Text="Dropped" Foreground="#6c7086" FontSize="11"/>
-                            <TextBlock Grid.Column="1" Text="{Binding LostFrames}" Foreground="#cdd6f4" FontSize="11" HorizontalAlignment="Right"/>
-                        </Grid>
-                        <Grid ColumnDefinitions="80,*">
-                            <TextBlock Grid.Column="0" Text="URL" Foreground="#6c7086" FontSize="11" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="1" Text="{Binding ConnectionUrl}" Foreground="#cdd6f4" FontSize="11"
-                                       HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"
-                                       ToolTip.Tip="{Binding ConnectionUrl}" MaxWidth="120"/>
+                        <Grid ColumnDefinitions="90,*">
+                            <TextBlock Grid.Column="0" Text="Dropped" Foreground="{StaticResource Muted}" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding LostFrames}" Foreground="{StaticResource Text}" FontSize="11" HorizontalAlignment="Right"/>
                         </Grid>
                     </StackPanel>
                 </Border>
 
             </Grid>
         </Grid>
-
-        <Grid x:Name="StatusBar" Grid.Row="3" ColumnDefinitions="*,Auto,Auto,Auto" Background="#181825">
-            <TextBlock Grid.Column="0" Text="{Binding StatusText}" Margin="10,3"
-                       Foreground="#6c7086" FontSize="11" VerticalAlignment="Center"/>
-            <TextBlock Grid.Column="1" Text="{Binding UpdateBadgeText}"
-                       Foreground="#a6e3a1" FontSize="11"
-                       VerticalAlignment="Center" Margin="8,0"
-                       IsVisible="{Binding IsUpdatePending}"/>
-            <ProgressBar Grid.Column="2" Value="{Binding UpdateDownloadProgress}"
-                         Maximum="1.0" Height="2" MinWidth="60"
-                         Foreground="#cba6f7" Background="#313244"
-                         VerticalAlignment="Center" Margin="0,0,8,0"/>
-        </Grid>
     </Grid>
+    </Border>
+
+        <!-- Resize grips (SystemDecorations=None removes native resize borders) -->
+        <Grid ZIndex="100">
+            <Border HorizontalAlignment="Left" VerticalAlignment="Stretch" Width="5" Background="Transparent"
+                    Cursor="SizeWestEast" Tag="West" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Right" VerticalAlignment="Stretch" Width="5" Background="Transparent"
+                    Cursor="SizeWestEast" Tag="East" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="5" Background="Transparent"
+                    Cursor="SizeNorthSouth" Tag="North" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="5" Background="Transparent"
+                    Cursor="SizeNorthSouth" Tag="South" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Left" VerticalAlignment="Top" Width="9" Height="9" Background="Transparent"
+                    Cursor="TopLeftCorner" Tag="NorthWest" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Right" VerticalAlignment="Top" Width="9" Height="9" Background="Transparent"
+                    Cursor="TopRightCorner" Tag="NorthEast" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="9" Height="9" Background="Transparent"
+                    Cursor="BottomLeftCorner" Tag="SouthWest" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="9" Height="9" Background="Transparent"
+                    Cursor="BottomRightCorner" Tag="SouthEast" PointerPressed="OnResizePressed"/>
+        </Grid>
+    </Panel>
 </Window>

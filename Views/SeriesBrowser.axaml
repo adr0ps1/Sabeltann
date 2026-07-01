@@ -3,51 +3,10 @@
              xmlns:vm="using:Sabeltann.ViewModels"
              x:Name="Root"
              x:Class="Sabeltann.Views.SeriesBrowser">
-    <Grid Background="#11111b" RowDefinitions="Auto,Auto,*,Auto">
+    <!-- Filters (category / search / count) live in the app's morphing toolbar. -->
+    <Grid Background="{StaticResource Bg}" RowDefinitions="*,Auto">
 
-        <!-- Combined header + filter bar -->
-        <Border Grid.Row="0" Padding="10,7" Background="#313244" BorderThickness="0,0,0,1" BorderBrush="#45475a">
-            <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto">
-                <Button Grid.Column="0" Background="Transparent" BorderThickness="0"
-                        Width="28" Height="28" Padding="0" Margin="0,0,6,0"
-                        Command="{Binding $parent[Window].DataContext.GoBackCommand}"
-                        ToolTip.Tip="Go back">
-                    <TextBlock Text="←" Foreground="#a6adc8" FontSize="14"
-                               VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                </Button>
-                <TextBlock Grid.Column="1" Text="{Binding CurrentShowName, StringFormat='Series: {0}'}"
-                           Foreground="#cdd6f4" FontSize="13" FontWeight="SemiBold"
-                           VerticalAlignment="Center" Margin="0,0,12,0"
-                           IsVisible="{Binding ShowEpisodes}"/>
-                <TextBlock Grid.Column="1" Text="TV Series"
-                           Foreground="#cdd6f4" FontSize="13" FontWeight="SemiBold"
-                           VerticalAlignment="Center" Margin="0,0,12,0"
-                           IsVisible="{Binding ShowShows}"/>
-                <TextBlock Grid.Column="2" Text="Category" VerticalAlignment="Center"
-                           FontSize="11" FontWeight="SemiBold"
-                           Foreground="#a6adc8" Margin="0,0,8,0"
-                           IsVisible="{Binding ShowShows}"/>
-                <ComboBox Grid.Column="3" ItemsSource="{Binding Categories}"
-                          SelectedItem="{Binding SelectedCategory}"
-                          MinWidth="150" FontSize="12" MaxWidth="250"
-                          IsVisible="{Binding ShowShows}"/>
-                <TextBox Grid.Column="4" Text="{Binding SearchText}"
-                         PlaceholderText="Search shows..."
-                         Background="#1e1e2e" Foreground="#cdd6f4"
-                         BorderThickness="1" BorderBrush="#45475a"
-                         FontSize="12" Padding="6,4"
-                         Margin="8,0" VerticalAlignment="Center"
-                         IsVisible="{Binding ShowShows}"/>
-                <Border Grid.Column="5" CornerRadius="10" Background="#313244"
-                        Padding="8,2" Margin="6,0" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding StatusText}" Foreground="#a6adc8" FontSize="11"/>
-                </Border>
-            </Grid>
-        </Border>
-
-        <!-- Row 1 intentionally empty (was filter bar, merged into Row 0) -->
-
-        <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Disabled">
             <Grid>
                 <!-- Shows grid -->
                 <WrapPanel IsVisible="{Binding ShowShows}" Margin="16,12">
@@ -59,30 +18,30 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:SeriesShowViewModel}">
-                                <Button Background="#181825" BorderThickness="1" BorderBrush="#313244"
+                                <Button Background="{StaticResource Surface}" BorderThickness="1" BorderBrush="{StaticResource Line}"
                                         CornerRadius="12" Padding="0" Margin="6,6" Width="180"
                                         EffectiveViewportChanged="OnCoverViewport"
                                         Command="{Binding #Root.DataContext.SelectShowCommand}"
                                         CommandParameter="{Binding .}">
                                     <StackPanel>
-                                        <Border Height="160" Background="#45475a" CornerRadius="12,12,0,0">
+                                        <Border Height="160" Background="{StaticResource Surface2}" CornerRadius="12,12,0,0">
                                             <Grid RowDefinitions="*,Auto">
                                                 <Grid Grid.Row="0">
                                                     <Image Source="{Binding CoverSrc}" Stretch="UniformToFill"
                                                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                                                     <TextBlock Text="{Binding Initial}"
-                                                               Foreground="#6c7086" FontSize="42" FontWeight="Bold"
+                                                               Foreground="{StaticResource Muted}" FontSize="42" FontWeight="Bold"
                                                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                IsVisible="{Binding CoverSrc, Converter={x:Static vm:MainViewModel.ImgFallback}}"/>
                                                 </Grid>
-                                                <Border Grid.Row="1" Background="#313244" Padding="6,3"
+                                                <Border Grid.Row="1" Background="{StaticResource Surface2}" Padding="6,3"
                                                         CornerRadius="0,0,12,12">
-                                                    <TextBlock Text="{Binding Subtitle}" Foreground="#a6adc8" FontSize="10"
+                                                    <TextBlock Text="{Binding Subtitle}" Foreground="{StaticResource Sub}" FontSize="10"
                                                                HorizontalAlignment="Center"/>
                                                 </Border>
                                             </Grid>
                                         </Border>
-                                        <TextBlock Text="{Binding Name}" Foreground="#cdd6f4" FontSize="13"
+                                        <TextBlock Text="{Binding Name}" Foreground="{StaticResource Text}" FontSize="13"
                                                    FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
                                                    Margin="10,8"/>
                                     </StackPanel>
@@ -97,37 +56,37 @@
                     <Button Background="Transparent" BorderThickness="0" Padding="8,4"
                             Command="{Binding BackToShowsCommand}"
                             HorizontalAlignment="Left">
-                        <TextBlock Text="← Back to shows" Foreground="#89b4fa" FontSize="13"/>
+                        <TextBlock Text="← Back to shows" Foreground="{StaticResource Info}" FontSize="13"/>
                     </Button>
 
                     <ItemsControl ItemsSource="{Binding SeasonGroups}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:SeasonGroup}">
                                 <StackPanel Margin="0,0,0,16">
-                                    <TextBlock Text="{Binding Header}" Foreground="#cba6f7" FontSize="16"
+                                    <TextBlock Text="{Binding Header}" Foreground="{StaticResource Accent}" FontSize="15"
                                                FontWeight="Bold" Margin="0,0,0,8"/>
                                     <ItemsControl ItemsSource="{Binding Episodes}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate DataType="{x:Type vm:VodEpisodeViewModel}">
-                                                <Button Background="#181825" BorderThickness="1" BorderBrush="#313244"
-                                                        CornerRadius="8" Padding="12,8" Margin="0,2"
+                                                <Button Background="{StaticResource Surface}" BorderThickness="1" BorderBrush="{StaticResource Line}"
+                                                        CornerRadius="9" Padding="12,10" Margin="0,3"
                                                         HorizontalAlignment="Stretch"
                                                         Command="{Binding #Root.DataContext.SelectEpisodeCommand}"
                                                         CommandParameter="{Binding .}">
                                                     <Grid ColumnDefinitions="Auto,*,Auto">
-                                                        <Border Width="32" Height="32" CornerRadius="8"
-                                                                Background="#313244">
+                                                        <Border Width="34" Height="34" CornerRadius="8"
+                                                                Background="{StaticResource Surface2}">
                                                             <Grid>
                                                                 <Image Source="{Binding PosterSrc}" Stretch="UniformToFill"
-                                                                       Width="32" Height="32"/>
-                                                                <TextBlock Text="▶" Foreground="#cba6f7" FontSize="10"
+                                                                       Width="34" Height="34"/>
+                                                                <TextBlock Text="▶" Foreground="{StaticResource Accent}" FontSize="10"
                                                                            HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                            IsVisible="{Binding PosterSrc, Converter={x:Static vm:MainViewModel.ImgFallback}}"/>
                                                             </Grid>
                                                         </Border>
                                                         <TextBlock Grid.Column="1" Text="{Binding Display}"
-                                                                   Foreground="#cdd6f4" FontSize="12"
-                                                                   VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                                                   Foreground="{StaticResource Text}" FontSize="12.5"
+                                                                   VerticalAlignment="Center" Margin="12,0,0,0"/>
                                                     </Grid>
                                                 </Button>
                                             </DataTemplate>
@@ -142,17 +101,17 @@
         </ScrollViewer>
 
         <!-- Loading overlay -->
-        <Border Grid.Row="2" IsVisible="{Binding IsLoading}" Background="#cc11111b"
+        <Border Grid.Row="0" IsVisible="{Binding IsLoading}" Background="#CC14161B"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
-                <TextBlock Text="{Binding StatusText}" Foreground="#cdd6f4" FontSize="14"
+                <TextBlock Text="{Binding StatusText}" Foreground="{StaticResource Text}" FontSize="14"
                            HorizontalAlignment="Center"/>
                 <ProgressBar IsIndeterminate="True" MinWidth="200" Height="4"
-                             Foreground="#cba6f7" Background="#313244"/>
+                             Foreground="{StaticResource Accent}" Background="{StaticResource Line}"/>
             </StackPanel>
         </Border>
 
-        <TextBlock Grid.Row="3" Text="Press Escape to go back" Foreground="#45475a" FontSize="11"
+        <TextBlock Grid.Row="1" Text="Press Escape to go back" Foreground="{StaticResource Muted}" FontSize="11"
                    HorizontalAlignment="Center" Margin="0,8"/>
     </Grid>
 </UserControl>

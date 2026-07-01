@@ -23,6 +23,11 @@ public class PlaybackService : IDisposable
     private bool _disposed;
     private volatile int _framePending;
     private int _frameCount;
+    private string? _currentUrl;
+
+    private RendererDiscoverer? _rendererDiscoverer;
+    private readonly List<RendererItem> _renderers = [];
+    private RendererItem? _activeRenderer;
 
     private static readonly MediaPlayer.LibVLCVideoLockCb LockCb = OnLock;
     private static readonly MediaPlayer.LibVLCVideoUnlockCb UnlockCb = OnUnlock;
@@ -45,6 +50,7 @@ public class PlaybackService : IDisposable
     public event EventHandler<int>? Buffering;
     public event EventHandler? PlayingStarted;
     public event EventHandler? Stopped;
+    public event EventHandler? CastTargetsChanged;
 
     public PlaybackService()
     {
@@ -83,9 +89,18 @@ public class PlaybackService : IDisposable
 
         LogService.Info("Playing", new { url = cleanUrl });
 
+        // New media → forget any track baked in for the previous stream (cast track-select restarts
+        // re-Play the same url and rely on these persisting; a real channel/movie change resets them).
+        if (url != _currentUrl) { _selAudioTrackId = -1; _selSubTrackId = -1; }
+        _currentUrl = url;
         _currentMedia?.Dispose();
         _currentMedia = new Media(_libVlc, new Uri(cleanUrl));
         _currentMedia.AddOption(":network-caching=2000");
+        // While casting, the track must be selected at the input before the transcode/sout chain —
+        // SetAudioTrack/SetSpu after Play don't survive the cast pipeline rebuild. Local playback
+        // leaves these at -1 and switches live instead.
+        if (_selAudioTrackId >= 0) _currentMedia.AddOption($":audio-track-id={_selAudioTrackId}");
+        if (_selSubTrackId >= 0) _currentMedia.AddOption($":sub-track-id={_selSubTrackId}");
 
         if (!_mediaPlayer.Play(_currentMedia))
         {
@@ -138,6 +153,88 @@ public class PlaybackService : IDisposable
     public int CurrentAudioTrack => _mediaPlayer.AudioTrack;
     public void SetAudioTrack(int id) => _mediaPlayer.SetAudioTrack(id);
 
+    private int _selAudioTrackId = -1;
+    private int _selSubTrackId = -1;
+
+    /// <summary>Casting only: bake the audio track into media options and restart the cast stream.</summary>
+    public void SetCastAudioTrack(int id) { _selAudioTrackId = id; RestartCurrent(); }
+
+    /// <summary>Casting only: bake the subtitle track (-1 = off) into media options and restart.</summary>
+    public void SetCastSubtitleTrack(int id) { _selSubTrackId = id; RestartCurrent(); }
+
+    private void RestartCurrent()
+    {
+        var url = _currentUrl;
+        if (url is null) return;
+        Stop();            // disposes media; _currentUrl (field) persists so Play keeps the baked tracks
+        Play(url);
+    }
+
+    public bool IsCasting => _activeRenderer is not null;
+    public string? CastTargetName => _activeRenderer?.Name;
+
+    /// <summary>Cast-capable renderers found so far (Chromecasts on the LAN). Names only.</summary>
+    public IReadOnlyList<string> CastTargets => _renderers.Select(r => r.Name).ToList();
+
+    /// <summary>Begins mDNS renderer discovery; idempotent. No-op if libvlc ships no discoverer.</summary>
+    // KNOWN LIMITATION: libvlc's libmicrodns binds mDNS to the wrong interface when a Tailscale (or
+    // any VPN TUN) adapter is present, so no Chromecasts are found — even though the device is
+    // reachable on the LAN. `tailscale down` is NOT enough; the adapter must be disabled/removed.
+    // LibVLCSharp's RendererDiscoverer exposes no interface knob, and a RendererItem can only come
+    // from libvlc's own discoverer, so there's no in-app fix. Verified 2026-06-30: disabling the
+    // Tailscale adapter makes the TV appear instantly. ponytail: documented, not coded around —
+    // revisit only if we move off libvlc-native casting.
+    public void StartCastDiscovery()
+    {
+        if (_rendererDiscoverer is not null) return;
+        var modules = _libVlc.RendererList.Select(r => r.Name).ToArray();
+        LogService.Info("Cast discovery: renderer modules", new { modules });
+        var desc = _libVlc.RendererList.FirstOrDefault();
+        if (string.IsNullOrEmpty(desc.Name))
+        {
+            LogService.Warn("Cast discovery: no renderer module in this libvlc build");
+            return;
+        }
+        _rendererDiscoverer = new RendererDiscoverer(_libVlc, desc.Name);
+        _rendererDiscoverer.ItemAdded += OnRendererAdded;
+        _rendererDiscoverer.ItemDeleted += OnRendererDeleted;
+        var ok = _rendererDiscoverer.Start();
+        LogService.Info("Cast discovery: started", new { module = desc.Name, ok });
+    }
+
+    private void OnRendererAdded(object? sender, RendererDiscovererItemAddedEventArgs e)
+    {
+        LogService.Info("Cast discovery: item added", new { e.RendererItem.Name, e.RendererItem.CanRenderVideo, e.RendererItem.CanRenderAudio });
+        _renderers.Add(e.RendererItem);
+        CastTargetsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnRendererDeleted(object? sender, RendererDiscovererItemDeletedEventArgs e)
+    {
+        _renderers.RemoveAll(r => r.Name == e.RendererItem.Name);
+        CastTargetsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Routes playback to the renderer at <paramref name="index"/> (-1 = back to local) and restarts the current stream.</summary>
+    public void CastTo(int index)
+    {
+        _activeRenderer = index >= 0 && index < _renderers.Count ? _renderers[index] : null;
+        // SetRenderer only takes effect on the next Play, so restart the current stream.
+        var url = _currentUrl;
+        Stop();
+        _mediaPlayer.SetRenderer(_activeRenderer);
+        if (url is not null) Play(url);
+    }
+
+    public void StopCasting() => CastTo(-1);
+
+    /// <summary>Clears the cast target without restarting playback — for when playback stops entirely.</summary>
+    public void ClearRenderer()
+    {
+        _activeRenderer = null;
+        _mediaPlayer.SetRenderer(null);
+    }
+
     /// <summary>
     /// Zeros the video surface so the last decoded frame doesn't linger when switching streams.
     /// Safe to call from any thread; posts to the UI thread if the bitmap exists.
@@ -168,11 +265,18 @@ public class PlaybackService : IDisposable
     /// <summary>Current LibVLC media statistics, or null if no media is active.</summary>
     public MediaStats? GetStats() => _mediaPlayer.Media?.Statistics;
 
+    /// <summary>Bytes read from the source for the current media. Stays ~0 for a stream that connects but delivers nothing — the liveness signal while casting, where no local frames decode.</summary>
+    public long InputBytes => GetStats()?.ReadBytes ?? 0;
+
+    /// <summary>Current player state name (Opening/Buffering/Playing/Error/Ended…) — diagnostic.</summary>
+    public string PlayerState => _mediaPlayer.State.ToString();
+
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
         Stop();
+        _rendererDiscoverer?.Dispose();
         _mediaPlayer.Dispose();
         _libVlc.Dispose();
         if (_instance == this) _instance = null;

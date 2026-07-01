@@ -112,3 +112,31 @@ jobs:
           name: Sabeltann-${{ needs.release-please.outputs.tag_name }}
           path: Releases/
           compression-level: 9
+
+  publish-winget:
+    name: Publish to WinGet
+    needs: [release-please, build-release]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: windows-latest
+    continue-on-error: true
+
+    steps:
+      - name: Extract version
+        id: ver
+        shell: pwsh
+        run: |
+          $v = "${{ needs.release-please.outputs.tag_name }}".TrimStart('v')
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Download wingetcreate
+        shell: pwsh
+        run: Invoke-WebRequest -Uri "https://aka.ms/wingetcreate/latest" -OutFile "wingetcreate.exe"
+
+      - name: Submit update to winget-pkgs
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.WINGETCREATE_TOKEN }}
+        run: |
+          $v = "${{ steps.ver.outputs.version }}"
+          $url = "https://github.com/adr0ps1/Sabeltann/releases/download/v$v/Sabeltann-win-Setup.exe"
+          .\wingetcreate.exe update adr0ps1.Sabeltann --version $v --urls $url --submit --token $env:GITHUB_TOKEN

@@ -3,6 +3,37 @@
              x:Class="Sabeltann.App"
              RequestedThemeVariant="Dark">
 
+    <Application.Resources>
+        <!-- Morphing-toolbar palette: cool near-black slate + single amber accent -->
+        <SolidColorBrush x:Key="Bg" Color="#14161B"/>
+        <SolidColorBrush x:Key="TitleBar" Color="#181A20"/>
+        <SolidColorBrush x:Key="Surface" Color="#1B1E25"/>
+        <SolidColorBrush x:Key="Surface2" Color="#232730"/>
+        <SolidColorBrush x:Key="InputBg" Color="#101216"/>
+        <SolidColorBrush x:Key="Line" Color="#2C313C"/>
+        <SolidColorBrush x:Key="Line2" Color="#20242C"/>
+        <SolidColorBrush x:Key="Text" Color="#E7E9EF"/>
+        <SolidColorBrush x:Key="TextStrong" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="Sub" Color="#969CAB"/>
+        <SolidColorBrush x:Key="Muted" Color="#6C7280"/>
+        <SolidColorBrush x:Key="Accent" Color="#E2A44E"/>
+        <SolidColorBrush x:Key="AccentText" Color="#1B1E25"/>
+        <SolidColorBrush x:Key="AccentSoft" Color="#22E2A44E"/>
+        <SolidColorBrush x:Key="Live" Color="#D05A5A"/>
+        <SolidColorBrush x:Key="Good" Color="#7BBF7B"/>
+        <SolidColorBrush x:Key="Info" Color="#89B4FA"/>
+        <SolidColorBrush x:Key="Danger" Color="#E08A8A"/>
+
+        <!-- Retint FluentTheme's accent (sliders, checkboxes, selection, focus) to amber -->
+        <Color x:Key="SystemAccentColor">#E2A44E</Color>
+        <Color x:Key="SystemAccentColorDark1">#C98F3E</Color>
+        <Color x:Key="SystemAccentColorDark2">#B07D34</Color>
+        <Color x:Key="SystemAccentColorDark3">#8A6228</Color>
+        <Color x:Key="SystemAccentColorLight1">#E9B570</Color>
+        <Color x:Key="SystemAccentColorLight2">#EFC891</Color>
+        <Color x:Key="SystemAccentColorLight3">#F4DAB3</Color>
+    </Application.Resources>
+
     <Application.Styles>
         <FluentTheme />
 
@@ -14,6 +45,29 @@
             <Setter Property="RenderTransform">
                 <ScaleTransform ScaleX="1.04" ScaleY="1.04"/>
             </Setter>
+        </Style>
+
+        <!-- Dialog title-bar close button (shared by all custom-chrome dialogs) -->
+        <Style Selector="Button.DialogClose">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#8B909B"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Width" Value="44"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="RenderTransform" Value="{x:Null}"/>
+        </Style>
+        <Style Selector="Button.DialogClose:pointerover">
+            <Setter Property="RenderTransform" Value="{x:Null}"/>
+        </Style>
+        <Style Selector="Button.DialogClose:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource Danger}"/>
+            <Setter Property="TextElement.Foreground" Value="#FFFFFF"/>
         </Style>
     </Application.Styles>
 </Application>

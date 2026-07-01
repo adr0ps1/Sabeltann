@@ -5,28 +5,43 @@
         mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="160"
         x:Class="Sabeltann.InputDialog"
         Title="Input"
-        SizeToContent="WidthAndHeight"
+        Width="400"
+        SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         CanResize="False"
-        Background="#1e1e2e"
-        Foreground="#cdd6f4">
+        WindowDecorations="None"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        Foreground="{StaticResource Text}">
 
-    <StackPanel Margin="20" Spacing="14">
+    <Border CornerRadius="12" Background="{StaticResource Bg}" ClipToBounds="True">
+    <Grid RowDefinitions="36,*">
+        <Grid Grid.Row="0" Background="{StaticResource TitleBar}" ColumnDefinitions="*,Auto"
+              PointerPressed="OnChromeDrag">
+            <TextBlock Grid.Column="0" Text="Sabeltann" Foreground="{StaticResource Sub}" FontSize="12"
+                       FontWeight="SemiBold" VerticalAlignment="Center" Margin="14,0"/>
+            <Button Grid.Column="1" Classes="DialogClose" Content="&#xE8BB;" Click="OnCancel"/>
+        </Grid>
+    <StackPanel Grid.Row="1" Margin="20" Spacing="14">
         <TextBlock x:Name="PromptText" Text="Enter value:" FontSize="14"
-                   Foreground="#cdd6f4"/>
+                   Foreground="{StaticResource Text}"/>
         <TextBox x:Name="InputBox" PlaceholderText="Type here..."
-                 Background="#313244" Foreground="#cdd6f4"
-                 BorderThickness="1" BorderBrush="#45475a"
+                 Background="{StaticResource Surface}" Foreground="{StaticResource Text}"
+                 BorderThickness="1" BorderBrush="{StaticResource Line}" CornerRadius="8"
                  Padding="8,7" FontSize="13"/>
         <Grid ColumnDefinitions="*,*" ColumnSpacing="8" Margin="0,6,0,0">
             <Button Grid.Column="0" Content="Cancel" Click="OnCancel"
-                    Background="#313244" Foreground="#cdd6f4"
+                    Background="{StaticResource Surface2}" Foreground="{StaticResource Text}"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                     BorderThickness="0" CornerRadius="8"
                     Padding="10,7" FontSize="13"/>
             <Button Grid.Column="1" Content="OK" Click="OnOk" IsDefault="True"
-                    Background="#cba6f7" Foreground="#1e1e2e"
+                    Background="{StaticResource Accent}" Foreground="{StaticResource AccentText}"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                     BorderThickness="0" CornerRadius="8"
                     Padding="10,7" FontSize="13" FontWeight="SemiBold"/>
         </Grid>
     </StackPanel>
+    </Grid>
+    </Border>
 </Window>

@@ -58,7 +58,9 @@ Merging to `main` triggers [release-please](https://github.com/googleapis/releas
 
 **Privacy:** Sabeltann does not collect or transmit personal data. Logs are stored locally. See [Privacy Policy](PRIVACY.md).
 
+**Disclaimer:** Sabeltann is a media player — it does not host, provide, or endorse any IPTV streams or content. All playlists, URLs, and sources are supplied entirely by the user. You are solely responsible for ensuring the content you access complies with applicable laws in your jurisdiction. Unauthorized streaming of copyrighted material may be illegal in your country.
+
 ## License
-This project is licensed under the **MIT License** — a short, permissive open-source license that allows anyone to use, modify, distribute, and even use the software in proprietary projects with minimal restrictions.
+This project is licensed under the **GNU General Public License v3.0** — a copyleft license that requires derivative works to be distributed under the same license.
 
 See [LICENSE](LICENSE) for the full text.

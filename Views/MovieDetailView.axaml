@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Sabeltann.Views.MovieDetailView"
-             Background="#11111b">
+             Background="{StaticResource Bg}">
   <!-- Viewbox scales the whole card (poster + text) to fill the window, capped so it
        doesn't over-zoom on large monitors. -->
   <Viewbox Stretch="Uniform" MaxWidth="1200" Margin="32">
@@ -10,7 +10,7 @@
       <!-- Back button -->
       <Button Command="{Binding BackCommand}" Background="Transparent" BorderThickness="0"
               HorizontalAlignment="Left" Padding="0" Cursor="Hand">
-        <TextBlock Text="← Back" Foreground="#89b4fa" FontSize="13"/>
+        <TextBlock Text="← Back" Foreground="{StaticResource Info}" FontSize="13"/>
       </Button>
 
       <!-- Hero row: Poster + metadata -->
@@ -18,10 +18,10 @@
 
         <!-- Poster -->
         <Border Grid.Column="0" Width="240" Height="340" CornerRadius="8"
-                Background="#313244" ClipToBounds="True" VerticalAlignment="Top">
+                Background="{StaticResource Surface2}" ClipToBounds="True" VerticalAlignment="Top">
           <Panel>
             <TextBlock Text="🎬" FontSize="48" HorizontalAlignment="Center"
-                       VerticalAlignment="Center" Foreground="#6c7086"
+                       VerticalAlignment="Center" Foreground="{StaticResource Muted}"
                        IsVisible="{Binding PosterBitmap, Converter={x:Static ObjectConverters.IsNull}}"/>
             <Image Source="{Binding PosterBitmap}" Stretch="UniformToFill"
                    IsVisible="{Binding PosterBitmap, Converter={x:Static ObjectConverters.IsNotNull}}"/>
@@ -32,16 +32,16 @@
         <StackPanel Grid.Column="1" Margin="24,0,0,0" Spacing="8" VerticalAlignment="Top">
 
           <!-- Title -->
-          <TextBlock Text="{Binding Title}" Foreground="#cdd6f4" FontSize="26"
+          <TextBlock Text="{Binding Title}" Foreground="{StaticResource TextStrong}" FontSize="26"
                      FontWeight="Bold" TextWrapping="Wrap"/>
 
           <!-- Episode label (series only) -->
-          <TextBlock Text="{Binding EpisodeLabel}" Foreground="#cba6f7" FontSize="14"
+          <TextBlock Text="{Binding EpisodeLabel}" Foreground="{StaticResource Accent}" FontSize="14"
                      FontWeight="SemiBold" TextWrapping="Wrap"
                      IsVisible="{Binding EpisodeLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
           <!-- Year • Runtime • Genre -->
-          <TextBlock Foreground="#a6adc8" FontSize="12" TextWrapping="Wrap">
+          <TextBlock Foreground="{StaticResource Sub}" FontSize="12" TextWrapping="Wrap">
             <Run Text="{Binding Year}"/>
             <Run Text=" • "/>
             <Run Text="{Binding Runtime}"/>
@@ -51,45 +51,45 @@
 
           <!-- Stars: from IMDb or the provider's own rating -->
           <StackPanel IsVisible="{Binding HasStars}" Spacing="4">
-            <TextBlock Text="{Binding Stars}" FontSize="20" Foreground="#f9e2af"/>
+            <TextBlock Text="{Binding Stars}" FontSize="20" Foreground="{StaticResource Accent}"/>
             <StackPanel Orientation="Horizontal" Spacing="16" IsVisible="{Binding HasRatings}">
               <StackPanel>
-                <TextBlock Text="IMDb" Foreground="#6c7086" FontSize="10"/>
-                <TextBlock Foreground="#cdd6f4" FontSize="14">
+                <TextBlock Text="IMDb" Foreground="{StaticResource Muted}" FontSize="10"/>
+                <TextBlock Foreground="{StaticResource Text}" FontSize="14">
                   <Run Text="{Binding ImdbRating}"/><Run Text="/10"/>
                 </TextBlock>
               </StackPanel>
               <StackPanel IsVisible="{Binding RottenTomatoes, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                <TextBlock Text="Rotten Tomatoes" Foreground="#6c7086" FontSize="10"/>
-                <TextBlock Text="{Binding RottenTomatoes}" Foreground="#a6e3a1" FontSize="14"/>
+                <TextBlock Text="Rotten Tomatoes" Foreground="{StaticResource Muted}" FontSize="10"/>
+                <TextBlock Text="{Binding RottenTomatoes}" Foreground="{StaticResource Good}" FontSize="14"/>
               </StackPanel>
             </StackPanel>
           </StackPanel>
 
           <!-- No ratings note -->
           <TextBlock Text="Ratings unavailable (no OMDb API key configured)"
-                     Foreground="#6c7086" FontSize="11" FontStyle="Italic"
+                     Foreground="{StaticResource Muted}" FontSize="11" FontStyle="Italic"
                      IsVisible="{Binding !HasStars}"/>
 
           <!-- Language (spoken) -->
           <StackPanel Orientation="Horizontal" Spacing="6"
                       IsVisible="{Binding Language, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-            <TextBlock Text="Language:" Foreground="#6c7086" FontSize="12"/>
-            <TextBlock Text="{Binding Language}" Foreground="#cdd6f4" FontSize="12" TextWrapping="Wrap"/>
+            <TextBlock Text="Language:" Foreground="{StaticResource Muted}" FontSize="12"/>
+            <TextBlock Text="{Binding Language}" Foreground="{StaticResource Text}" FontSize="12" TextWrapping="Wrap"/>
           </StackPanel>
 
           <!-- Play actions: anchored under the metadata, left-aligned (hero CTA) -->
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Left"
                       Spacing="10" Margin="0,12,0,0">
             <Button Padding="24,11" CornerRadius="8"
-                    Background="#cba6f7" Foreground="#1e1e2e" FontWeight="Bold" FontSize="14"
+                    Background="{StaticResource Accent}" Foreground="{StaticResource AccentText}" FontWeight="Bold" FontSize="14"
                     IsVisible="{Binding CanResume}"
                     Command="{Binding $parent[Window].DataContext.ResumeFromDetailCommand}"
                     Cursor="Hand">
               <TextBlock Text="{Binding ResumeText}"/>
             </Button>
             <Button Padding="24,11" CornerRadius="8"
-                    Background="#45475a" Foreground="#cdd6f4" FontWeight="Bold" FontSize="14"
+                    Background="{StaticResource Surface2}" Foreground="{StaticResource Text}" FontWeight="Bold" FontSize="14"
                     Command="{Binding $parent[Window].DataContext.PlayFromStartCommand}"
                     Cursor="Hand">
               <TextBlock Text="▶  Play from start"/>
@@ -101,27 +101,27 @@
 
       <!-- Loading indicator -->
       <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True"
-                   Height="2" Foreground="#cba6f7" Background="Transparent" Margin="0,-8,0,0"/>
+                   Height="2" Foreground="{StaticResource Accent}" Background="Transparent" Margin="0,-8,0,0"/>
 
       <!-- Plot (capped reading width so lines stay legible on wide windows) -->
       <StackPanel Spacing="4" HorizontalAlignment="Left" MaxWidth="900"
                   IsVisible="{Binding Plot, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-        <TextBlock Text="Plot" Foreground="#6c7086" FontSize="11" FontWeight="SemiBold"/>
-        <TextBlock Text="{Binding Plot}" Foreground="#a6adc8" FontSize="13" TextWrapping="Wrap"/>
+        <TextBlock Text="Plot" Foreground="{StaticResource Muted}" FontSize="11" FontWeight="SemiBold"/>
+        <TextBlock Text="{Binding Plot}" Foreground="{StaticResource Sub}" FontSize="13" TextWrapping="Wrap" LineHeight="21"/>
       </StackPanel>
 
       <!-- Director -->
       <StackPanel Orientation="Horizontal" Spacing="6"
                   IsVisible="{Binding Director, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-        <TextBlock Text="Director:" Foreground="#6c7086" FontSize="12"/>
-        <TextBlock Text="{Binding Director}" Foreground="#cdd6f4" FontSize="12" TextWrapping="Wrap"/>
+        <TextBlock Text="Director:" Foreground="{StaticResource Muted}" FontSize="12"/>
+        <TextBlock Text="{Binding Director}" Foreground="{StaticResource Text}" FontSize="12" TextWrapping="Wrap"/>
       </StackPanel>
 
       <!-- Cast -->
       <StackPanel Orientation="Horizontal" Spacing="6"
                   IsVisible="{Binding Cast, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-        <TextBlock Text="Cast:" Foreground="#6c7086" FontSize="12"/>
-        <TextBlock Text="{Binding Cast}" Foreground="#cdd6f4" FontSize="12" TextWrapping="Wrap"/>
+        <TextBlock Text="Cast:" Foreground="{StaticResource Muted}" FontSize="12"/>
+        <TextBlock Text="{Binding Cast}" Foreground="{StaticResource Text}" FontSize="12" TextWrapping="Wrap"/>
       </StackPanel>
 
     </StackPanel>
