@@ -2,56 +2,71 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="280"
+        mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="300"
         x:Class="Sabeltann.LoginWindow"
         Title="Xtream Login"
-        SizeToContent="WidthAndHeight"
+        Width="420"
+        SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         CanResize="False"
-        Background="#1e1e2e"
-        Foreground="#cdd6f4">
+        WindowDecorations="None"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        Foreground="{StaticResource Text}">
 
-    <StackPanel Margin="20" Spacing="14">
+    <Border CornerRadius="12" Background="{StaticResource Bg}" ClipToBounds="True">
+    <Grid RowDefinitions="36,*">
+        <Grid Grid.Row="0" Background="{StaticResource TitleBar}" ColumnDefinitions="*,Auto"
+              PointerPressed="OnChromeDrag">
+            <TextBlock Grid.Column="0" Text="Xtream Login" Foreground="{StaticResource Sub}" FontSize="12"
+                       FontWeight="SemiBold" VerticalAlignment="Center" Margin="14,0"/>
+            <Button Grid.Column="1" Classes="DialogClose" Content="&#xE8BB;" Click="OnCancel"/>
+        </Grid>
+    <StackPanel Grid.Row="1" Margin="20" Spacing="14">
         <StackPanel Spacing="2">
             <TextBlock Text="Xtream Codes Login" FontSize="18" FontWeight="Bold"
-                       Foreground="#cdd6f4"/>
-            <TextBlock Text="Enter your IPTV provider details" Foreground="#6c7086"
+                       Foreground="{StaticResource TextStrong}"/>
+            <TextBlock Text="Enter your IPTV provider details" Foreground="{StaticResource Muted}"
                        FontSize="12"/>
         </StackPanel>
 
         <StackPanel Spacing="4">
-            <TextBlock Text="Server URL" Foreground="#a6adc8" FontSize="11" FontWeight="SemiBold"/>
+            <TextBlock Text="SERVER URL" Foreground="{StaticResource Sub}" FontSize="11" FontWeight="SemiBold"/>
             <TextBox x:Name="ServerUrlBox" PlaceholderText="http://your-iptv-server.com:8080"
-                     Background="#313244" Foreground="#cdd6f4"
-                     BorderThickness="1" BorderBrush="#45475a"
+                     Background="{StaticResource Surface}" Foreground="{StaticResource Text}"
+                     BorderThickness="1" BorderBrush="{StaticResource Line}" CornerRadius="8"
                      Padding="8,7" FontSize="13"/>
         </StackPanel>
 
         <StackPanel Spacing="4">
-            <TextBlock Text="Username" Foreground="#a6adc8" FontSize="11" FontWeight="SemiBold"/>
+            <TextBlock Text="USERNAME" Foreground="{StaticResource Sub}" FontSize="11" FontWeight="SemiBold"/>
             <TextBox x:Name="UsernameBox" PlaceholderText="username"
-                     Background="#313244" Foreground="#cdd6f4"
-                     BorderThickness="1" BorderBrush="#45475a"
+                     Background="{StaticResource Surface}" Foreground="{StaticResource Text}"
+                     BorderThickness="1" BorderBrush="{StaticResource Line}" CornerRadius="8"
                      Padding="8,7" FontSize="13"/>
         </StackPanel>
 
         <StackPanel Spacing="4">
-            <TextBlock Text="Password" Foreground="#a6adc8" FontSize="11" FontWeight="SemiBold"/>
+            <TextBlock Text="PASSWORD" Foreground="{StaticResource Sub}" FontSize="11" FontWeight="SemiBold"/>
             <TextBox x:Name="PasswordBox" PlaceholderText="password" PasswordChar="*"
-                     Background="#313244" Foreground="#cdd6f4"
-                     BorderThickness="1" BorderBrush="#45475a"
+                     Background="{StaticResource Surface}" Foreground="{StaticResource Text}"
+                     BorderThickness="1" BorderBrush="{StaticResource Line}" CornerRadius="8"
                      Padding="8,7" FontSize="13"/>
         </StackPanel>
 
         <Grid ColumnDefinitions="*,*" ColumnSpacing="8" Margin="0,6,0,0">
             <Button Grid.Column="0" Content="Cancel" Click="OnCancel"
-                    Background="#313244" Foreground="#cdd6f4"
+                    Background="{StaticResource Surface2}" Foreground="{StaticResource Text}"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                     BorderThickness="0" CornerRadius="8"
                     Padding="10,7" FontSize="13"/>
             <Button Grid.Column="1" Content="Login" Click="OnLogin" IsDefault="True"
-                    Background="#cba6f7" Foreground="#1e1e2e"
+                    Background="{StaticResource Accent}" Foreground="{StaticResource AccentText}"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                     BorderThickness="0" CornerRadius="8"
                     Padding="10,7" FontSize="13" FontWeight="SemiBold"/>
         </Grid>
     </StackPanel>
+    </Grid>
+    </Border>
 </Window>

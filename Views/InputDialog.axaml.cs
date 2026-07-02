@@ -1,4 +1,5 @@
 
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Controls;
 
@@ -10,6 +11,12 @@ public partial class InputDialog : Window
     public InputDialog()
     {
         InitializeComponent();
+    }
+
+    private void OnChromeDrag(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            BeginMoveDrag(e);
     }
 
     public InputDialog(string prompt, string defaultValue) : this()

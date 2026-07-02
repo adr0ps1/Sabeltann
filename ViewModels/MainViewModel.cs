@@ -27,6 +27,9 @@ public partial class MainViewModel : ObservableObject
     public static readonly FuncValueConverter<bool, string> MuteIcon = new(
         muted => muted ? "🔇" : "🔊");
 
+    public static readonly FuncValueConverter<bool, IBrush> CastIcon = new(
+        casting => casting ? new SolidColorBrush(Color.Parse("#a6e3a1")) : new SolidColorBrush(Color.Parse("#89b4fa")));
+
     public static readonly FuncValueConverter<bool, IBrush> ConnDot = new(
         connected => connected ? new SolidColorBrush(Color.Parse("#a6e3a1")) : new SolidColorBrush(Color.Parse("#6c7086")));
 
@@ -69,7 +72,14 @@ public partial class MainViewModel : ObservableObject
     private CategoryViewModel? _selectedCategory;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CurrentPlayingTitle))]
     private ChannelListItemViewModel? _selectedChannel;
+
+    /// <summary>Public LIVE-vs-VOD flag for the playback toolbar badge.</summary>
+    public bool IsCurrentVod => _isCurrentVod;
+
+    /// <summary>Title shown in the playback toolbar (channel name for live, movie/episode title for VOD).</summary>
+    public string CurrentPlayingTitle => _isCurrentVod ? (MovieDetail?.Title ?? "") : (SelectedChannel?.Name ?? "");
 
     public string ConnectionServerUrl => _pendingXtreamInfo?.ServerUrl ?? _settings.Load().LastXtream?.ServerUrl ?? "";
     public string ConnectionUsername => _pendingXtreamInfo?.Username ?? _settings.Load().LastXtream?.Username ?? "";
@@ -133,6 +143,12 @@ public partial class MainViewModel : ObservableObject
         StatusText = $"{matches.Count} results for \"{query}\"";
     }
 
+    // Morphing-toolbar segmented tabs. Movies/Series need their async browser init,
+    // not a bare Mode set — reuse the existing browser entrypoints.
+    [RelayCommand] private void SwitchToLive() => ShowLiveChannels();
+    [RelayCommand] private Task SwitchToMovies() => ShowMoviesBrowserAsync();
+    [RelayCommand] private Task SwitchToSeries() => ShowSeriesBrowserAsync();
+
     public void ShowLiveChannels()
     {
         Mode = ContentMode.LiveTv;
@@ -163,6 +179,8 @@ public partial class MainViewModel : ObservableObject
         VodBrowser.PlayRequested += OnVodPlayRequested;
         VodBrowser.DetailRequested -= OnMovieDetailRequested;
         VodBrowser.DetailRequested += OnMovieDetailRequested;
+        VodBrowser.RemoveFromContinueWatchingRequested -= OnRemoveFromContinueWatching;
+        VodBrowser.RemoveFromContinueWatchingRequested += OnRemoveFromContinueWatching;
         Mode = ContentMode.Movies;
 
         if (_pendingXtreamInfo is not null)
@@ -244,12 +262,22 @@ public partial class MainViewModel : ObservableObject
     // Grid/episode play auto-resumes; the detail page passes an explicit choice via PlayVod.
     private void OnVodPlayRequested(string url) => PlayVod(url, resume: true);
 
+    // Drop a saved VOD position (right-click → Remove on the Continue Watching strip).
+    private void OnRemoveFromContinueWatching(string url)
+    {
+        LogService.Info("Remove from Continue Watching", new { url });
+        _settingsData = MergeAndSave(s => s.VodProgress.Remove(url));
+        VodBrowser.RefreshContinueWatching(_settingsData.VodProgress);
+    }
+
     private void PlayVod(string url, bool resume)
     {
         try
         {
             SaveVodProgress();           // persist the title we're leaving
             _isCurrentVod = true;
+            OnPropertyChanged(nameof(IsCurrentVod));
+            OnPropertyChanged(nameof(CurrentPlayingTitle));
             _resumeToMs = resume ? TryGetResumeMs(url) ?? 0 : 0;
             _currentPlayingUrl = url;
             _vodPausePosition = TimeSpan.Zero;
@@ -261,6 +289,7 @@ public partial class MainViewModel : ObservableObject
             _awaitingPlayback = true;
             _awaitingSince = DateTime.UtcNow;
             _playbackRequested = true;
+            _playbackConfirmed = false;
             _playStartFrames = _player?.FramesDecoded ?? 0;
             _player?.ClearBitmap();
             _player?.Play(url);
@@ -326,6 +355,13 @@ public partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(ShowOverlay))]
     [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
     [NotifyPropertyChangedFor(nameof(ShowVideo))]
+    [NotifyPropertyChangedFor(nameof(ShowPlaybackBar))]
+    [NotifyPropertyChangedFor(nameof(ShowLiveBar))]
+    [NotifyPropertyChangedFor(nameof(ShowMoviesBar))]
+    [NotifyPropertyChangedFor(nameof(ShowSeriesBar))]
+    [NotifyPropertyChangedFor(nameof(ShowDetailBar))]
+    [NotifyPropertyChangedFor(nameof(ShowToolbarBack))]
+    [NotifyPropertyChangedFor(nameof(ShowFileMenu))]
     private bool _isPlaying;
 
     public string PlayPauseSymbol => IsPlaying ? "⏸" : "⏵";
@@ -335,6 +371,13 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowVideo))]
+    [NotifyPropertyChangedFor(nameof(ShowPlaybackBar))]
+    [NotifyPropertyChangedFor(nameof(ShowLiveBar))]
+    [NotifyPropertyChangedFor(nameof(ShowMoviesBar))]
+    [NotifyPropertyChangedFor(nameof(ShowSeriesBar))]
+    [NotifyPropertyChangedFor(nameof(ShowDetailBar))]
+    [NotifyPropertyChangedFor(nameof(ShowToolbarBack))]
+    [NotifyPropertyChangedFor(nameof(ShowFileMenu))]
     private bool _isPaused;
 
     [ObservableProperty]
@@ -349,6 +392,12 @@ public partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsCategoryBarVisible))]
     [NotifyPropertyChangedFor(nameof(ShowBackButton))]
     [NotifyPropertyChangedFor(nameof(ShowCategoryBar))]
+    [NotifyPropertyChangedFor(nameof(ShowLiveBar))]
+    [NotifyPropertyChangedFor(nameof(ShowMoviesBar))]
+    [NotifyPropertyChangedFor(nameof(ShowSeriesBar))]
+    [NotifyPropertyChangedFor(nameof(ShowDetailBar))]
+    [NotifyPropertyChangedFor(nameof(ShowToolbarBack))]
+    [NotifyPropertyChangedFor(nameof(ShowFileMenu))]
     private ContentMode _mode = ContentMode.Welcome;
 
     public bool IsWelcome => Mode == ContentMode.Welcome;
@@ -362,6 +411,17 @@ public partial class MainViewModel : ObservableObject
     public bool IsCategoryBarVisible => Mode == ContentMode.LiveTv;
     public bool ShowBackButton => Mode is not ContentMode.Welcome and not ContentMode.Picker;
     public bool ShowCategoryBar => Mode is ContentMode.Welcome or ContentMode.Picker or ContentMode.LiveTv;
+
+    // Morphing-toolbar panel gating: a browsing bar shows only when its mode is active AND video isn't playing.
+    public bool ShowPlaybackBar => ShowVideo;
+    public bool ShowLiveBar => IsLiveTv && !ShowVideo;
+    public bool ShowMoviesBar => IsMovies && !ShowVideo;
+    public bool ShowSeriesBar => IsSeries && !ShowVideo;
+    public bool ShowDetailBar => IsMovieDetail && !ShowVideo;
+
+    // Toolbar left zone: back arrow during detail/playback, ☰ File menu everywhere else.
+    public bool ShowToolbarBack => ShowVideo || IsMovieDetail;
+    public bool ShowFileMenu => !ShowToolbarBack;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
@@ -413,6 +473,7 @@ public partial class MainViewModel : ObservableObject
     private bool _awaitingPlayback;
     private DateTime _awaitingSince;
     private bool _playbackRequested;
+    private bool _playbackConfirmed;
     private int _playStartFrames;
     private bool _isCurrentVod;
     private double _resumeToMs;
@@ -425,6 +486,14 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _showVolumePopup;
+
+    [ObservableProperty]
+    private bool _isCasting;
+
+    [ObservableProperty]
+    private string? _castTargetName;
+
+    public IReadOnlyList<string> CastTargets => _player?.CastTargets ?? [];
 
     [ObservableProperty]
     private double _updateDownloadProgress;
@@ -442,6 +511,9 @@ public partial class MainViewModel : ObservableObject
     public void SetPlayer(PlaybackService player)
     {
         _player = player;
+        _player.StartCastDiscovery();
+        _player.CastTargetsChanged += (_, _) =>
+            Dispatcher.UIThread.Post(() => OnPropertyChanged(nameof(CastTargets)));
         _player.Error += (_, msg) =>
         {
             LogService.Info("VLC Error event fired", new { msg, isPlaying = IsPlaying, isPaused = IsPaused });
@@ -455,11 +527,11 @@ public partial class MainViewModel : ObservableObject
         };
         _player.PlayingStarted += (_, _) => Dispatcher.UIThread.Post(() =>
         {
+            // Playing fires when the connection opens, before any frame decodes — keep the loading
+            // overlay up until a real frame renders (cleared in the position timer) so dead streams
+            // don't flash to a black screen. Same path for Live TV and VOD.
             _awaitingPlayback = false;
-            ConnectionState = "";
-            ShowConnectionOverlay = false;
-            ShowBufferingOverlay = false;
-            ConnectionProgress = 0;
+            if (!_playbackConfirmed) ConnectionState = "Buffering...";
             var len = _player.Length;
             if (len > 0) VodDuration = len;
             if (_resumeToMs > 0)
@@ -472,13 +544,21 @@ public partial class MainViewModel : ObservableObject
         _player.Buffering += (_, pct) => Dispatcher.UIThread.Post(() =>
         {
             ConnectionProgress = pct;
-            // VLC emits Buffering both before AND after Playing (seeks, refills). 100 = done:
-            // clear the overlay here, otherwise the indeterminate bar sticks over live video
-            // since Playing won't re-fire after a seek or a mid-stream refill.
+            // VLC emits Buffering both before AND after Playing (seeks, refills). 100 = done, but
+            // only clear once playback is confirmed (a frame rendered) — on the initial load a dead
+            // stream can report 100 with no frames, so keep the bar up until the timer confirms or
+            // the watchdog fails. Mid-stream refills are already confirmed, so they clear as before.
             if (pct >= 100)
             {
-                ConnectionState = "";
-                ShowBufferingOverlay = false;
+                if (_playbackConfirmed)
+                {
+                    ConnectionState = "";
+                    ShowBufferingOverlay = false;
+                }
+                else
+                {
+                    ConnectionState = "Buffering...";
+                }
             }
             else
             {
@@ -512,21 +592,54 @@ public partial class MainViewModel : ObservableObject
                 if (len > 0) VodDuration = len;
                 VodPosition = _player.TimeMs;
             }
+            // Confirm playback once real data flows — a decoded frame locally, or bytes read while
+            // casting (no local frames then). This is the single point that clears the loading bar,
+            // so the overlay stays visible from selection until playback truly starts, for both modes.
+            if (!_playbackConfirmed && _player is not null && (IsPlaying || IsPaused))
+            {
+                // DIAG: log what libvlc reports while a cast is starting up, so we can see whether
+                // InputBytes/Time actually advance during casting. Remove once the signal is chosen.
+                if (IsCasting)
+                    LogService.Info("Cast progress", new { _player.PlayerState, _player.InputBytes, _player.TimeMs, _player.Length, _player.IsPlaying });
+                bool started = IsCasting ? _player.InputBytes > 100_000 : _player.FramesDecoded > _playStartFrames;
+                if (started)
+                {
+                    _playbackConfirmed = true;
+                    ConnectionState = "";
+                    ShowConnectionOverlay = false;
+                    ShowBufferingOverlay = false;
+                    ConnectionProgress = 0;
+                }
+            }
             // Watchdog: dead streams often fire Playing (connection opened) but never decode
-            // a single video frame, so event-based signals can't catch them. Key off actual
-            // frames: if none have decoded within the timeout, surface the failure ourselves.
+            // a single video frame, so event-based signals can't catch them. Surface the failure
+            // ourselves if the stream shows no progress within the timeout.
             if (_playbackRequested && (DateTime.UtcNow - _awaitingSince).TotalSeconds > PlaybackTimeoutSeconds)
             {
                 _playbackRequested = false;
-                if (_player is null || _player.FramesDecoded <= _playStartFrames)
+                // Casting decodes on the Chromecast, so local frames never advance even for good streams —
+                // key off bytes read from the source instead. ponytail: ~100KB in 15s = nothing real arrived;
+                // bump the threshold if a very slow source ever false-trips.
+                // DIAG: while casting, don't kill — just log what libvlc reports at the deadline, so we
+                // can see whether the cast was actually progressing when our watchdog would have fired.
+                if (IsCasting)
                 {
-                    LogService.Warn("Playback watchdog: no frames decoded, stream unavailable");
-                    _player?.Stop();
-                    _awaitingPlayback = false;
-                    ConnectionState = "Stream unavailable";
-                    ShowConnectionOverlay = false;
-                    ShowBufferingOverlay = true;
-                    IsPlaying = false;
+                    LogService.Warn("Cast watchdog deadline (not killing — diag)", new { _player?.PlayerState, _player?.InputBytes, _player?.TimeMs, _player?.Length });
+                }
+                else
+                {
+                    bool dead = _player is null || _player.FramesDecoded <= _playStartFrames;
+                    if (dead)
+                    {
+                        LogService.Warn("Playback watchdog: stream unavailable", new { casting = IsCasting });
+                        _player?.Stop();
+                        EndCasting();
+                        _awaitingPlayback = false;
+                        ConnectionState = "Stream unavailable";
+                        ShowConnectionOverlay = false;
+                        ShowBufferingOverlay = true;
+                        IsPlaying = false;
+                    }
                 }
             }
             if (_player?.VideoBitmap is not null)
@@ -627,6 +740,8 @@ public partial class MainViewModel : ObservableObject
                 IsBrowsing = false;
                 SaveVodProgress();
                 _isCurrentVod = false;
+                OnPropertyChanged(nameof(IsCurrentVod));
+                OnPropertyChanged(nameof(CurrentPlayingTitle));
                 _resumeToMs = 0;
                 _currentPlayingUrl = value.Url;
                 _vodPausePosition = TimeSpan.Zero;
@@ -639,6 +754,7 @@ public partial class MainViewModel : ObservableObject
                 _awaitingPlayback = true;
                 _awaitingSince = DateTime.UtcNow;
                 _playbackRequested = true;
+                _playbackConfirmed = false;
                 _playStartFrames = _player?.FramesDecoded ?? 0;
                 _player?.ClearBitmap();
                 _player.Play(value.Url);
@@ -684,7 +800,16 @@ public partial class MainViewModel : ObservableObject
     private void SelectSubtitle(int id)
     {
         if (_player is null) return;
-        _player.SetSubtitleTrack(id);
+        if (IsCasting)
+        {
+            if (_isCurrentVod) _resumeToMs = _player.TimeMs;   // resume where we are after the cast rebuild
+            _player.SetCastSubtitleTrack(id);
+            BeginCastWindow();
+        }
+        else
+        {
+            _player.SetSubtitleTrack(id);
+        }
         CurrentSubtitleTrack = id;
         ShowSubtitlePopup = false;
     }
@@ -702,8 +827,60 @@ public partial class MainViewModel : ObservableObject
     private void SelectAudio(int id)
     {
         if (_player is null) return;
-        _player.SetAudioTrack(id);
+        if (IsCasting)
+        {
+            if (_isCurrentVod) _resumeToMs = _player.TimeMs;
+            _player.SetCastAudioTrack(id);
+            BeginCastWindow();
+        }
+        else
+        {
+            _player.SetAudioTrack(id);
+        }
         CurrentAudioTrack = id;
+    }
+
+    [RelayCommand]
+    private void CastTo(int index)
+    {
+        if (_player is null || _currentPlayingUrl is null) return;
+        // Resume the VOD on the cast device; live restarts at the live edge.
+        if (_isCurrentVod) _resumeToMs = _player.TimeMs;
+        _player.CastTo(index);
+        IsCasting = _player.IsCasting;
+        CastTargetName = _player.CastTargetName;
+        BeginCastWindow();
+    }
+
+    /// <summary>A cast (re)start restarts the stream, so give it a fresh watchdog/confirmation window —
+    /// otherwise it inherits the already-elapsed local clock and gets killed mid-startup.</summary>
+    private void BeginCastWindow()
+    {
+        _awaitingPlayback = true;
+        _awaitingSince = DateTime.UtcNow;
+        _playbackRequested = true;
+        _playbackConfirmed = false;
+        _playStartFrames = _player?.FramesDecoded ?? 0;
+        if (IsCasting) { ShowConnectionOverlay = true; ConnectionState = "Casting…"; }
+    }
+
+    [RelayCommand]
+    private void StopCasting()
+    {
+        if (_player is null) return;
+        if (_isCurrentVod && _currentPlayingUrl is not null) _resumeToMs = _player.TimeMs;
+        _player.StopCasting();
+        IsCasting = false;
+        CastTargetName = null;
+    }
+
+    /// <summary>Ends casting without restarting; call from every full-stop path so the overlay can't stick.</summary>
+    private void EndCasting()
+    {
+        if (!IsCasting) return;
+        _player?.ClearRenderer();
+        IsCasting = false;
+        CastTargetName = null;
     }
 
     partial void OnVolumeChanged(int value) => _player?.SetVolume(value);
@@ -950,6 +1127,7 @@ public partial class MainViewModel : ObservableObject
         LogService.Info("StopPlayback called", new { mode = Mode.ToString(), isPlaying = IsPlaying, isPaused = IsPaused });
         SaveVodProgress();           // persist position before we zero it below
         _player?.Stop();
+        EndCasting();
         IsPlaying = false;
         IsPaused = false;
         SelectedChannel = null;
@@ -959,6 +1137,7 @@ public partial class MainViewModel : ObservableObject
         ShowConnectionOverlay = false;
         _awaitingPlayback = false;
         _playbackRequested = false;
+        _playbackConfirmed = false;
         _player?.ClearBitmap();
 
         if (Mode == ContentMode.LiveTv)
@@ -1009,7 +1188,21 @@ public partial class MainViewModel : ObservableObject
     private string _connectionLabel = "Not connected";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ConnectionHost))]
     private bool _isConnected;
+
+    /// <summary>Title-bar connection cluster text: "Connected · {host}" or a disconnected hint.</summary>
+    public string ConnectionHost
+    {
+        get
+        {
+            if (!IsConnected) return "No source connected";
+            var url = ConnectionServerUrl;
+            if (!string.IsNullOrWhiteSpace(url) && Uri.TryCreate(url, UriKind.Absolute, out var uri))
+                return $"Connected · {uri.Host}";
+            return "Connected";
+        }
+    }
 
     [RelayCommand]
     private void TogglePlayPause()
@@ -1086,19 +1279,6 @@ public partial class MainViewModel : ObservableObject
         _settings.Save(s);
     }
 
-    [RelayCommand]
-    private void Stop()
-    {
-        LogService.Info("Stop command called", new { isPlaying = IsPlaying, isPaused = IsPaused });
-        _player?.Stop();
-        _player?.SetVolume(Volume);
-        _vodPausePosition = TimeSpan.Zero;
-        IsPlaying = false;
-        IsPaused = false;
-        VodPosition = 0;
-        VodDuration = 1;
-        StatusText = "Stopped";
-    }
 
     private void RestoreFavorites()
     {

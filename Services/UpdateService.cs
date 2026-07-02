@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Velopack;
 using Velopack.Sources;
@@ -8,6 +9,28 @@ namespace Sabeltann.Services;
 public sealed class UpdateService
 {
     private const string RepoUrl = "https://github.com/adr0ps1/Sabeltann";
+
+    private static bool IsRunningAsMsix
+    {
+        get
+        {
+            try
+            {
+                var length = 0;
+                var result = GetCurrentPackageFullName(ref length, nint.Zero);
+                // ERROR_SUCCESS (0) or ERROR_INSUFFICIENT_BUFFER (122) = MSIX
+                // APPMODEL_ERROR_NO_PACKAGE (15703) = not MSIX
+                return result is 0 or 122;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+    }
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern int GetCurrentPackageFullName(ref int packageFullNameLength, nint packageFullName);
 
     private UpdateManager _manager;
     private UpdateInfo? _pending;
@@ -31,7 +54,7 @@ public sealed class UpdateService
 
     public async Task CheckAndDownloadAsync(IProgress<double>? progress = null)
     {
-        if (!_manager.IsInstalled)
+        if (!_manager.IsInstalled || IsRunningAsMsix)
             return;
 
         try
@@ -66,7 +89,7 @@ public sealed class UpdateService
 
     public void ApplyPendingOnExit(bool restart = false)
     {
-        if (_pending is null || !_manager.IsInstalled)
+        if (_pending is null || !_manager.IsInstalled || IsRunningAsMsix)
             return;
 
         try

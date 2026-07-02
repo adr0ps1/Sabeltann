@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
+PackageIdentifier: adr0ps1.Sabeltann
+PackageVersion: 0.1.23
+InstallerLocale: en-US
+InstallerType: exe
+InstallModes:
+  - silent
+  - interactive
+InstallerSwitches:
+  Silent: --silent
+  SilentWithProgress: --silent
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/adr0ps1/Sabeltann/releases/download/v0.1.23/Sabeltann-win-Setup.exe
+    InstallerSha256: 83d5e454642ca82377cce8f76023e734fbc68ae35a51a72f6f772ebb1c2635f6
+ManifestType: installer
+ManifestVersion: 1.6.0

@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#0b0c0e;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#e7e9ef;-webkit-font-smoothing:antialiased}
+  @keyframes barMorph{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+  @keyframes paneIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:#3a3f4a;border-radius:6px}
+  ::-webkit-scrollbar-track{background:transparent}
+</style>
+</helmet>
+
+<section style="padding:48px 56px 64px;min-width:1700px;border-bottom:1px solid #1c1e24">
+  <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:3px;color:#6c7280;margin-bottom:14px">1A APPLIED TO THE REST OF THE APP · TURN 2</div>
+  <h1 style="font-size:28px;font-weight:650;margin:0 0 10px;letter-spacing:-0.5px">The Morphing Toolbar across every viewmodel</h1>
+  <p style="max-width:780px;font-size:14.5px;line-height:1.55;color:#9aa0ae;margin:0 0 30px">
+    Same slate + amber chrome from <a href="#1a" style="color:#e2a44e;text-decoration:none">1A</a> carried into menus, dialogs and playback. Reference any frame by its badge: <span style="color:#cfd3dc">2A</span>–<span style="color:#cfd3dc">2G</span>.
+  </p>
+
+  <div style="display:flex;gap:48px;flex-wrap:wrap;align-items:flex-start">
+
+    <!-- 2A — File menu open -->
+    <div id="2a" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#1b1e25;background:#e2a44e;padding:3px 8px;border-radius:5px">2A</span><span style="font-size:15px;font-weight:600">File menu open</span></div>
+      <div style="width:780px;position:relative;border-radius:13px;overflow:hidden;border:1px solid #2c313c;background:#14161b;box-shadow:0 30px 70px -30px rgba(0,0,0,.8)">
+        <div style="height:38px;background:#181a20;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid #20242c"><div style="display:flex;align-items:center;gap:11px"><div style="width:20px;height:20px;border-radius:5px;background:#e2a44e;display:flex;align-items:center;justify-content:center;color:#1b1e25;font-size:11px">☠</div><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:#cfd3dc">SABELTANN</span><div style="display:flex;align-items:center;gap:6px;padding:3px 7px"><div style="width:7px;height:7px;border-radius:50%;background:#7bbf7b"></div><span style="font-size:11px;color:#7c828f">Connected · sabeltann.tv</span></div></div><div style="display:flex;align-items:center;gap:15px;color:#5a606b;font-size:12px"><span>—</span><span style="font-size:10px">▢</span><span>✕</span></div></div>
+        <div style="height:54px;background:#1b1e25;border-bottom:1px solid #2c313c;display:flex;align-items:center;padding:0 12px;gap:8px">
+          <div style="display:flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:8px;background:#e2a44e22;color:#e2a44e;font-size:12.5px;font-weight:600">☰ File</div>
+          <div style="width:1px;height:22px;background:#2c313c;margin:0 4px"></div>
+          <div style="display:flex;align-items:center;gap:7px;height:30px;padding:0 13px;border-radius:8px;background:#e2a44e22;color:#e2a44e;font-size:12.5px;font-weight:600">▦ Live TV</div>
+          <div style="display:flex;align-items:center;gap:7px;height:30px;padding:0 13px;border-radius:8px;color:#969cab;font-size:12.5px">▷ Movies</div>
+          <div style="display:flex;align-items:center;gap:7px;height:30px;padding:0 13px;border-radius:8px;color:#969cab;font-size:12.5px">⊞ Series</div>
+        </div>
+        <div style="height:300px;background:#14161b;padding:16px;display:flex;flex-wrap:wrap;gap:11px;opacity:.35;pointer-events:none">
+          <div style="width:175px;height:60px;border-radius:11px;background:#1b1e25;border:1px solid #2c313c"></div>
+          <div style="width:175px;height:60px;border-radius:11px;background:#1b1e25;border:1px solid #2c313c"></div>
+          <div style="width:175px;height:60px;border-radius:11px;background:#1b1e25;border:1px solid #2c313c"></div>
+          <div style="width:175px;height:60px;border-radius:11px;background:#1b1e25;border:1px solid #2c313c"></div>
+        </div>
+        <div style="position:absolute;left:12px;top:90px;width:210px;background:#1f232b;border:1px solid #343a45;border-radius:10px;padding:6px;box-shadow:0 18px 40px -14px rgba(0,0,0,.75);font-size:13px;color:#cfd3dc">
+          <div style="padding:8px 11px;border-radius:7px" style-hover="background:#2a2f39">Load M3U URL…</div>
+          <div style="padding:8px 11px;border-radius:7px" style-hover="background:#2a2f39">Load M3U File…</div>
+          <div style="height:1px;background:#2c313c;margin:5px 8px"></div>
+          <div style="padding:8px 11px;border-radius:7px;display:flex;justify-content:space-between" style-hover="background:#2a2f39">Xtream Login… <span style="color:#6c7280">⌘L</span></div>
+          <div style="height:1px;background:#2c313c;margin:5px 8px"></div>
+          <div style="padding:8px 11px;border-radius:7px;display:flex;justify-content:space-between" style-hover="background:#2a2f39">Settings… <span style="color:#6c7280">⌘,</span></div>
+          <div style="height:1px;background:#2c313c;margin:5px 8px"></div>
+          <div style="padding:8px 11px;border-radius:7px;color:#e08a8a" style-hover="background:#2a2f39">Exit</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2F — Now playing + debug -->
+    <div id="2f" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#1b1e25;background:#e2a44e;padding:3px 8px;border-radius:5px">2F</span><span style="font-size:15px;font-weight:600">Playing content + debug overlay</span></div>
+      <div style="width:780px;border-radius:13px;overflow:hidden;border:1px solid #2c313c;background:#14161b;box-shadow:0 30px 70px -30px rgba(0,0,0,.8)">
+        <div style="height:38px;background:#181a20;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid #20242c"><div style="display:flex;align-items:center;gap:11px"><div style="width:20px;height:20px;border-radius:5px;background:#e2a44e;display:flex;align-items:center;justify-content:center;color:#1b1e25;font-size:11px">☠</div><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:#cfd3dc">SABELTANN</span></div><div style="display:flex;align-items:center;gap:15px;color:#5a606b;font-size:12px"><span>—</span><span style="font-size:10px">▢</span><span>✕</span></div></div>
+        <div style="height:54px;background:#1b1e25;border-bottom:1px solid #2c313c;display:flex;align-items:center;padding:0 12px;gap:12px">
+          <div style="width:30px;height:30px;border-radius:8px;background:#232730;display:flex;align-items:center;justify-content:center;color:#cfd3dc">←</div>
+          <span style="font-size:14px;color:#fff;font-weight:600">NRK1</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;letter-spacing:1px;padding:3px 7px;border-radius:5px;color:#fff;background:#d05a5a">LIVE</span>
+          <span style="font-size:12px;color:#6c7280">Dagsrevyen</span>
+          <div style="flex:1"></div>
+          <div style="display:flex;align-items:center;gap:12px;color:#969cab;font-size:14px"><span>🔊</span><span style="font-weight:700;font-size:12px;color:#89b4fa">CC</span><span>📺</span><span style="color:#e2a44e;font-weight:700;font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:1px">DEBUG</span><span>⛶</span></div>
+        </div>
+        <div style="height:300px;position:relative;background:radial-gradient(circle at 50% 40%,#22262f,#0c0d10);display:flex;align-items:center;justify-content:center">
+          <div style="width:64px;height:64px;border-radius:50%;border:2px solid #e2a44e;display:flex;align-items:center;justify-content:center;color:#e2a44e;font-size:24px">▶</div>
+          <div style="position:absolute;right:14px;bottom:14px;width:250px;background:#cc11131a;background:rgba(16,18,22,.85);border:1px solid #2c313c;border-radius:9px;padding:12px 13px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#e2a44e;letter-spacing:1px;margin-bottom:8px">DEBUG</div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin:3px 0"><span style="color:#6c7280">State</span><span style="color:#cfd3dc">Playing</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin:3px 0"><span style="color:#6c7280">Resolution</span><span style="color:#cfd3dc">1920×1080</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin:3px 0"><span style="color:#6c7280">Input bitrate</span><span style="color:#cfd3dc">6.2 Mbps</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin:3px 0"><span style="color:#6c7280">Frames</span><span style="color:#cfd3dc">42 180</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin:3px 0"><span style="color:#6c7280">Dropped</span><span style="color:#cfd3dc">3</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2D — Series episodes -->
+    <div id="2d" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#1b1e25;background:#e2a44e;padding:3px 8px;border-radius:5px">2D</span><span style="font-size:15px;font-weight:600">Series → seasons &amp; episodes</span></div>
+      <div style="width:780px;border-radius:13px;overflow:hidden;border:1px solid #2c313c;background:#14161b;box-shadow:0 30px 70px -30px rgba(0,0,0,.8)">
+        <div style="height:38px;background:#181a20;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid #20242c"><div style="display:flex;align-items:center;gap:11px"><div style="width:20px;height:20px;border-radius:5px;background:#e2a44e;display:flex;align-items:center;justify-content:center;color:#1b1e25;font-size:11px">☠</div><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:#cfd3dc">SABELTANN</span></div><div style="display:flex;align-items:center;gap:15px;color:#5a606b;font-size:12px"><span>—</span><span style="font-size:10px">▢</span><span>✕</span></div></div>
+        <div style="height:54px;background:#1b1e25;border-bottom:1px solid #2c313c;display:flex;align-items:center;padding:0 12px;gap:12px">
+          <div style="width:30px;height:30px;border-radius:8px;background:#232730;display:flex;align-items:center;justify-content:center;color:#cfd3dc">←</div>
+          <span style="font-size:14px;color:#fff;font-weight:600">Severance</span>
+          <span style="font-size:12px;color:#6c7280">TV Series · 2 seasons</span>
+          <div style="flex:1"></div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#969cab;background:#232730;padding:5px 10px;border-radius:7px">19 episodes</div>
+        </div>
+        <div style="height:300px;overflow-y:auto;background:#14161b;padding:16px 18px">
+          <div style="font-size:15px;font-weight:700;color:#e2a44e;margin:0 0 10px">Season 1</div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:9px;background:#1b1e25;border:1px solid #2c313c;margin-bottom:7px"><div style="width:34px;height:34px;border-radius:8px;background:repeating-linear-gradient(135deg,hsl(190,33%,30%) 0 8px,hsl(190,33%,25%) 8px 16px);display:flex;align-items:center;justify-content:center;color:#e2a44e;font-size:11px">▶</div><div><div style="font-size:12.5px;color:#e7e9ef">S01E01 · Good News About Hell</div><div style="font-size:11px;color:#6c7280">47 min</div></div></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:9px;background:#1b1e25;border:1px solid #2c313c;margin-bottom:7px"><div style="width:34px;height:34px;border-radius:8px;background:repeating-linear-gradient(135deg,hsl(190,33%,30%) 0 8px,hsl(190,33%,25%) 8px 16px);display:flex;align-items:center;justify-content:center;color:#e2a44e;font-size:11px">▶</div><div><div style="font-size:12.5px;color:#e7e9ef">S01E02 · Half Loop</div><div style="font-size:11px;color:#6c7280">39 min</div></div></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:9px;background:#1b1e25;border:1px solid #2c313c;margin-bottom:7px"><div style="width:34px;height:34px;border-radius:8px;background:repeating-linear-gradient(135deg,hsl(190,33%,30%) 0 8px,hsl(190,33%,25%) 8px 16px);display:flex;align-items:center;justify-content:center;color:#e2a44e;font-size:11px">▶</div><div><div style="font-size:12.5px;color:#e7e9ef">S01E03 · In Perpetuity</div><div style="font-size:11px;color:#6c7280">44 min</div></div></div>
+          <div style="font-size:15px;font-weight:700;color:#e2a44e;margin:16px 0 10px">Season 2</div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:9px;background:#1b1e25;border:1px solid #2c313c;margin-bottom:7px"><div style="width:34px;height:34px;border-radius:8px;background:repeating-linear-gradient(135deg,hsl(190,33%,30%) 0 8px,hsl(190,33%,25%) 8px 16px);display:flex;align-items:center;justify-content:center;color:#e2a44e;font-size:11px">▶</div><div><div style="font-size:12.5px;color:#e7e9ef">S02E01 · Hello, Ms. Cobel</div><div style="font-size:11px;color:#6c7280">51 min</div></div></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:9px;background:#1b1e25;border:1px solid #2c313c"><div style="width:34px;height:34px;border-radius:8px;background:repeating-linear-gradient(135deg,hsl(190,33%,30%) 0 8px,hsl(190,33%,25%) 8px 16px);display:flex;align-items:center;justify-content:center;color:#e2a44e;font-size:11px">▶</div><div><div style="font-size:12.5px;color:#e7e9ef">S02E02 · Goodbye, Mrs. Selvig</div><div style="font-size:11px;color:#6c7280">48 min</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2E — Movie detail rich -->
+    <div id="2e" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#1b1e25;background:#e2a44e;padding:3px 8px;border-radius:5px">2E</span><span style="font-size:15px;font-weight:600">Movie detail (ratings + resume)</span></div>
+      <div style="width:780px;border-radius:13px;overflow:hidden;border:1px solid #2c313c;background:#14161b;box-shadow:0 30px 70px -30px rgba(0,0,0,.8)">
+        <div style="height:38px;background:#181a20;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid #20242c"><div style="display:flex;align-items:center;gap:11px"><div style="width:20px;height:20px;border-radius:5px;background:#e2a44e;display:flex;align-items:center;justify-content:center;color:#1b1e25;font-size:11px">☠</div><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:#cfd3dc">SABELTANN</span></div><div style="display:flex;align-items:center;gap:15px;color:#5a606b;font-size:12px"><span>—</span><span style="font-size:10px">▢</span><span>✕</span></div></div>
+        <div style="height:54px;background:#1b1e25;border-bottom:1px solid #2c313c;display:flex;align-items:center;padding:0 12px;gap:12px">
+          <div style="width:30px;height:30px;border-radius:8px;background:#232730;display:flex;align-items:center;justify-content:center;color:#cfd3dc">←</div>
+          <span style="font-size:14px;color:#fff;font-weight:600">The Northman</span>
+          <span style="font-size:12px;color:#6c7280">2022 · 2h 17m</span>
+          <div style="flex:1"></div>
+          <div style="display:flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:8px;border:1px solid #2c313c;color:#969cab;font-size:12.5px">＋ My List</div>
+          <div style="display:flex;align-items:center;gap:7px;height:30px;padding:0 15px;border-radius:8px;background:#e2a44e;color:#1b1e25;font-size:12.5px;font-weight:600">▶ Resume 1:04</div>
+        </div>
+        <div style="height:300px;overflow:hidden;position:relative;background:#14161b">
+          <div style="height:120px;background:linear-gradient(180deg,hsl(20,36%,26%),hsl(20,28%,13%))"></div>
+          <div style="display:flex;gap:20px;padding:0 22px;margin-top:-46px">
+            <div style="width:118px;height:172px;flex:none;border-radius:10px;background:repeating-linear-gradient(135deg,hsl(20,33%,30%) 0 9px,hsl(20,33%,25%) 9px 18px);box-shadow:0 14px 30px -12px rgba(0,0,0,.7)"></div>
+            <div style="padding-top:54px;min-width:0">
+              <div style="font-size:21px;font-weight:650">The Northman</div>
+              <div style="font-size:12.5px;color:#969cab;margin:5px 0 9px">2022 · 2h 17m · Action, Drama, Adventure</div>
+              <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">
+                <span style="color:#e2a44e;font-size:16px;letter-spacing:2px">★★★★☆</span>
+                <span style="font-size:12px;color:#969cab"><span style="color:#6c7280">IMDb</span> 7.0/10</span>
+                <span style="font-size:12px;color:#7bbf7b"><span style="color:#6c7280">RT</span> 89%</span>
+                <span style="font-size:12px;color:#969cab"><span style="color:#6c7280">Lang</span> English, Old Norse</span>
+              </div>
+              <div style="font-size:12.5px;color:#7c828f;line-height:1.6;max-width:420px">A young Viking prince is on a quest to avenge his father's murder. Restored 4K transfer with original audio and optional subtitles.</div>
+              <div style="font-size:11.5px;color:#6c7280;margin-top:10px"><span style="color:#5a606b">Director</span> Robert Eggers &nbsp;·&nbsp; <span style="color:#5a606b">Cast</span> A. Skarsgård, N. Kidman, A. Taylor-Joy</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2B — Xtream login -->
+    <div id="2b" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#1b1e25;background:#e2a44e;padding:3px 8px;border-radius:5px">2B</span><span style="font-size:15px;font-weight:600">Xtream login</span></div>
+      <div style="width:420px;border-radius:12px;overflow:hidden;border:1px solid #2c313c;background:#181a20;box-shadow:0 30px 70px -30px rgba(0,0,0,.8)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 13px;border-bottom:1px solid #20242c"><span style="font-size:12px;color:#cfd3dc;font-weight:550">Xtream Login</span><span style="color:#5a606b;font-size:12px">✕</span></div>
+        <div style="padding:20px;background:#14161b">
+          <div style="font-size:18px;font-weight:650;color:#fff">Xtream Codes Login</div>
+          <div style="font-size:12px;color:#6c7280;margin:3px 0 18px">Enter your IPTV provider details</div>
+          <div style="font-size:11px;font-weight:600;color:#969cab;margin-bottom:5px">SERVER URL</div>
+          <div style="height:38px;border-radius:8px;background:#1b1e25;border:1px solid #2c313c;display:flex;align-items:center;padding:0 11px;color:#6c7280;font-size:12.5px;margin-bottom:14px">http://your-iptv-server.com:8080</div>
+          <div style="font-size:11px;font-weight:600;color:#969cab;margin-bottom:5px">USERNAME</div>
+          <div style="height:38px;border-radius:8px;background:#1b1e25;border:1px solid #2c313c;display:flex;align-items:center;padding:0 11px;color:#cfd3dc;font-size:12.5px;margin-bottom:14px">adriarepos</div>
+          <div style="font-size:11px;font-weight:600;color:#969cab;margin-bottom:5px">PASSWORD</div>
+          <div style="height:38px;border-radius:8px;background:#1b1e25;border:1px solid #2c313c;display:flex;align-items:center;padding:0 11px;color:#cfd3dc;font-size:12.5px;letter-spacing:2px;margin-bottom:20px">••••••••••</div>
+          <div style="display:flex;gap:9px">
+            <div style="flex:1;height:38px;border-radius:8px;background:#232730;color:#cfd3dc;display:flex;align-items:center;justify-content:center;font-size:13px">Cancel</div>
+            <div style="flex:1;height:38px;border-radius:8px;background:#e2a44e;color:#1b1e25;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">Login</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2C — Settings -->
+    <div id="2c" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#1b1e25;background:#e2a44e;padding:3px 8px;border-radius:5px">2C</span><span style="font-size:15px;font-weight:600">Settings</span></div>
+      <div style="width:440px;border-radius:12px;overflow:hidden;border:1px solid #2c313c;background:#181a20;box-shadow:0 30px 70px -30px rgba(0,0,0,.8)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 13px;border-bottom:1px solid #20242c"><span style="font-size:12px;color:#cfd3dc;font-weight:550">Settings</span><span style="color:#5a606b;font-size:12px">✕</span></div>
+        <div style="padding:20px;background:#14161b;display:flex;flex-direction:column;gap:16px">
+          <div>
+            <div style="font-size:12.5px;font-weight:600;color:#cfd3dc;margin-bottom:8px">Default volume</div>
+            <div style="display:flex;align-items:center;gap:12px"><div style="flex:1;height:5px;border-radius:3px;background:#232730;position:relative"><div style="position:absolute;left:0;top:0;height:5px;width:50%;border-radius:3px;background:#e2a44e"></div><div style="position:absolute;left:calc(50% - 7px);top:-5px;width:14px;height:14px;border-radius:50%;background:#e2a44e"></div></div><span style="font-size:12.5px;color:#969cab;width:36px">100%</span></div>
+          </div>
+          <div>
+            <div style="font-size:12.5px;font-weight:600;color:#cfd3dc;margin-bottom:8px">Startup</div>
+            <div style="display:flex;align-items:center;gap:9px;font-size:12.5px;color:#cfd3dc"><div style="width:17px;height:17px;border-radius:5px;background:#e2a44e;color:#1b1e25;display:flex;align-items:center;justify-content:center;font-size:11px">✓</div>Auto-load last session on startup</div>
+          </div>
+          <div>
+            <div style="font-size:12.5px;font-weight:600;color:#cfd3dc;margin-bottom:8px">Current connection</div>
+            <div style="background:#1b1e25;border:1px solid #2c313c;border-radius:8px;padding:11px 12px;font-size:11.5px;display:flex;flex-direction:column;gap:4px"><div style="display:flex;gap:10px"><span style="color:#6c7280;width:62px">Server</span><span style="color:#cfd3dc">sabeltann.tv:8080</span></div><div style="display:flex;gap:10px"><span style="color:#6c7280;width:62px">User</span><span style="color:#cfd3dc">adriarepos</span></div><div style="display:flex;gap:10px"><span style="color:#6c7280;width:62px">Channels</span><span style="color:#cfd3dc">342</span></div></div>
+          </div>
+          <div>
+            <div style="font-size:12.5px;font-weight:600;color:#cfd3dc;margin-bottom:8px">Movie info (OMDb)</div>
+            <div style="height:36px;border-radius:8px;background:#1b1e25;border:1px solid #2c313c;display:flex;align-items:center;padding:0 11px;color:#6c7280;font-size:12px">OMDb API key</div>
+          </div>
+          <div style="display:flex;gap:9px;margin-top:2px">
+            <div style="flex:1;height:38px;border-radius:8px;background:#232730;color:#cfd3dc;display:flex;align-items:center;justify-content:center;font-size:13px">Cancel</div>
+            <div style="flex:1;height:38px;border-radius:8px;background:#e2a44e;color:#1b1e25;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">Save</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2G — Update dialog -->
+    <div id="2g" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#1b1e25;background:#e2a44e;padding:3px 8px;border-radius:5px">2G</span><span style="font-size:15px;font-weight:600">Update available</span></div>
+      <div style="width:440px;border-radius:12px;overflow:hidden;border:1px solid #2c313c;background:#181a20;box-shadow:0 30px 70px -30px rgba(0,0,0,.8)">
+        <div style="height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 13px;border-bottom:1px solid #20242c"><span style="font-size:12px;color:#cfd3dc;font-weight:550">Update Available</span><span style="color:#5a606b;font-size:12px">✕</span></div>
+        <div style="padding:22px;background:#14161b">
+          <div style="font-size:18px;font-weight:650;color:#fff;margin-bottom:10px">Update Available</div>
+          <div style="font-size:13px;margin-bottom:16px"><span style="color:#969cab">v1.4.2</span> <span style="color:#6c7280">→</span> <span style="color:#7bbf7b;font-weight:600">v1.5.0</span></div>
+          <div style="font-size:11px;font-weight:600;color:#6c7280;margin-bottom:7px">WHAT'S NEW</div>
+          <div style="background:#1b1e25;border:1px solid #2c313c;border-radius:8px;padding:12px 13px;font-size:12px;color:#969cab;line-height:1.7;margin-bottom:20px">• Audio &amp; subtitle track selection<br/>• Resume VOD from last position<br/>• Faster channel grid scrolling<br/>• Fixes for Xtream reconnect</div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <div style="height:36px;padding:0 14px;border-radius:8px;background:#232730;color:#969cab;display:flex;align-items:center;font-size:12.5px">Remind Later</div>
+            <div style="height:36px;padding:0 14px;border-radius:8px;background:#232730;color:#89b4fa;display:flex;align-items:center;font-size:12.5px">Install on Exit</div>
+            <div style="height:36px;padding:0 14px;border-radius:8px;background:#e2a44e;color:#1b1e25;font-weight:600;display:flex;align-items:center;font-size:12.5px">Install &amp; Restart</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section style="padding:48px 56px 80px;min-width:1700px">
+  <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:3px;color:#6c7280;margin-bottom:14px">SABELTANN · DYNAMIC MENU FRAMES · TURN 1</div>
+  <h1 style="font-size:30px;font-weight:650;margin:0 0 10px;letter-spacing:-0.5px">Two ways the top chrome morphs by context</h1>
+  <p style="max-width:760px;font-size:14.5px;line-height:1.55;color:#9aa0ae;margin:0 0 6px">
+    Each frame is live — click the <strong style="color:#cfd3dc">nav tabs / rail</strong>, open a <strong style="color:#cfd3dc">tile</strong>, hit <strong style="color:#cfd3dc">Play</strong>, or click the <strong style="color:#cfd3dc">connection dot</strong> to reach the disconnected state, and watch the bar reshape per mode. The bottom transport bar is intentionally omitted.
+  </p>
+  <p style="font-size:12.5px;color:#6c7280;margin:0 0 36px">Compare <a href="#1a" style="color:#e2a44e;text-decoration:none">1A</a> · <a href="#1b" style="color:#5ec8c2;text-decoration:none">1B</a></p>
+
+  <div style="display:flex;gap:56px;flex-wrap:wrap;align-items:flex-start">
+
+    <!-- ============ OPTION 1A ============ -->
+    <div id="1a" style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:baseline;gap:12px">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:#1b1e25;background:#e2a44e;padding:4px 9px;border-radius:6px">1A</span>
+        <span style="font-size:16px;font-weight:600">Morphing Toolbar</span>
+        <span style="font-size:13px;color:#6c7280">— one bar, controls reshuffle per mode</span>
+      </div>
+
+      <div style="width:780px;border-radius:13px;overflow:hidden;border:1px solid #2c313c;background:#14161b;box-shadow:0 30px 70px -30px rgba(0,0,0,.8)">
+        <!-- titlebar -->
+        <div style="height:40px;background:#181a20;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid #20242c">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:22px;height:22px;border-radius:6px;background:#e2a44e;display:flex;align-items:center;justify-content:center;color:#1b1e25;font-size:12px">☠</div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:2.5px;color:#cfd3dc">SABELTANN</span>
+            <div onClick="{{ a.goHome }}" style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:3px 7px;border-radius:6px" title="Toggle connection state">
+              <div style="width:7px;height:7px;border-radius:50%;background:#7bbf7b"></div>
+              <span style="font-size:11px;color:#7c828f">Connected · sabeltann.tv</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;color:#5a606b">
+            <span style="font-size:15px;line-height:1">—</span><span style="font-size:11px">▢</span><span style="font-size:13px">✕</span>
+          </div>
+        </div>
+
+        <!-- morphing bar -->
+        <div style="height:54px;background:#1b1e25;border-bottom:1px solid #2c313c;display:flex;align-items:center;padding:0 12px">
+          <sc-if value="{{ a.isLive }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;gap:8px;width:100%;animation:barMorph .25s ease">
+              <div style="display:flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:8px;background:#232730;color:#969cab;font-size:12.5px;cursor:pointer">☰ File</div>
+              <div style="width:1px;height:22px;background:#2c313c;margin:0 4px"></div>
+              <div onClick="{{ a.goLive }}" style="{{ a.tabLive }}">▦ Live TV</div>
+              <div onClick="{{ a.goMovies }}" style="{{ a.tabMovies }}">▷ Movies</div>
+              <div onClick="{{ a.goSeries }}" style="{{ a.tabSeries }}">⊞ Series</div>
+              <div style="width:1px;height:22px;background:#2c313c;margin:0 4px"></div>
+              <div style="display:flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:8px;background:#232730;color:#cfd3dc;font-size:12.5px;cursor:pointer">All channels <span style="color:#6c7280">▾</span></div>
+              <div style="width:30px;height:30px;border-radius:8px;border:1px solid #2c313c;display:flex;align-items:center;justify-content:center;color:#e2a44e;cursor:pointer" title="Favorites only">★</div>
+              <div style="flex:1;display:flex;align-items:center;gap:8px;height:30px;padding:0 11px;border-radius:8px;background:#101216;border:1px solid #2c313c;color:#6c7280;font-size:12.5px;min-width:90px">⌕ Search channels…</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#969cab;background:#232730;padding:5px 10px;border-radius:7px;white-space:nowrap">342 ch</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ a.isMovies }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:8px;width:100%;animation:barMorph .25s ease">
+              <div style="display:flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:8px;background:#232730;color:#969cab;font-size:12.5px;cursor:pointer">☰ File</div>
+              <div style="width:1px;height:22px;background:#2c313c;margin:0 4px"></div>
+              <div onClick="{{ a.goLive }}" style="{{ a.tabLive }}">▦ Live TV</div>
+              <div onClick="{{ a.goMovies }}" style="{{ a.tabMovies }}">▷ Movies</div>
+              <div onClick="{{ a.goSeries }}" style="{{ a.tabSeries }}">⊞ Series</div>
+              <div style="width:1px;height:22px;background:#2c313c;margin:0 4px"></div>
+              <div style="flex:1;display:flex;align-items:center;gap:8px;height:30px;padding:0 11px;border-radius:8px;background:#101216;border:1px solid #2c313c;color:#6c7280;font-size:12.5px;min-width:90px">⌕ Search movies…</div>
+              <div style="display:flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:8px;background:#232730;color:#cfd3dc;font-size:12.5px;cursor:pointer">Recently added <span style="color:#6c7280">▾</span></div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#969cab;background:#232730;padding:5px 10px;border-radius:7px;white-space:nowrap">1 204</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ a.isSeries }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:8px;width:100%;animation:barMorph .25s ease">
+              <div style="display:flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:8px;background:#232730;color:#969cab;font-size:12.5px;cursor:pointer">☰ File</div>
+              <div style="width:1px;height:22px;background:#2c313c;margin:0 4px"></div>
+              <div onClick="{{ a.goLive }}" style="{{ a.tabLive }}">▦ Live TV</div>
+              <div onClick="{{ a.goMovies }}" style="{{ a.tabMovies }}">▷ Movies</div>
+              <div onClick="{{ a.goSeries }}" style="{{ a.tabSeries }}">⊞ Series</div>
+              <div style="width:1px;height:22px;background:#2c313c;margin:0 4px"></div>
+              <div style="flex:1;display:flex;align-items:center;gap:8px;height:30px;padding:0 11px;border-radius:8px;background:#101216;border:1px solid #2c313c;color:#6c7280;font-size:12.5px;min-width:90px">⌕ Search series…</div>
+              <div style="display:flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:8px;background:#232730;color:#cfd3dc;font-size:12.5px;cursor:pointer">A–Z <span style="color:#6c7280">▾</span></div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#969cab;background:#232730;padding:5px 10px;border-radius:7px;white-space:nowrap">318</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ a.isWelcome }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:10px;width:100%;animation:barMorph .25s ease">
+              <div style="display:flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:8px;background:#232730;color:#969cab;font-size:12.5px;cursor:pointer">☰ File</div>
+              <span style="font-size:12.5px;color:#6c7280">No source connected</span>
+              <div style="flex:1"></div>
+              <div onClick="{{ a.goPicker }}" style="display:flex;align-items:center;gap:7px;height:30px;padding:0 15px;border-radius:8px;background:#e2a44e;color:#1b1e25;font-size:12.5px;font-weight:600;cursor:pointer">＋ Connect a source</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ a.isPicker }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:10px;width:100%;animation:barMorph .25s ease">
+              <div style="display:flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:8px;background:#232730;color:#969cab;font-size:12.5px;cursor:pointer">☰ File</div>
+              <span style="font-size:13.5px;color:#cfd3dc;font-weight:550">Choose what to watch</span>
+              <div style="flex:1"></div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6c7280">3 sources online</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ a.isDetail }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:12px;width:100%;animation:barMorph .25s ease">
+              <div onClick="{{ a.back }}" style="width:30px;height:30px;border-radius:8px;background:#232730;display:flex;align-items:center;justify-content:center;color:#cfd3dc;cursor:pointer">←</div>
+              <span style="font-size:14px;color:#fff;font-weight:600">{{ a.selTitle }}</span>
+              <span style="font-size:12px;color:#6c7280">{{ a.detailMeta }}</span>
+              <div style="flex:1"></div>
+              <div style="display:flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:8px;border:1px solid #2c313c;color:#969cab;font-size:12.5px;cursor:pointer">＋ My List</div>
+              <div onClick="{{ a.play }}" style="display:flex;align-items:center;gap:7px;height:30px;padding:0 15px;border-radius:8px;background:#e2a44e;color:#1b1e25;font-size:12.5px;font-weight:600;cursor:pointer">▶ Play</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ a.isPlayback }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:12px;width:100%;animation:barMorph .25s ease">
+              <div onClick="{{ a.back }}" style="width:30px;height:30px;border-radius:8px;background:#232730;display:flex;align-items:center;justify-content:center;color:#cfd3dc;cursor:pointer">←</div>
+              <span style="font-size:14px;color:#fff;font-weight:600">{{ a.now }}</span>
+              <span style="{{ a.nowBadgeStyle }}">{{ a.nowBadge }}</span>
+              <div style="flex:1"></div>
+              <div style="display:flex;align-items:center;gap:10px;color:#969cab;font-size:14px">
+                <span style="cursor:pointer" title="Audio">🔊</span>
+                <span style="cursor:pointer;font-weight:700;font-size:12px;color:#89b4fa" title="Subtitles">CC</span>
+                <span style="cursor:pointer" title="Cast">📺</span>
+                <span style="cursor:pointer" title="Fullscreen">⛶</span>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+
+        <!-- content -->
+        <div style="height:392px;overflow-y:auto;position:relative;background:#14161b">
+          <sc-if value="{{ a.isLive }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:16px;display:flex;flex-wrap:wrap;gap:11px;animation:paneIn .28s ease">
+              <sc-for list="{{ channels }}" as="ch" hint-placeholder-count="8">
+                <div onClick="{{ a.openChannel }}" data-idx="{{ ch.idx }}" style="width:175px;display:flex;align-items:center;gap:11px;padding:11px;border-radius:11px;background:#1b1e25;border:1px solid #2c313c;cursor:pointer" style-hover="background:#232730;border-color:#3a3f4a">
+                  <div style="{{ ch.av }}">{{ ch.initial }}</div>
+                  <div style="min-width:0">
+                    <div style="font-size:13px;color:#e7e9ef;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ch.n }}</div>
+                    <div style="font-size:11px;color:#6c7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">● {{ ch.now }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ a.isMovies }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:18px;display:flex;flex-wrap:wrap;gap:16px;animation:paneIn .28s ease">
+              <sc-for list="{{ movies }}" as="m" hint-placeholder-count="10">
+                <div onClick="{{ a.openMovie }}" data-idx="{{ m.idx }}" style="width:108px;cursor:pointer">
+                  <div style="{{ m.poster }}"></div>
+                  <div style="font-size:12px;color:#e7e9ef;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.t }}</div>
+                  <div style="font-size:11px;color:#6c7280">{{ m.y }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ a.isSeries }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:18px;display:flex;flex-wrap:wrap;gap:16px;animation:paneIn .28s ease">
+              <sc-for list="{{ series }}" as="s" hint-placeholder-count="8">
+                <div onClick="{{ a.openSeries }}" data-idx="{{ s.idx }}" style="width:108px;cursor:pointer">
+                  <div style="{{ s.poster }}"></div>
+                  <div style="font-size:12px;color:#e7e9ef;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.t }}</div>
+                  <div style="font-size:11px;color:#6c7280">Series</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ a.isWelcome }}" hint-placeholder-val="{{ false }}">
+            <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;animation:paneIn .28s ease">
+              <div style="width:64px;height:64px;border-radius:18px;background:#e2a44e;display:flex;align-items:center;justify-content:center;color:#1b1e25;font-size:32px">☠</div>
+              <div style="text-align:center">
+                <div style="font-size:20px;font-weight:600">Sabeltann</div>
+                <div style="font-size:13px;color:#6c7280;margin-top:4px">No playlist loaded — connect a source to start</div>
+              </div>
+              <div style="display:flex;gap:10px">
+                <div onClick="{{ a.goPicker }}" style="padding:10px 18px;border-radius:9px;background:#e2a44e;color:#1b1e25;font-size:13px;font-weight:600;cursor:pointer">Load M3U…</div>
+                <div onClick="{{ a.goPicker }}" style="padding:10px 18px;border-radius:9px;border:1px solid #2c313c;color:#cfd3dc;font-size:13px;cursor:pointer">Xtream login…</div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ a.isPicker }}" hint-placeholder-val="{{ false }}">
+            <div style="height:100%;display:flex;align-items:center;justify-content:center;gap:18px;animation:paneIn .28s ease">
+              <div onClick="{{ a.goLive }}" style="width:170px;height:200px;border-radius:14px;background:#1b1e25;border:1px solid #2c313c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;cursor:pointer" style-hover="border-color:#e2a44e;background:#20242c">
+                <div style="font-size:40px">▦</div><div style="font-size:15px;font-weight:600">Live TV</div><div style="font-size:11px;color:#6c7280">342 channels</div>
+              </div>
+              <div onClick="{{ a.goMovies }}" style="width:170px;height:200px;border-radius:14px;background:#1b1e25;border:1px solid #2c313c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;cursor:pointer" style-hover="border-color:#e2a44e;background:#20242c">
+                <div style="font-size:40px">▷</div><div style="font-size:15px;font-weight:600">Movies</div><div style="font-size:11px;color:#6c7280">1 204 titles</div>
+              </div>
+              <div onClick="{{ a.goSeries }}" style="width:170px;height:200px;border-radius:14px;background:#1b1e25;border:1px solid #2c313c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;cursor:pointer" style-hover="border-color:#e2a44e;background:#20242c">
+                <div style="font-size:40px">⊞</div><div style="font-size:15px;font-weight:600">Series</div><div style="font-size:11px;color:#6c7280">318 shows</div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ a.isDetail }}" hint-placeholder-val="{{ false }}">
+            <div style="animation:paneIn .28s ease">
+              <div style="height:150px;{{ a.selBackdrop }}"></div>
+              <div style="display:flex;gap:20px;padding:0 22px;margin-top:-54px">
+                <div style="width:120px;flex:none;{{ a.selPoster }};box-shadow:0 14px 30px -12px rgba(0,0,0,.7)"></div>
+                <div style="padding-top:62px">
+                  <div style="font-size:22px;font-weight:650">{{ a.selTitle }}</div>
+                  <div style="font-size:12.5px;color:#969cab;margin:6px 0 12px">{{ a.detailMeta }}</div>
+                  <div style="font-size:12.5px;color:#7c828f;line-height:1.6;max-width:430px">A brooding, atmospheric feature with a slow-burn first act and a relentless final hour. Restored 4K transfer, original audio with optional subtitles.</div>
+                  <div style="display:flex;gap:10px;margin-top:16px">
+                    <div onClick="{{ a.play }}" style="padding:9px 18px;border-radius:9px;background:#e2a44e;color:#1b1e25;font-size:13px;font-weight:600;cursor:pointer">▶ Play</div>
+                    <div style="padding:9px 16px;border-radius:9px;border:1px solid #2c313c;color:#cfd3dc;font-size:13px;cursor:pointer">＋ My List</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ a.isPlayback }}" hint-placeholder-val="{{ false }}">
+            <div style="height:100%;position:relative;background:radial-gradient(circle at 50% 42%,#22262f,#0c0d10);display:flex;align-items:center;justify-content:center;animation:paneIn .28s ease">
+              <div style="width:70px;height:70px;border-radius:50%;border:2px solid #e2a44e;display:flex;align-items:center;justify-content:center;color:#e2a44e;font-size:26px;cursor:pointer">▶</div>
+              <div style="position:absolute;left:18px;bottom:16px;display:flex;align-items:center;gap:9px">
+                <span style="{{ a.nowBadgeStyle }}">{{ a.nowBadge }}</span>
+                <span style="font-size:13px;color:#cfd3dc">{{ a.now }}</span>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ OPTION 1B ============ -->
+    <div id="1b" style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:baseline;gap:12px">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:#161513;background:#5ec8c2;padding:4px 9px;border-radius:6px">1B</span>
+        <span style="font-size:16px;font-weight:600">Command Rail</span>
+        <span style="font-size:13px;color:#6c7280">— persistent nav rail + slim contextual bar</span>
+      </div>
+
+      <div style="width:780px;border-radius:13px;overflow:hidden;border:1px solid #2e2b27;background:#161513;box-shadow:0 30px 70px -30px rgba(0,0,0,.8)">
+        <!-- titlebar -->
+        <div style="height:40px;background:#1a1917;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid #25221e">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:22px;height:22px;border-radius:6px;background:#5ec8c2;display:flex;align-items:center;justify-content:center;color:#161513;font-size:12px">☠</div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:2.5px;color:#ece8e2">SABELTANN</span>
+            <div onClick="{{ b.goHome }}" style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:3px 7px;border-radius:6px" title="Toggle connection state">
+              <div style="width:7px;height:7px;border-radius:50%;background:#7bbf7b"></div>
+              <span style="font-size:11px;color:#8c857b">Connected · sabeltann.tv</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;color:#5a544c">
+            <span style="font-size:15px;line-height:1">—</span><span style="font-size:11px">▢</span><span style="font-size:13px">✕</span>
+          </div>
+        </div>
+
+        <div style="display:flex;height:446px">
+          <!-- rail -->
+          <div style="width:188px;flex:none;background:#1a1917;border-right:1px solid #25221e;padding:14px 12px;display:flex;flex-direction:column;gap:5px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:#5a544c;padding:0 8px 8px">BROWSE</div>
+            <div onClick="{{ b.goPicker }}" style="{{ b.railHome }}">⌂ Home</div>
+            <div onClick="{{ b.goLive }}" style="{{ b.railLive }}">▦ Live TV</div>
+            <div onClick="{{ b.goMovies }}" style="{{ b.railMovies }}">▷ Movies</div>
+            <div onClick="{{ b.goSeries }}" style="{{ b.railSeries }}">⊞ Series</div>
+            <div style="flex:1"></div>
+            <div style="display:flex;align-items:center;gap:11px;height:42px;padding:0 14px;border-radius:10px;color:#8c857b;font-size:13.5px;cursor:pointer">☰ File</div>
+            <div style="display:flex;align-items:center;gap:11px;height:42px;padding:0 14px;border-radius:10px;color:#8c857b;font-size:13.5px;cursor:pointer">⚙ Settings</div>
+          </div>
+
+          <!-- right column -->
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:#161513">
+            <!-- contextual bar -->
+            <div style="height:54px;border-bottom:1px solid #25221e;display:flex;align-items:center;padding:0 16px">
+              <sc-if value="{{ b.isLive }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;align-items:center;gap:10px;width:100%;animation:barMorph .25s ease">
+                  <span style="font-size:15px;font-weight:600;color:#ece8e2">Live TV</span>
+                  <div style="display:flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:8px;background:#26231f;color:#ece8e2;font-size:12.5px;cursor:pointer">All channels <span style="color:#8c857b">▾</span></div>
+                  <div style="width:30px;height:30px;border-radius:8px;border:1px solid #2e2b27;display:flex;align-items:center;justify-content:center;color:#5ec8c2;cursor:pointer">★</div>
+                  <div style="flex:1;display:flex;align-items:center;gap:8px;height:30px;padding:0 11px;border-radius:8px;background:#100f0d;border:1px solid #2e2b27;color:#8c857b;font-size:12.5px;min-width:80px">⌕ Search channels…</div>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#a8a097;background:#26231f;padding:5px 10px;border-radius:7px">342 ch</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ b.isMovies }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:10px;width:100%;animation:barMorph .25s ease">
+                  <span style="font-size:15px;font-weight:600;color:#ece8e2">Movies</span>
+                  <div style="flex:1;display:flex;align-items:center;gap:8px;height:30px;padding:0 11px;border-radius:8px;background:#100f0d;border:1px solid #2e2b27;color:#8c857b;font-size:12.5px;min-width:80px">⌕ Search movies…</div>
+                  <div style="display:flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:8px;background:#26231f;color:#ece8e2;font-size:12.5px;cursor:pointer">Recently added <span style="color:#8c857b">▾</span></div>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#a8a097;background:#26231f;padding:5px 10px;border-radius:7px">1 204</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ b.isSeries }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:10px;width:100%;animation:barMorph .25s ease">
+                  <span style="font-size:15px;font-weight:600;color:#ece8e2">Series</span>
+                  <div style="flex:1;display:flex;align-items:center;gap:8px;height:30px;padding:0 11px;border-radius:8px;background:#100f0d;border:1px solid #2e2b27;color:#8c857b;font-size:12.5px;min-width:80px">⌕ Search series…</div>
+                  <div style="display:flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:8px;background:#26231f;color:#ece8e2;font-size:12.5px;cursor:pointer">A–Z <span style="color:#8c857b">▾</span></div>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#a8a097;background:#26231f;padding:5px 10px;border-radius:7px">318</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ b.isWelcome }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:10px;width:100%;animation:barMorph .25s ease">
+                  <span style="font-size:15px;font-weight:600;color:#ece8e2">Welcome</span>
+                  <span style="font-size:12.5px;color:#8c857b">No source connected</span>
+                  <div style="flex:1"></div>
+                  <div onClick="{{ b.goPicker }}" style="height:30px;padding:0 15px;display:flex;align-items:center;border-radius:8px;background:#5ec8c2;color:#161513;font-size:12.5px;font-weight:600;cursor:pointer">＋ Connect a source</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ b.isPicker }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:10px;width:100%;animation:barMorph .25s ease">
+                  <span style="font-size:15px;font-weight:600;color:#ece8e2">Home</span>
+                  <span style="font-size:12.5px;color:#8c857b">Choose what to watch</span>
+                  <div style="flex:1"></div>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8c857b">3 sources online</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ b.isDetail }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:12px;width:100%;animation:barMorph .25s ease">
+                  <div onClick="{{ b.back }}" style="width:30px;height:30px;border-radius:8px;background:#26231f;display:flex;align-items:center;justify-content:center;color:#ece8e2;cursor:pointer">←</div>
+                  <span style="font-size:14px;color:#fff;font-weight:600">{{ b.selTitle }}</span>
+                  <span style="font-size:12px;color:#8c857b">{{ b.detailMeta }}</span>
+                  <div style="flex:1"></div>
+                  <div onClick="{{ b.play }}" style="height:30px;padding:0 15px;display:flex;align-items:center;gap:7px;border-radius:8px;background:#5ec8c2;color:#161513;font-size:12.5px;font-weight:600;cursor:pointer">▶ Play</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ b.isPlayback }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:12px;width:100%;animation:barMorph .25s ease">
+                  <div onClick="{{ b.back }}" style="width:30px;height:30px;border-radius:8px;background:#26231f;display:flex;align-items:center;justify-content:center;color:#ece8e2;cursor:pointer">←</div>
+                  <span style="font-size:14px;color:#fff;font-weight:600">{{ b.now }}</span>
+                  <span style="{{ b.nowBadgeStyle }}">{{ b.nowBadge }}</span>
+                  <div style="flex:1"></div>
+                  <div style="display:flex;align-items:center;gap:10px;color:#a8a097;font-size:14px">
+                    <span style="cursor:pointer">🔊</span>
+                    <span style="cursor:pointer;font-weight:700;font-size:12px;color:#5ec8c2">CC</span>
+                    <span style="cursor:pointer">📺</span>
+                    <span style="cursor:pointer">⛶</span>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+
+            <!-- content -->
+            <div style="flex:1;overflow-y:auto;position:relative">
+              <sc-if value="{{ b.isLive }}" hint-placeholder-val="{{ true }}">
+                <div style="padding:16px;display:flex;flex-wrap:wrap;gap:11px;animation:paneIn .28s ease">
+                  <sc-for list="{{ channels }}" as="ch" hint-placeholder-count="8">
+                    <div onClick="{{ b.openChannel }}" data-idx="{{ ch.idx }}" style="width:170px;display:flex;align-items:center;gap:11px;padding:11px;border-radius:11px;background:#1e1c1a;border:1px solid #2e2b27;cursor:pointer" style-hover="background:#26231f;border-color:#3a352f">
+                      <div style="{{ ch.av }}">{{ ch.initial }}</div>
+                      <div style="min-width:0">
+                        <div style="font-size:13px;color:#ece8e2;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ch.n }}</div>
+                        <div style="font-size:11px;color:#8c857b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">● {{ ch.now }}</div>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ b.isMovies }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:18px;display:flex;flex-wrap:wrap;gap:16px;animation:paneIn .28s ease">
+                  <sc-for list="{{ movies }}" as="m" hint-placeholder-count="10">
+                    <div onClick="{{ b.openMovie }}" data-idx="{{ m.idx }}" style="width:106px;cursor:pointer">
+                      <div style="{{ m.poster }}"></div>
+                      <div style="font-size:12px;color:#ece8e2;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.t }}</div>
+                      <div style="font-size:11px;color:#8c857b">{{ m.y }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ b.isSeries }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:18px;display:flex;flex-wrap:wrap;gap:16px;animation:paneIn .28s ease">
+                  <sc-for list="{{ series }}" as="s" hint-placeholder-count="8">
+                    <div onClick="{{ b.openSeries }}" data-idx="{{ s.idx }}" style="width:106px;cursor:pointer">
+                      <div style="{{ s.poster }}"></div>
+                      <div style="font-size:12px;color:#ece8e2;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.t }}</div>
+                      <div style="font-size:11px;color:#8c857b">Series</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ b.isWelcome }}" hint-placeholder-val="{{ false }}">
+                <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;animation:paneIn .28s ease">
+                  <div style="width:64px;height:64px;border-radius:18px;background:#5ec8c2;display:flex;align-items:center;justify-content:center;color:#161513;font-size:32px">☠</div>
+                  <div style="text-align:center">
+                    <div style="font-size:20px;font-weight:600">Sabeltann</div>
+                    <div style="font-size:13px;color:#8c857b;margin-top:4px">No playlist loaded — connect a source to start</div>
+                  </div>
+                  <div style="display:flex;gap:10px">
+                    <div onClick="{{ b.goPicker }}" style="padding:10px 18px;border-radius:9px;background:#5ec8c2;color:#161513;font-size:13px;font-weight:600;cursor:pointer">Load M3U…</div>
+                    <div onClick="{{ b.goPicker }}" style="padding:10px 18px;border-radius:9px;border:1px solid #2e2b27;color:#ece8e2;font-size:13px;cursor:pointer">Xtream login…</div>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ b.isPicker }}" hint-placeholder-val="{{ false }}">
+                <div style="height:100%;display:flex;align-items:center;justify-content:center;gap:18px;animation:paneIn .28s ease">
+                  <div onClick="{{ b.goLive }}" style="width:160px;height:200px;border-radius:14px;background:#1e1c1a;border:1px solid #2e2b27;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;cursor:pointer" style-hover="border-color:#5ec8c2;background:#26231f">
+                    <div style="font-size:40px">▦</div><div style="font-size:15px;font-weight:600">Live TV</div><div style="font-size:11px;color:#8c857b">342 channels</div>
+                  </div>
+                  <div onClick="{{ b.goMovies }}" style="width:160px;height:200px;border-radius:14px;background:#1e1c1a;border:1px solid #2e2b27;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;cursor:pointer" style-hover="border-color:#5ec8c2;background:#26231f">
+                    <div style="font-size:40px">▷</div><div style="font-size:15px;font-weight:600">Movies</div><div style="font-size:11px;color:#8c857b">1 204 titles</div>
+                  </div>
+                  <div onClick="{{ b.goSeries }}" style="width:160px;height:200px;border-radius:14px;background:#1e1c1a;border:1px solid #2e2b27;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;cursor:pointer" style-hover="border-color:#5ec8c2;background:#26231f">
+                    <div style="font-size:40px">⊞</div><div style="font-size:15px;font-weight:600">Series</div><div style="font-size:11px;color:#8c857b">318 shows</div>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ b.isDetail }}" hint-placeholder-val="{{ false }}">
+                <div style="animation:paneIn .28s ease">
+                  <div style="height:150px;{{ b.selBackdrop }}"></div>
+                  <div style="display:flex;gap:20px;padding:0 22px;margin-top:-54px">
+                    <div style="width:120px;flex:none;{{ b.selPoster }};box-shadow:0 14px 30px -12px rgba(0,0,0,.7)"></div>
+                    <div style="padding-top:62px">
+                      <div style="font-size:22px;font-weight:650">{{ b.selTitle }}</div>
+                      <div style="font-size:12.5px;color:#a8a097;margin:6px 0 12px">{{ b.detailMeta }}</div>
+                      <div style="font-size:12.5px;color:#8c857b;line-height:1.6;max-width:430px">A brooding, atmospheric feature with a slow-burn first act and a relentless final hour. Restored 4K transfer, original audio with optional subtitles.</div>
+                      <div style="display:flex;gap:10px;margin-top:16px">
+                        <div onClick="{{ b.play }}" style="padding:9px 18px;border-radius:9px;background:#5ec8c2;color:#161513;font-size:13px;font-weight:600;cursor:pointer">▶ Play</div>
+                        <div style="padding:9px 16px;border-radius:9px;border:1px solid #2e2b27;color:#ece8e2;font-size:13px;cursor:pointer">＋ My List</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ b.isPlayback }}" hint-placeholder-val="{{ false }}">
+                <div style="height:100%;position:relative;background:radial-gradient(circle at 50% 42%,#23211d,#0c0b09);display:flex;align-items:center;justify-content:center;animation:paneIn .28s ease">
+                  <div style="width:70px;height:70px;border-radius:50%;border:2px solid #5ec8c2;display:flex;align-items:center;justify-content:center;color:#5ec8c2;font-size:26px;cursor:pointer">▶</div>
+                  <div style="position:absolute;left:18px;bottom:16px;display:flex;align-items:center;gap:9px">
+                    <span style="{{ b.nowBadgeStyle }}">{{ b.nowBadge }}</span>
+                    <span style="font-size:13px;color:#ece8e2">{{ b.now }}</span>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { aState:'live', aPrev:'picker', aSel:null, bState:'live', bPrev:'picker', bSel:null };
+
+  themes = {
+    a:{ surf2:'#232730', sub:'#969cab', acc:'#e2a44e' },
+    b:{ surf2:'#26231f', sub:'#8c857b', acc:'#5ec8c2' }
+  };
+
+  data(){
+    if(this._data) return this._data;
+    const av = h => `width:38px;height:38px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;background:hsl(${h},42%,40%)`;
+    const poster = h => `aspect-ratio:2/3;border-radius:10px;background:repeating-linear-gradient(135deg,hsl(${h},33%,30%) 0 9px,hsl(${h},33%,25%) 9px 18px)`;
+    const back = h => `background:linear-gradient(180deg,hsl(${h},36%,26%),hsl(${h},28%,13%))`;
+    const ch = [['NRK1',6,'Dagsrevyen'],['TV 2',210,'Premier League'],['NRK2',150,'Planet Earth II'],['TVNorge',280,'Friends'],['Viasat 4',32,'MotoGP'],['BBC One',0,'Doctor Who'],['Eurosport 1',120,'Tour de France'],['CNN Int.',350,'News Night'],['Discovery',200,'Gold Rush'],['Nat Geo',48,'Wild Cases']]
+      .map((c,i)=>({idx:i,n:c[0],hue:c[1],now:c[2],initial:c[0].replace(/[^A-Za-z0-9]/,'')[0],av:av(c[1])}));
+    const mv = [['The Northman',2022,20],['Dune',2021,32],['Sicario',2015,8],['Blade Runner 2049',2017,205],['Arrival',2016,160],['Prisoners',2013,48],['Nightcrawler',2014,280],['Drive',2011,330],['Heat',1995,210],['No Country',2007,36],['Tenet',2020,190],['Joker',2019,40]]
+      .map((m,i)=>({idx:i,t:m[0],y:m[1],hue:m[2],poster:poster(m[2]),back:back(m[2])}));
+    const sr = [['Severance',190],['Dark',270],['The Bear',10],['Andor',30],['Chernobyl',90],['Fargo',0],['Better Call Saul',40],['True Detective',150]]
+      .map((s,i)=>({idx:i,t:s[0],hue:s[1],poster:poster(s[1]),back:back(s[1])}));
+    this._data = { channels:ch, movies:mv, series:sr };
+    return this._data;
+  }
+
+  nav(dir,next,sel){ this.setState(s=>({[dir+'Prev']:s[dir+'State'],[dir+'State']:next,[dir+'Sel']:sel!==undefined?sel:s[dir+'Sel']})); }
+  back(dir){ this.setState(s=>({[dir+'State']:s[dir+'Prev']||'picker'})); }
+  toggleHome(dir){ this.setState(s=>({[dir+'State']: s[dir+'State']==='welcome' ? 'picker' : 'welcome'})); }
+
+  tabStyle(active,t){
+    const base='display:flex;align-items:center;gap:7px;height:30px;padding:0 13px;border-radius:8px;font-size:12.5px;cursor:pointer;transition:all .15s;white-space:nowrap;';
+    return active ? base+`font-weight:600;background:${t.acc}22;color:${t.acc};` : base+`font-weight:500;background:transparent;color:${t.sub};`;
+  }
+  railStyle(active,t){
+    const base='display:flex;align-items:center;gap:11px;height:42px;padding:0 14px;border-radius:10px;font-size:13.5px;cursor:pointer;transition:all .15s;';
+    return active ? base+`font-weight:600;background:${t.acc}1c;color:${t.acc};box-shadow:inset 2px 0 0 ${t.acc};` : base+`font-weight:500;background:transparent;color:${t.sub};`;
+  }
+
+  view(dir){
+    const d=this.data(), t=this.themes[dir];
+    const s=this.state[dir+'State'], sel=this.state[dir+'Sel'];
+    const is=x=>s===x;
+    let tab = is('live')?'live':is('movies')?'movies':is('series')?'series':null;
+    if(!tab && is('detail') && sel) tab = sel.kind==='series'?'series':'movies';
+    let rail = tab || ((is('welcome')||is('picker'))?'home':null);
+    const meta = sel ? (sel.kind==='series' ? '4 seasons · Drama · 2017' : `${sel.y} · 2h 14m · Thriller`) : '';
+    const badge = sel && sel.kind==='channel' ? 'LIVE' : 'VOD';
+    const badgeStyle = `font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;letter-spacing:1px;padding:3px 7px;border-radius:5px;color:#fff;background:${badge==='LIVE'?'#d05a5a':t.acc};`+(badge==='VOD'?`color:#161513;`:'');
+    return {
+      isWelcome:is('welcome'), isPicker:is('picker'), isLive:is('live'), isMovies:is('movies'), isSeries:is('series'), isDetail:is('detail'), isPlayback:is('playback'),
+      tabLive:this.tabStyle(tab==='live',t), tabMovies:this.tabStyle(tab==='movies',t), tabSeries:this.tabStyle(tab==='series',t),
+      railHome:this.railStyle(rail==='home',t), railLive:this.railStyle(rail==='live',t), railMovies:this.railStyle(rail==='movies',t), railSeries:this.railStyle(rail==='series',t),
+      selTitle: sel?sel.t:'', detailMeta: meta,
+      selBackdrop: sel?sel.back:'', selPoster: sel?sel.poster:'',
+      now: sel?(sel.n||sel.t):'Now playing', nowBadge: badge, nowBadgeStyle: badgeStyle,
+      goHome:()=>this.toggleHome(dir), goPicker:()=>this.nav(dir,'picker'),
+      goLive:()=>this.nav(dir,'live'), goMovies:()=>this.nav(dir,'movies'), goSeries:()=>this.nav(dir,'series'),
+      openChannel:e=>this.nav(dir,'playback',{...d.channels[+e.currentTarget.dataset.idx],kind:'channel'}),
+      openMovie:e=>this.nav(dir,'detail',{...d.movies[+e.currentTarget.dataset.idx],kind:'movie'}),
+      openSeries:e=>this.nav(dir,'detail',{...d.series[+e.currentTarget.dataset.idx],kind:'series'}),
+      play:()=>this.nav(dir,'playback'), back:()=>this.back(dir)
+    };
+  }
+
+  renderVals(){
+    const d=this.data();
+    return { channels:d.channels, movies:d.movies, series:d.series, a:this.view('a'), b:this.view('b') };
+  }
+}
+</script>
+</body>
+</html>

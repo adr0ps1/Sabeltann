@@ -1,3 +1,4 @@
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Controls;
 
@@ -7,6 +8,12 @@ namespace Sabeltann.Views;
 
 public partial class SettingsWindow : Window
 {
+    private void OnChromeDrag(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            BeginMoveDrag(e);
+    }
+
     private readonly SettingsData _data;
 
     public SettingsWindow(SettingsData current, string? serverUrl, string? username, int channelCount)

@@ -4,79 +4,81 @@
     <UserControl.Styles>
         <Style Selector="Button.ContentPickerCard">
             <Setter Property="RenderTransform" Value="{x:Null}"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="{StaticResource Surface}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="14"/>
             <Style Selector="^:pointerover">
                 <Setter Property="RenderTransform" Value="{x:Null}"/>
-                <Setter Property="Background" Value="#1e1e2e"/>
+            </Style>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="{StaticResource Surface2}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
             </Style>
         </Style>
     </UserControl.Styles>
-    <Grid Background="#11111b" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+    <Grid Background="{StaticResource Bg}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Border Margin="60,40" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Grid RowDefinitions="Auto,*,Auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel Grid.Row="0" Spacing="8" HorizontalAlignment="Center" Margin="0,0,0,32">
                 <TextBlock Text="Select category"
-                           Foreground="#cdd6f4" FontSize="20" FontWeight="Bold"
+                           Foreground="{StaticResource TextStrong}" FontSize="20" FontWeight="Bold"
                            HorizontalAlignment="Center"/>
             </StackPanel>
 
             <Grid Grid.Row="1" ColumnDefinitions="*,24,*,24,*" HorizontalAlignment="Stretch"
                   VerticalAlignment="Stretch">
-                <Button x:Name="LiveTvBtn" Grid.Column="0" Classes="ContentPickerCard" Padding="0"
-                        Background="#181825" BorderThickness="1" BorderBrush="#313244"
-                        CornerRadius="14"
+                <Button x:Name="LiveTvBtn" Grid.Column="0" Classes="ContentPickerCard"
                         HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <StackPanel Spacing="20" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <Border Width="72" Height="72" CornerRadius="18" Background="#313244"
+                        <Border Width="72" Height="72" CornerRadius="18" Background="{StaticResource Surface2}"
                                 HorizontalAlignment="Center">
-                            <TextBlock Text="📺" FontSize="36" HorizontalAlignment="Center"
+                            <TextBlock Text="▦" Foreground="{StaticResource Accent}" FontSize="34" HorizontalAlignment="Center"
                                        VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel Spacing="4" HorizontalAlignment="Center">
-                            <TextBlock Text="Live TV" Foreground="#cdd6f4" FontSize="22" FontWeight="Bold"
+                            <TextBlock Text="Live TV" Foreground="{StaticResource Text}" FontSize="22" FontWeight="Bold"
                                        HorizontalAlignment="Center"/>
                             <TextBlock Text="Watch live channels and streams"
-                                       Foreground="#6c7086" FontSize="12"
+                                       Foreground="{StaticResource Muted}" FontSize="12"
                                        HorizontalAlignment="Center"/>
                         </StackPanel>
                     </StackPanel>
                 </Button>
 
-                <Button x:Name="MoviesBtn" Grid.Column="2" Classes="ContentPickerCard" Padding="0"
-                        Background="#181825" BorderThickness="1" BorderBrush="#313244"
-                        CornerRadius="14"
+                <Button x:Name="MoviesBtn" Grid.Column="2" Classes="ContentPickerCard"
                         HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <StackPanel Spacing="20" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <Border Width="72" Height="72" CornerRadius="18" Background="#cba6f7"
+                        <Border Width="72" Height="72" CornerRadius="18" Background="{StaticResource Surface2}"
                                 HorizontalAlignment="Center">
-                            <TextBlock Text="🎬" FontSize="36" HorizontalAlignment="Center"
+                            <TextBlock Text="▷" Foreground="{StaticResource Accent}" FontSize="34" HorizontalAlignment="Center"
                                        VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel Spacing="4" HorizontalAlignment="Center">
-                            <TextBlock Text="Movies" Foreground="#cdd6f4" FontSize="22" FontWeight="Bold"
+                            <TextBlock Text="Movies" Foreground="{StaticResource Text}" FontSize="22" FontWeight="Bold"
                                        HorizontalAlignment="Center"/>
                             <TextBlock Text="Browse movies and films"
-                                       Foreground="#6c7086" FontSize="12"
+                                       Foreground="{StaticResource Muted}" FontSize="12"
                                        HorizontalAlignment="Center"/>
                         </StackPanel>
                     </StackPanel>
                 </Button>
 
-                <Button x:Name="SeriesBtn" Grid.Column="4" Classes="ContentPickerCard" Padding="0"
-                        Background="#181825" BorderThickness="1" BorderBrush="#313244"
-                        CornerRadius="14"
+                <Button x:Name="SeriesBtn" Grid.Column="4" Classes="ContentPickerCard"
                         HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <StackPanel Spacing="20" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <Border Width="72" Height="72" CornerRadius="18" Background="#89b4fa"
+                        <Border Width="72" Height="72" CornerRadius="18" Background="{StaticResource Surface2}"
                                 HorizontalAlignment="Center">
-                            <TextBlock Text="📖" FontSize="36" HorizontalAlignment="Center"
+                            <TextBlock Text="⊞" Foreground="{StaticResource Accent}" FontSize="34" HorizontalAlignment="Center"
                                        VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel Spacing="4" HorizontalAlignment="Center">
-                            <TextBlock Text="Series" Foreground="#cdd6f4" FontSize="22" FontWeight="Bold"
+                            <TextBlock Text="Series" Foreground="{StaticResource Text}" FontSize="22" FontWeight="Bold"
                                        HorizontalAlignment="Center"/>
                             <TextBlock Text="Browse TV shows and episodes"
-                                       Foreground="#6c7086" FontSize="12"
+                                       Foreground="{StaticResource Muted}" FontSize="12"
                                        HorizontalAlignment="Center"/>
                         </StackPanel>
                     </StackPanel>
@@ -84,7 +86,7 @@
             </Grid>
 
             <TextBlock Grid.Row="2" Text="Press Escape to go back"
-                       Foreground="#45475a" FontSize="11" HorizontalAlignment="Center" Margin="0,24,0,0"/>
+                       Foreground="{StaticResource Muted}" FontSize="11" HorizontalAlignment="Center" Margin="0,24,0,0"/>
         </Grid>
         </Border>
     </Grid>

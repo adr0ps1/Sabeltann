@@ -2,50 +2,58 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Sabeltann.Views.UpdateDialog"
         Title="Update Available"
-        Width="420" Height="300"
+        Width="440" Height="300"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
-        Background="#1e1e2e"
-        Foreground="#cdd6f4">
+        WindowDecorations="None"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        Foreground="{StaticResource Text}">
 
-    <StackPanel Margin="24,20,24,20" Spacing="16">
+    <Border CornerRadius="12" Background="{StaticResource Bg}" ClipToBounds="True">
+    <Grid RowDefinitions="36,*">
+        <Grid Grid.Row="0" Background="{StaticResource TitleBar}" ColumnDefinitions="*,Auto"
+              PointerPressed="OnChromeDrag">
+            <TextBlock Grid.Column="0" Text="Update Available" Foreground="{StaticResource Sub}" FontSize="12"
+                       FontWeight="SemiBold" VerticalAlignment="Center" Margin="14,0"/>
+            <Button Grid.Column="1" Classes="DialogClose" Content="&#xE8BB;" Click="OnChromeClose"/>
+        </Grid>
+    <StackPanel Grid.Row="1" Margin="24,20,24,20" Spacing="16">
 
-        <!-- Title -->
-        <TextBlock Text="Update Available" Foreground="#cdd6f4" FontSize="18" FontWeight="Bold"/>
+        <TextBlock Text="Update Available" Foreground="{StaticResource TextStrong}" FontSize="18" FontWeight="Bold"/>
 
-        <!-- Version line -->
-        <TextBlock Foreground="#a6adc8" FontSize="13">
-            <Run Text="{Binding CurrentVersion}"/>
-            <Run Text=" → " Foreground="#6c7086"/>
-            <Run Text="{Binding NewVersion}" Foreground="#a6e3a1" FontWeight="SemiBold"/>
+        <TextBlock FontSize="13">
+            <Run Text="{Binding CurrentVersion}" Foreground="{StaticResource Sub}"/>
+            <Run Text=" → " Foreground="{StaticResource Muted}"/>
+            <Run Text="{Binding NewVersion}" Foreground="{StaticResource Good}" FontWeight="SemiBold"/>
         </TextBlock>
 
-        <!-- Release notes (if available) -->
         <StackPanel IsVisible="{Binding HasReleaseNotes}" Spacing="6">
-            <TextBlock Text="What's new:" Foreground="#6c7086" FontSize="11" FontWeight="SemiBold"/>
-            <Border Background="#313244" CornerRadius="6" Padding="10,8" MaxHeight="160">
+            <TextBlock Text="WHAT'S NEW" Foreground="{StaticResource Muted}" FontSize="11" FontWeight="SemiBold"/>
+            <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Line}" BorderThickness="1"
+                    CornerRadius="8" Padding="10,8" MaxHeight="160">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <TextBlock Text="{Binding ReleaseNotes}" Foreground="#a6adc8" FontSize="12"
-                               TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding ReleaseNotes}" Foreground="{StaticResource Sub}" FontSize="12"
+                               TextWrapping="Wrap" LineHeight="20"/>
                 </ScrollViewer>
             </Border>
         </StackPanel>
 
-        <!-- Spacer -->
         <Grid/>
 
-        <!-- Buttons -->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
             <Button Content="Remind Later" Command="{Binding RemindLaterCommand}"
-                    Background="#313244" Foreground="#a6adc8"
+                    Background="{StaticResource Surface2}" Foreground="{StaticResource Sub}"
                     BorderThickness="0" CornerRadius="8" Padding="12,8"/>
             <Button Content="Install on Exit" Command="{Binding InstallOnExitCommand}"
-                    Background="#313244" Foreground="#89b4fa"
+                    Background="{StaticResource Surface2}" Foreground="{StaticResource Info}"
                     BorderThickness="0" CornerRadius="8" Padding="12,8"/>
             <Button Content="Install &amp; Restart" Command="{Binding InstallAndRestartCommand}"
-                    Background="#cba6f7" Foreground="#1e1e2e" FontWeight="Bold"
+                    Background="{StaticResource Accent}" Foreground="{StaticResource AccentText}" FontWeight="Bold"
                     BorderThickness="0" CornerRadius="8" Padding="12,8"/>
         </StackPanel>
 
     </StackPanel>
+    </Grid>
+    </Border>
 </Window>

@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -17,6 +18,7 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _transportAutoHide;
     private readonly DispatcherTimer _volumeHideTimer;
     private bool _isFullscreen;
+    private WindowState _preFullscreenState = WindowState.Normal;
     private bool _isPopout;
 
     public MainWindow()
@@ -70,6 +72,8 @@ public partial class MainWindow : Window
 
         Opened += (_, _) => _ = _vm.CheckForUpdatesCommand.ExecuteAsync(null);
 
+        Opened += (_, _) => TryRoundCorners();
+
         ConnectionPage.LoadM3UFileRequested += OnLoadM3UFile;
         ConnectionPage.LoadM3UUrlRequested += OnLoadM3UUrl;
         ConnectionPage.XtreamLoginRequested += OnXtreamLogin;
@@ -115,8 +119,17 @@ public partial class MainWindow : Window
 
     private void ToggleFullscreen()
     {
-        _isFullscreen = WindowState != WindowState.FullScreen;
-        WindowState = _isFullscreen ? WindowState.FullScreen : WindowState.Normal;
+        if (WindowState != WindowState.FullScreen)
+        {
+            _preFullscreenState = WindowState; // remember Maximized vs Normal so we can restore it
+            _isFullscreen = true;
+            WindowState = WindowState.FullScreen;
+        }
+        else
+        {
+            _isFullscreen = false;
+            WindowState = _preFullscreenState;
+        }
         UpdateChrome();
     }
 
@@ -130,6 +143,16 @@ public partial class MainWindow : Window
             _isPopout = false;
             UpdateChrome();
         }
+
+        // Morph the toolbar: quick fade-in whenever the active sub-bar swaps.
+        if (e.PropertyName is nameof(MainViewModel.Mode) or nameof(MainViewModel.ShowVideo))
+            AnimateToolbarMorph();
+    }
+
+    private void AnimateToolbarMorph()
+    {
+        ToolbarContent.Opacity = 0;
+        Dispatcher.UIThread.Post(() => ToolbarContent.Opacity = 1, DispatcherPriority.Render);
     }
 
     /// <summary>Windowed pop-out: hides the top/bottom bars like fullscreen but keeps the window framed.</summary>
@@ -139,16 +162,50 @@ public partial class MainWindow : Window
         UpdateChrome();
     }
 
-    /// <summary>Top/bottom chrome is hidden when either fullscreen or pop-out is active.</summary>
+    /// <summary>Title bar + morphing toolbar are hidden when either fullscreen or pop-out is active.</summary>
     private void UpdateChrome()
     {
         var hide = _isFullscreen || _isPopout;
         TitleBar.IsVisible = !hide;
-        MainMenu.IsVisible = !hide;
-        StatusBar.IsVisible = !hide;
-        MainGrid.RowDefinitions[0].Height = new GridLength(0);
-        MainGrid.RowDefinitions[1].Height = hide ? new GridLength(0) : GridLength.Auto;
-        MainGrid.RowDefinitions[3].Height = hide ? new GridLength(0) : new GridLength(28);
+        Toolbar.IsVisible = !hide;
+        MainGrid.RowDefinitions[0].Height = new GridLength(hide ? 0 : 40);
+        MainGrid.RowDefinitions[1].Height = new GridLength(hide ? 0 : 54);
+    }
+
+    private void OnTitleBarPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            BeginMoveDrag(e);
+    }
+
+    private void OnMinimize(object? sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    private void OnMaximizeRestore(object? sender, RoutedEventArgs e) =>
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+
+    private void OnCloseWindow(object? sender, RoutedEventArgs e) => Close();
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
+
+    // Round the frameless window's corners via DWM (Win11). No-op elsewhere.
+    private void TryRoundCorners()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var h = TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
+        if (h == IntPtr.Zero) return;
+        const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
+        const int DWMWCP_ROUND = 2;
+        var pref = DWMWCP_ROUND;
+        try { DwmSetWindowAttribute(h, DWMWA_WINDOW_CORNER_PREFERENCE, ref pref, sizeof(int)); } catch { }
+    }
+
+    private void OnResizePressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is Control c && c.Tag is string edgeName &&
+            Enum.TryParse<WindowEdge>(edgeName, out var edge) &&
+            e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            BeginResizeDrag(edge, e);
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
@@ -229,6 +286,19 @@ public partial class MainWindow : Window
         _volumeHideTimer.Stop();
         _transportAutoHide.Stop();
         _vm.ShowVolumePopup = true;
+        PositionVolumeOverlay();
+    }
+
+    // Anchor the slider popup over the volume button so it tracks the button's actual position,
+    // not the window edge — adding/removing transport buttons no longer shifts it out of alignment.
+    private void PositionVolumeOverlay()
+    {
+        if (VolumeOverlay.Parent is not Visual parent) return;
+        if (VolumeBtn.TranslatePoint(new Point(0, 0), parent) is not { } pt) return;
+        const double overlayWidth = 86; // canvas + slider + padding
+        var left = pt.X + VolumeBtn.Bounds.Width / 2 - overlayWidth / 2;
+        VolumeOverlay.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
+        VolumeOverlay.Margin = new Thickness(System.Math.Max(left, 4), 0, 0, 52);
     }
 
     private void OnVolumeBtnExited(object? sender, PointerEventArgs e)
@@ -333,6 +403,30 @@ public partial class MainWindow : Window
         }
         if (menu.Items.Count == 0)
             menu.Items.Add(new MenuItem { Header = "No audio tracks", IsEnabled = false });
+        menu.Open(btn);
+    }
+
+    private void OnCastClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn) return;
+        var menu = new ContextMenu();
+        if (_vm.IsCasting)
+        {
+            var stop = new MenuItem { Header = $"Stop casting — play here" };
+            stop.Click += (_, _) => { _vm.StopCastingCommand.Execute(null); menu.Close(); };
+            menu.Items.Add(stop);
+            menu.Items.Add(new Separator());
+        }
+        var targets = _vm.CastTargets;
+        for (var i = 0; i < targets.Count; i++)
+        {
+            var index = i;
+            var mi = new MenuItem { Header = targets[i] };
+            mi.Click += (_, _) => { _vm.CastToCommand.Execute(index); menu.Close(); };
+            menu.Items.Add(mi);
+        }
+        if (targets.Count == 0)
+            menu.Items.Add(new MenuItem { Header = "Searching for devices…", IsEnabled = false });
         menu.Open(btn);
     }
 
