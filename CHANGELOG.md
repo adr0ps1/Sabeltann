@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.24](https://github.com/adr0ps1/Sabeltann/compare/v0.1.23...v0.1.24) (2026-07-02)
+
+
+### Features
+
+* Morphing-toolbar GUI redesign (slate + amber theme) ([#67](https://github.com/adr0ps1/Sabeltann/issues/67)) ([7889cdc](https://github.com/adr0ps1/Sabeltann/commit/7889cdc2732f95bb3fe55bdb23f482a64b165bbd))
+
+
+### Refactors
+
+* Ponytail pass — shared channel/grammar/image helpers ([#65](https://github.com/adr0ps1/Sabeltann/issues/65)) ([48a472e](https://github.com/adr0ps1/Sabeltann/commit/48a472ed3fba4f267165b31a64de7fea1ea1666f))
+
 ## [0.1.23](https://github.com/adr0ps1/Sabeltann/compare/v0.1.22...v0.1.23) (2026-06-29)
 
 
