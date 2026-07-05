@@ -522,7 +522,7 @@
 
                         <Button Grid.Column="6" Classes="TransportBtn" Focusable="False"
                                 ToolTip.Tip="Audio track / language" Click="OnAudioClick">
-                            <TextBlock Text="🔊" Foreground="{StaticResource Info}" FontSize="15"
+                            <TextBlock Text="🎧" Foreground="{StaticResource Info}" FontSize="15"
                                        VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
 
