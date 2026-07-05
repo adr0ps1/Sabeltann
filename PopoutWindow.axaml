@@ -1,0 +1,9 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Sabeltann.PopoutWindow"
+        Title="Sabeltann — Pop-out"
+        Width="480" Height="270" MinWidth="240" MinHeight="150"
+        Topmost="True" Background="#0B0C0F">
+    <!-- Shares MainViewModel's VideoBitmap; frames are pushed via InvalidateVideo() from MainWindow. -->
+    <Image x:Name="PopoutImage" Source="{Binding VideoBitmap}" Stretch="Uniform"/>
+</Window>
