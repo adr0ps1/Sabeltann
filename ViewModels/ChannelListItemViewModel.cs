@@ -24,6 +24,7 @@ public partial class ChannelListItemViewModel : ObservableObject
 
     public string Url { get; }
     public ChannelType Type { get; }
+    public string? TvgId { get; }
     private bool _imageLoaded;
     private bool _imageLoading;
 
@@ -34,6 +35,7 @@ public partial class ChannelListItemViewModel : ObservableObject
         Group = channel.Group;
         Url = channel.Url;
         Type = channel.Type;
+        TvgId = channel.TvgId;
     }
 
     public void EnsureImageLoaded()

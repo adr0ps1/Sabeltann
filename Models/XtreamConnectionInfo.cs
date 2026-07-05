@@ -18,6 +18,7 @@ public class XtreamConnectionInfo
     public string SeriesCategoriesUrl => $"{PlayerApiUrl}?username={U}&password={P}&action=get_series_categories";
     public string VodInfoUrl(int id) => $"{PlayerApiUrl}?username={U}&password={P}&action=get_vod_info&vod_id={id}";
     public string SeriesInfoUrl(int id) => $"{PlayerApiUrl}?username={U}&password={P}&action=get_series_info&series_id={id}";
+    public string XmltvUrl => $"{ServerUrl.TrimEnd('/')}/xmltv.php?username={U}&password={P}";
     public string StreamUrl(int id, string ext) => $"{ServerUrl.TrimEnd('/')}/movie/{U}/{P}/{id}.{ext}";
     public string EpisodeUrl(int id, string ext) => $"{ServerUrl.TrimEnd('/')}/series/{U}/{P}/{id}.{ext}";
 }
