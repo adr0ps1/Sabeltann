@@ -277,7 +277,7 @@
 
                     <!-- Movies -->
                     <Grid IsVisible="{Binding ShowMoviesBar}"
-                          ColumnDefinitions="Auto,Auto,Auto,*,Auto" VerticalAlignment="Center">
+                          ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto" VerticalAlignment="Center">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2">
                             <ToggleButton Classes="Tab" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
                             <ToggleButton Classes="Tab" IsChecked="True" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
@@ -287,11 +287,15 @@
                         <ComboBox Grid.Column="2" ItemsSource="{Binding VodBrowser.Categories}"
                                   SelectedItem="{Binding VodBrowser.SelectedCategory}"
                                   MinWidth="150" MaxWidth="230" FontSize="12" VerticalAlignment="Center"/>
-                        <TextBox Grid.Column="3" Text="{Binding VodBrowser.SearchText}" PlaceholderText="⌕ Search movies…"
+                        <ComboBox Grid.Column="3" ItemsSource="{Binding VodBrowser.SortOptions}"
+                                  SelectedItem="{Binding VodBrowser.SelectedSort}"
+                                  MinWidth="130" FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center"
+                                  ToolTip.Tip="Sort (ratings need OMDb; unrated titles sink)"/>
+                        <TextBox Grid.Column="4" Text="{Binding VodBrowser.SearchText}" PlaceholderText="⌕ Search movies…"
                                  Background="{StaticResource InputBg}" Foreground="{StaticResource Text}"
                                  BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8"
                                  FontSize="12" Padding="8,5" Margin="8,0" VerticalAlignment="Center"/>
-                        <Border Grid.Column="4" Classes="CountPill">
+                        <Border Grid.Column="5" Classes="CountPill">
                             <TextBlock Text="{Binding VodBrowser.StatusText}"
                                        Foreground="{StaticResource Sub}" FontFamily="Consolas" FontSize="11"/>
                         </Border>
@@ -299,7 +303,7 @@
 
                     <!-- Series -->
                     <Grid IsVisible="{Binding ShowSeriesBar}"
-                          ColumnDefinitions="Auto,Auto,Auto,*,Auto" VerticalAlignment="Center">
+                          ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto" VerticalAlignment="Center">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2">
                             <ToggleButton Classes="Tab" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
                             <ToggleButton Classes="Tab" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
@@ -310,12 +314,17 @@
                                   SelectedItem="{Binding SeriesBrowser.SelectedCategory}"
                                   MinWidth="150" MaxWidth="230" FontSize="12" VerticalAlignment="Center"
                                   IsVisible="{Binding SeriesBrowser.ShowShows}"/>
-                        <TextBox Grid.Column="3" Text="{Binding SeriesBrowser.SearchText}" PlaceholderText="⌕ Search shows…"
+                        <ComboBox Grid.Column="3" ItemsSource="{Binding SeriesBrowser.SortOptions}"
+                                  SelectedItem="{Binding SeriesBrowser.SelectedSort}"
+                                  MinWidth="130" FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center"
+                                  IsVisible="{Binding SeriesBrowser.ShowShows}"
+                                  ToolTip.Tip="Sort (ratings need OMDb; unrated titles sink)"/>
+                        <TextBox Grid.Column="4" Text="{Binding SeriesBrowser.SearchText}" PlaceholderText="⌕ Search shows…"
                                  Background="{StaticResource InputBg}" Foreground="{StaticResource Text}"
                                  BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8"
                                  FontSize="12" Padding="8,5" Margin="8,0" VerticalAlignment="Center"
                                  IsVisible="{Binding SeriesBrowser.ShowShows}"/>
-                        <Border Grid.Column="4" Classes="CountPill">
+                        <Border Grid.Column="5" Classes="CountPill">
                             <TextBlock Text="{Binding SeriesBrowser.StatusText}"
                                        Foreground="{StaticResource Sub}" FontFamily="Consolas" FontSize="11"/>
                         </Border>
