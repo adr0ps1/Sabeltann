@@ -388,13 +388,6 @@ public partial class VodBrowserViewModel : ObservableObject
         DetailRequested?.Invoke(movie);
     }
 
-    [RelayCommand]
-    private void ResumeMovie(VodMovieViewModel? movie)
-    {
-        if (movie?.Url is null) return;
-        PlayRequested?.Invoke(movie.Url);
-    }
-
     /// <summary>Rebuild the Continue Watching strip from the latest saved VOD progress.</summary>
     public void RefreshContinueWatching(IReadOnlyDictionary<string, VodProgressEntry> progress)
     {
