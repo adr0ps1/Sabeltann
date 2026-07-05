@@ -18,6 +18,10 @@ class Program
         // launch this returns immediately.
         VelopackApp.Build().Run();
 
+        // Code past here runs only on a normal launch (install/update hooks exit above), so the
+        // uninstall registry key exists — backfill the Size shown in Programs & Features.
+        Task.Run(InstallerInfo.EnsureEstimatedSize);
+
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 
