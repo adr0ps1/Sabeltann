@@ -180,6 +180,11 @@ public partial class VodBrowserViewModel : ObservableObject
     [ObservableProperty]
     private string _searchText = "";
 
+    public IReadOnlyList<string> SortOptions => VodSorting.Options;
+
+    [ObservableProperty]
+    private string _selectedSort = VodSorting.Default;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowMovies))]
     [NotifyPropertyChangedFor(nameof(ShowSeries))]
@@ -202,6 +207,7 @@ public partial class VodBrowserViewModel : ObservableObject
 
     partial void OnSelectedCategoryChanged(string? value) => ApplyMovieFilters();
     partial void OnSearchTextChanged(string value) => ApplyMovieFilters();
+    partial void OnSelectedSortChanged(string value) => ApplyMovieFilters();
 
     public async Task InitializeAsync(XtreamConnectionInfo connectionInfo)
     {
@@ -258,6 +264,8 @@ public partial class VodBrowserViewModel : ObservableObject
         if (query.Length > 0)
             pool = pool.Where(ch => ch.Name.ToLowerInvariant().Contains(query));
 
+        pool = VodSorting.Apply(pool, SelectedSort, _omdb, ch => ch.Name, _ => null);
+
         const int max = 500;
         var filtered = pool.Take(max).ToList();
 
@@ -278,6 +286,8 @@ public partial class VodBrowserViewModel : ObservableObject
         IEnumerable<VodMovieViewModel> pool = _allXtreamMovies;
         if (query.Length > 0)
             pool = pool.Where(m => m.Name.ToLowerInvariant().Contains(query));
+
+        pool = VodSorting.Apply(pool, SelectedSort, _omdb, m => m.Name, m => m.Year);
 
         const int max = 500;
         var filtered = pool.Take(max).ToList();
