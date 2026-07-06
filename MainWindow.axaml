@@ -296,57 +296,57 @@
 
                     <!-- Movies -->
                     <Grid IsVisible="{Binding ShowMoviesBar}"
-                          ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto" VerticalAlignment="Center">
+                          ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*" VerticalAlignment="Center">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2">
                             <Button Classes="NavTab" Classes.active="{Binding IsLiveTv}" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
                             <Button Classes="NavTab" Classes.active="{Binding IsMovies}" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
                             <Button Classes="NavTab" Classes.active="{Binding IsSeries}" Content="⊞ Series" Command="{Binding SwitchToSeriesCommand}"/>
                         </StackPanel>
                         <Border Grid.Column="1" Classes="Divider"/>
-                        <ComboBox Grid.Column="2" ItemsSource="{Binding VodBrowser.Categories}"
+                        <TextBlock Grid.Column="2" Text="Category:" Foreground="{StaticResource Muted}" FontSize="12"
+                                   VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <ComboBox Grid.Column="3" ItemsSource="{Binding VodBrowser.Categories}"
                                   SelectedItem="{Binding VodBrowser.SelectedCategory}"
-                                  MinWidth="150" MaxWidth="230" FontSize="12" VerticalAlignment="Center"/>
-                        <ComboBox Grid.Column="3" ItemsSource="{Binding VodBrowser.SortOptions}"
+                                  MinWidth="140" MaxWidth="220" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="4" Text="Sort by:" Foreground="{StaticResource Muted}" FontSize="12"
+                                   VerticalAlignment="Center" Margin="12,0,6,0"/>
+                        <ComboBox Grid.Column="5" ItemsSource="{Binding VodBrowser.SortOptions}"
                                   SelectedItem="{Binding VodBrowser.SelectedSort}"
-                                  MinWidth="130" FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center"
-                                  ToolTip.Tip="Sort (ratings need OMDb; unrated titles sink)"/>
-                        <TextBox Grid.Column="4" Text="{Binding VodBrowser.SearchText}" PlaceholderText="⌕ Search movies…"
+                                  MinWidth="120" FontSize="12" VerticalAlignment="Center"
+                                  ToolTip.Tip="Ratings need OMDb; unrated titles sink"/>
+                        <TextBox Grid.Column="6" Text="{Binding VodBrowser.SearchText}" PlaceholderText="⌕ Search movies…"
                                  Background="{StaticResource InputBg}" Foreground="{StaticResource Text}"
                                  BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8"
-                                 FontSize="12" Padding="8,5" Margin="8,0" VerticalAlignment="Center"/>
-                        <Border Grid.Column="5" Classes="CountPill">
-                            <TextBlock Text="{Binding VodBrowser.StatusText}"
-                                       Foreground="{StaticResource Sub}" FontFamily="Consolas" FontSize="11"/>
-                        </Border>
+                                 FontSize="12" Padding="8,5" Margin="12,0,0,0" VerticalAlignment="Center"/>
                     </Grid>
 
                     <!-- Series -->
                     <Grid IsVisible="{Binding ShowSeriesBar}"
-                          ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto" VerticalAlignment="Center">
+                          ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*" VerticalAlignment="Center">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2">
                             <Button Classes="NavTab" Classes.active="{Binding IsLiveTv}" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
                             <Button Classes="NavTab" Classes.active="{Binding IsMovies}" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
                             <Button Classes="NavTab" Classes.active="{Binding IsSeries}" Content="⊞ Series" Command="{Binding SwitchToSeriesCommand}"/>
                         </StackPanel>
                         <Border Grid.Column="1" Classes="Divider"/>
-                        <ComboBox Grid.Column="2" ItemsSource="{Binding SeriesBrowser.Categories}"
+                        <TextBlock Grid.Column="2" Text="Category:" Foreground="{StaticResource Muted}" FontSize="12"
+                                   VerticalAlignment="Center" Margin="0,0,6,0" IsVisible="{Binding SeriesBrowser.ShowShows}"/>
+                        <ComboBox Grid.Column="3" ItemsSource="{Binding SeriesBrowser.Categories}"
                                   SelectedItem="{Binding SeriesBrowser.SelectedCategory}"
-                                  MinWidth="150" MaxWidth="230" FontSize="12" VerticalAlignment="Center"
+                                  MinWidth="140" MaxWidth="220" FontSize="12" VerticalAlignment="Center"
                                   IsVisible="{Binding SeriesBrowser.ShowShows}"/>
-                        <ComboBox Grid.Column="3" ItemsSource="{Binding SeriesBrowser.SortOptions}"
+                        <TextBlock Grid.Column="4" Text="Sort by:" Foreground="{StaticResource Muted}" FontSize="12"
+                                   VerticalAlignment="Center" Margin="12,0,6,0" IsVisible="{Binding SeriesBrowser.ShowShows}"/>
+                        <ComboBox Grid.Column="5" ItemsSource="{Binding SeriesBrowser.SortOptions}"
                                   SelectedItem="{Binding SeriesBrowser.SelectedSort}"
-                                  MinWidth="130" FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center"
+                                  MinWidth="120" FontSize="12" VerticalAlignment="Center"
                                   IsVisible="{Binding SeriesBrowser.ShowShows}"
-                                  ToolTip.Tip="Sort (ratings need OMDb; unrated titles sink)"/>
-                        <TextBox Grid.Column="4" Text="{Binding SeriesBrowser.SearchText}" PlaceholderText="⌕ Search shows…"
+                                  ToolTip.Tip="Ratings need OMDb; unrated titles sink"/>
+                        <TextBox Grid.Column="6" Text="{Binding SeriesBrowser.SearchText}" PlaceholderText="⌕ Search shows…"
                                  Background="{StaticResource InputBg}" Foreground="{StaticResource Text}"
                                  BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8"
-                                 FontSize="12" Padding="8,5" Margin="8,0" VerticalAlignment="Center"
+                                 FontSize="12" Padding="8,5" Margin="12,0,0,0" VerticalAlignment="Center"
                                  IsVisible="{Binding SeriesBrowser.ShowShows}"/>
-                        <Border Grid.Column="5" Classes="CountPill">
-                            <TextBlock Text="{Binding SeriesBrowser.StatusText}"
-                                       Foreground="{StaticResource Sub}" FontFamily="Consolas" FontSize="11"/>
-                        </Border>
                     </Grid>
 
                     <!-- Movie/Series detail -->

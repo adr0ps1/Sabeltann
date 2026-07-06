@@ -2,10 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Sabeltann.Views.MovieDetailView"
              Background="{StaticResource Bg}">
-  <!-- Viewbox scales the whole card (poster + text) to fill the window, capped so it
-       doesn't over-zoom on large monitors. -->
-  <Viewbox Stretch="Uniform" MaxWidth="1200" Margin="32">
-    <StackPanel Width="780" Spacing="18">
+  <!-- Scroll rather than scale: keeps text at a readable size on short windows (a Viewbox here
+       shrank the whole card, and its text, to fit the height). -->
+  <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+    <StackPanel Width="780" Spacing="18" Margin="32" HorizontalAlignment="Center">
 
       <!-- Back button -->
       <Button Command="{Binding BackCommand}" Background="Transparent" BorderThickness="0"
@@ -125,5 +125,5 @@
       </StackPanel>
 
     </StackPanel>
-  </Viewbox>
+  </ScrollViewer>
 </UserControl>
