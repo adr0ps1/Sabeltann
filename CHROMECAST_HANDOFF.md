@@ -126,6 +126,102 @@ Working & done:
 6. **Transport while native-casting:** route play/pause/seek/stop to `CastService`; `StopCasting` → disconnect + resume libvlc local at position.
 7. Overlay/icon/`IsCasting` state must reflect whichever cast path is active (add a `CastMode { None, Native, Libvlc }`).
 
+## COMPLETION (2026-07-06)
+
+Wireup committed (`bb8faf8`), then finished the native-cast integration:
+- **Progress bar + seek under native cast** — `OnCastStatusTick` feeds `_castCurrentSec`/`Media.Duration`
+  into `VodPosition`/`VodDuration` (ms); the seek-bar drag (`VodPositionPercent` setter) routes to
+  `_cast.SeekAsync` when native.
+- **Diag branches scoped to the right mode** — the position-timer confirmation/watchdog keyed off
+  `IsCasting`, which misfired under native cast (local player is stopped → `InputBytes` frozen). Now
+  gated on `_castMode`: native confirms/positions via the status poll; libvlc-cast keeps the InputBytes
+  path; local keeps frames.
+- **Libvlc-cast watchdog promoted from diag to real kill** — dead libvlc cast (`InputBytes <= 100KB` at
+  the deadline) now stops + clears + shows "Stream unavailable", same as the local-frames path. The
+  "not killing — diag" branch and per-tick "Cast progress" log are gone.
+- **Phase-4 cleanup** — removed `PlaybackService.PlayerState` (diagnostic) and the verbose
+  `renderer modules` / `started` / `item added` discovery logs (kept the no-module warn).
+
+Deferred (not blocking): **volume/mute don't route to the TV under native cast** — `CastService` has no
+volume API and SharpCaster's is unverified; the TV/physical remote covers it. Add `SetVolumeAsync`/
+`SetMuteAsync` to `CastService` + route from `OnVolumeChanged`/`ToggleMute` if wanted.
+
+Still needs **hardware verification** (Tailscale adapter disabled) — nothing below has run against a real TV.
+
+## DISCOVERY REFACTOR (2026-07-06)
+
+Symptom: cast list stayed empty even with Tailscale fully stopped and a firewall rule present.
+Root cause: **mDNS multicast is dead on this Wi-Fi** (libvlc, Zeroconf, SharpCaster, raw socket all found 0),
+though the TV answers unicast fine (8009 open, `eureka_info` returns its name, direct-IP connect+launch works).
+
+Fix — `CastService.FindDevicesAsync` now runs, in parallel and merged by host:
+- **mDNS** (`ChromecastLocator`, the standard primary), and
+- **a unicast subnet scan** (`FindViaScanAsync`): gateway-interface /24, probe Cast port 8009, name each hit
+  via `http://ip:8008/setup/eureka_info`. ~0.5s for a /24. `LocalLanIPv4()` skips VPN tunnels (no IPv4 gateway).
+Scan-discovered devices are plain `ChromecastReceiver { DeviceUri, Port=8009 }` and cast via the existing
+native path (direct-IP connect verified). `EnsureMdnsFirewallRule()` (first-run UAC) still helps mDNS where
+multicast DOES work; it does not fix multicast-filtered networks — the scan does.
+UI: transport bar stays visible while the cast menu / "searching…" box is open (resumes auto-hide on close).
+
+Verified live: scan found `[LG] webOS TV OLED65B36LA @ 192.168.4.27` in 439ms; direct connect+LaunchApplication OK.
+Not yet verified: an actual stream LoadAsync + track switch on the TV through the app UI (needs a run).
+Skipped: persisting discovered device IPs for instant reconnect (scan is fast enough) — add if scans feel slow.
+
+## TRANSCODE/REMUX PROXY (2026-07-06)
+
+Root problem: the provider's live URL 302-redirects to a **session-bound MPEG-TS** stream; the Default
+Media Receiver needs HLS and only decodes **H.264 8-bit / VP8**. Handing it the provider URL always fails.
+Verified via prototype: libvlc remux→HLS→local HTTP serve→direct-IP cast reaches the TV; the TV downloads
+playlist+segments. The first tested channel was **HEVC** (receiver bounces to idle); a codec probe of ~10
+channels showed **most are H.264** (CNN, BBC, Sky, NRK1/2, CNBC, TV2 News…).
+
+Built `Services/CastProxyService.cs`:
+- libvlc (own headless instance) remuxes the source → HLS (`livehttp`, `mux=ts{use-key-frames}`, copy
+  codecs — no transcode) into a temp dir; a tiny `TcpListener` HTTP server (no urlacl/admin) serves it.
+- **Codec gate**: reads the source video track; non-`h264`/`avc1` → `UnsupportedCastCodecException`.
+- `StartAsync(url)` returns `http://<lan-ip>:8099/stream.m3u8`; `StopAsync`/`DisposeAsync` tear down.
+
+Wired into `MainViewModel.CastTo`: stop local → `_castProxy.StartAsync` → `_cast.CastAsync(localUrl)` by
+direct IP. HEVC/other → message + resume local. `StopCasting`/`EndCasting`/failure-fallback stop the proxy.
+`MainWindow` owns `_castProxy`, passes via `SetCastService(cast, proxy)`, disposes on close.
+
+Deferred rungs: HEVC transcode (needs ffmpeg/HW encoder — 10-bit-only x264 in this libvlc build); smooth
+track-switching while proxy-casting (single-program remux → would need a proxy restart with `:audio-track=`).
+NOT yet verified end-to-end in the running app (TV cast stack wedged from repeated test connects; build clean).
+
+## PIVOT — libvlc chromecast BY IP (2026-07-06, the one that works)
+
+The native SharpCaster path and the remux `CastProxyService` are **removed**. Root reason they were the
+wrong tree: the provider's live URL redirects to session-bound MPEG-TS the Default Media Receiver can't
+fetch, and it only decodes H.264/VP8 (many channels are **HEVC**). The old "worked without issues" path
+was libvlc's own chromecast output — which transcodes any codec and runs its own HTTP server. Its only
+weakness was mDNS discovery, which our **unicast scan** already solves by handing us the device IP.
+
+New design (verified: HEVC channel plays video+audio on the LG TV; `AddOption` engages the module):
+- **Discovery** stays `CastService.FindDevicesAsync` (mDNS + unicast scan) → `ChromecastReceiver` with
+  `DeviceUri = https://<ip>`. `CastService` is now discovery + firewall only (SharpCaster streaming
+  methods deleted; no longer `IAsyncDisposable`).
+- **Casting** = `PlaybackService.CastToIp(ip, name)`: sets `_castIp`, restarts the current stream with
+  `:sout=#chromecast{ip=<ip>,port=8009}` + `:sout-keep` + `:demux-filter=demux_chromecast` (added in
+  `Play` via `AddOption`). libvlc connects, launches the receiver, transcodes as needed. `StopCasting`
+  drops the sout and replays local. `IsCasting`/`CastTargetName` cover the IP path.
+- `MainViewModel.CastTo` → `_player.CastToIp(ip)`, `CastMode.Libvlc`. Enum is now `{ None, Libvlc }`.
+  Removed: `OnCastStatusTick`/poll, `HandleNativeCastFailure`, `PopulateCastTracks`, native transport
+  branches, `CastProxyService`. Track switching = `SetCastAudio/SubtitleTrack` (restart, brief blip).
+
+Tradeoff vs the abandoned native path: no smooth in-cast track switching (restart on change) — but that
+never worked for these streams anyway. This actually plays them, all codecs.
+
+## KNOWN OPEN BUG (2026-07-06) — Live TV grid empty after casting
+
+After casting, the Live TV channel grid shows empty until you switch to Movies/Series and back.
+Diagnosis (partial): `ShowChannelGrid => Mode==LiveTv && IsBrowsing && !IsTimeline` (MainViewModel ~430).
+Playing/casting a channel sets `IsBrowsing=false` (`OnSelectedChannelChanged` ~805) → grid hidden. The
+stop/back command sets `IsBrowsing=true` again (~1225, `if Mode==LiveTv`). Switching mode and back also
+restores it. So the cast path leaves `IsBrowsing=false` with no way back to the grid while casting.
+Likely fix: while `IsCasting`, treat the app as "browsing" (video is on the TV, not in-app) — e.g. set
+`IsBrowsing=true` on cast start, or make `ShowChannelGrid` true when casting. NOT yet fixed.
+
 ## Build/test
 - `dotnet build` — clean (0 errors). Debug exe: `bin/Debug/net10.0/SabeltannDevelopment.exe`.
 - To exercise cast discovery: disable Tailscale adapter (above), run the exe ~15s, then read

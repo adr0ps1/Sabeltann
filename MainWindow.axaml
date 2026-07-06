@@ -9,7 +9,7 @@
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
         x:Class="Sabeltann.MainWindow"
         Title="Sabeltann - IPTV Player"
-        Width="960" Height="560"
+        Width="960" Height="680"
         WindowStartupLocation="CenterScreen"
         WindowDecorations="None"
         Background="Transparent"
