@@ -432,7 +432,19 @@
                 </ListBox>
 
                 <Border x:Name="VideoBorder" Background="#0B0C0F" IsVisible="{Binding ShowVideo}" ZIndex="1">
-                    <Image x:Name="VideoImage" Source="{Binding VideoBitmap}" Stretch="Uniform" />
+                    <Grid>
+                        <Image x:Name="VideoImage" Source="{Binding VideoBitmap}" Stretch="Uniform" />
+                        <!-- Shown while the video is detached into the pop-out window. -->
+                        <StackPanel x:Name="PopoutPlaceholder" IsVisible="False"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+                            <TextBlock Text="🗗" FontSize="44" Foreground="{StaticResource Sub}"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="Playing in pop-out window" Foreground="{StaticResource Text}"
+                                       FontSize="16" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Close the pop-out (or press Esc) to return it here"
+                                       Foreground="{StaticResource Muted}" FontSize="12" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
                 </Border>
 
                 <views:ConnectionPage x:Name="ConnectionPage" IsVisible="{Binding IsWelcome}"/>
@@ -556,7 +568,7 @@
                         </ToggleButton>
 
                         <Button Grid.Column="10" Classes="TransportBtn" Focusable="False"
-                                Click="OnPopoutClick" ToolTip.Tip="Pop-out player — hide bars (Esc to exit)">
+                                Click="OnPopoutClick" ToolTip.Tip="Pop-out player — detach into a floating window (Esc to return)">
                             <TextBlock Text="🗗" Foreground="{StaticResource Info}" FontSize="16"
                                        VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
@@ -610,6 +622,22 @@
                         <Grid ColumnDefinitions="90,*">
                             <TextBlock Grid.Column="0" Text="Input bitrate" Foreground="{StaticResource Muted}" FontSize="11"/>
                             <TextBlock Grid.Column="1" Text="{Binding InputBitrate}" Foreground="{StaticResource Text}" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="90,*">
+                            <TextBlock Grid.Column="0" Text="Demux bitrate" Foreground="{StaticResource Muted}" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding DemuxBitrate}" Foreground="{StaticResource Text}" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="90,*">
+                            <TextBlock Grid.Column="0" Text="Position" Foreground="{StaticResource Muted}" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Position}" Foreground="{StaticResource Text}" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="90,*">
+                            <TextBlock Grid.Column="0" Text="Duration" Foreground="{StaticResource Muted}" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Duration}" Foreground="{StaticResource Text}" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="90,*">
+                            <TextBlock Grid.Column="0" Text="Volume" Foreground="{StaticResource Muted}" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Volume}" Foreground="{StaticResource Text}" FontSize="11" HorizontalAlignment="Right"/>
                         </Grid>
                         <Grid ColumnDefinitions="90,*">
                             <TextBlock Grid.Column="0" Text="Frames" Foreground="{StaticResource Muted}" FontSize="11"/>

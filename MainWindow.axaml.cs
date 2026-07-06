@@ -19,7 +19,7 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _volumeHideTimer;
     private bool _isFullscreen;
     private WindowState _preFullscreenState = WindowState.Normal;
-    private bool _isPopout;
+    private PopoutWindow? _popout;
 
     public MainWindow()
     {
@@ -28,7 +28,7 @@ public partial class MainWindow : Window
         _player = new PlaybackService();
         _vm = new MainViewModel();
         _vm.SetPlayer(_player);
-        _player.FrameRendered += () => VideoImage?.InvalidateVisual();
+        _player.FrameRendered += () => { VideoImage?.InvalidateVisual(); _popout?.InvalidateVideo(); };
         _vm.ToggleFullscreenRequested += ToggleFullscreen;
         _vm.PropertyChanged += OnVmPropertyChanged;
         DataContext = _vm;
@@ -135,14 +135,11 @@ public partial class MainWindow : Window
 
     private void OnPopoutClick(object? sender, RoutedEventArgs e) => TogglePopout();
 
-    // When playback ends, leave pop-out so the bars (and their controls) come back.
+    // When playback ends, close the pop-out so the video returns inline.
     private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainViewModel.ShowVideo) && !_vm.ShowVideo && _isPopout)
-        {
-            _isPopout = false;
-            UpdateChrome();
-        }
+        if (e.PropertyName == nameof(MainViewModel.ShowVideo) && !_vm.ShowVideo && _popout is not null)
+            _popout.Close();
 
         // Morph the toolbar: quick fade-in whenever the active sub-bar swaps.
         if (e.PropertyName is nameof(MainViewModel.Mode) or nameof(MainViewModel.ShowVideo))
@@ -155,17 +152,36 @@ public partial class MainWindow : Window
         Dispatcher.UIThread.Post(() => ToolbarContent.Opacity = 1, DispatcherPriority.Render);
     }
 
-    /// <summary>Windowed pop-out: hides the top/bottom bars like fullscreen but keeps the window framed.</summary>
+    /// <summary>Detach the video into a floating, always-on-top window (or return it inline).</summary>
     private void TogglePopout()
     {
-        _isPopout = !_isPopout;
-        UpdateChrome();
+        if (_popout is null)
+            OpenPopout();
+        else
+            _popout.Close(); // Closed handler returns the video inline
     }
 
-    /// <summary>Title bar + morphing toolbar are hidden when either fullscreen or pop-out is active.</summary>
+    private void OpenPopout()
+    {
+        _popout = new PopoutWindow { DataContext = _vm };
+        _popout.Closed += (_, _) => { _popout = null; ApplyPopoutState(); };
+        ApplyPopoutState();
+        _popout.Show();
+    }
+
+    // While popped out, the inline surface is replaced by a placeholder so the main window is usable
+    // (browse, other apps) without a second copy of the video competing for it.
+    private void ApplyPopoutState()
+    {
+        var popped = _popout is not null;
+        VideoImage.IsVisible = !popped;
+        PopoutPlaceholder.IsVisible = popped;
+    }
+
+    /// <summary>Title bar + morphing toolbar are hidden when fullscreen is active.</summary>
     private void UpdateChrome()
     {
-        var hide = _isFullscreen || _isPopout;
+        var hide = _isFullscreen;
         TitleBar.IsVisible = !hide;
         Toolbar.IsVisible = !hide;
         MainGrid.RowDefinitions[0].Height = new GridLength(hide ? 0 : 40);
@@ -210,9 +226,9 @@ public partial class MainWindow : Window
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape && _isPopout)
+        if (e.Key == Key.Escape && _popout is not null)
         {
-            TogglePopout();
+            _popout.Close();
             e.Handled = true;
         }
         else if (e.Key == Key.Escape && (_vm.IsPlaying || _vm.IsPaused))
@@ -442,6 +458,7 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        _popout?.Close();
         _vm.SaveVodProgress();
         _vm.DebugStats.Stop();
         _player.Dispose();
