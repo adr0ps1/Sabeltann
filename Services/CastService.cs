@@ -1,77 +1,166 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Sharpcaster;
 using Sharpcaster.Models;
-using Sharpcaster.Models.Media;
 
 namespace Sabeltann.Services;
 
 /// <summary>
-/// Native Google Cast sender (SharpCaster). The Chromecast fetches and plays the stream URL itself,
-/// so audio/subtitle tracks switch live via <see cref="SetActiveTracksAsync"/> with no pipeline
-/// rebuild — unlike the libvlc renderer path in <see cref="PlaybackService"/>. Only works for
-/// Chromecast-playable streams (HLS / H.264 / AAC); callers fall back to the libvlc cast for the rest.
+/// Cast device <b>discovery</b> — mDNS (SharpCaster) plus a unicast subnet scan, merged. The actual
+/// streaming is done by libvlc's chromecast output (<see cref="PlaybackService.CastToIp"/>), addressed
+/// by the IP this discovery returns, so casting needs no mDNS and plays any codec via libvlc transcode.
+/// Also owns the one-time Windows Firewall rule that lets mDNS replies reach the app.
 /// </summary>
-public class CastService : IAsyncDisposable
+public class CastService
 {
-    // Google's Default Media Receiver — plays a plain URL, incl. HLS, with track support.
-    private const string DefaultMediaReceiver = "CC1AD845";
+    private const string FirewallRuleName = "Sabeltann mDNS discovery";
 
-    private ChromecastClient? _client;
+    /// <summary>
+    /// Ensures an inbound Windows Firewall rule for mDNS (UDP 5353) exists so Cast discovery receives
+    /// responses. Without it Windows silently drops the replies on the Public profile — by default only
+    /// svchost (and apps with their own rule, e.g. Chrome/Edge) may receive — so no devices are ever
+    /// found. Adds the rule via an elevated <c>netsh</c> call: one UAC prompt the first run, a no-op
+    /// afterwards. Best-effort — if the rule can't be added (user declines UAC), discovery just stays
+    /// empty, so callers still degrade gracefully. Port-scoped (not program-scoped) so Velopack's
+    /// per-version install path can change on update without stranding the rule. Windows-only.
+    /// </summary>
+    public static void EnsureMdnsFirewallRule()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        try
+        {
+            if (MdnsRuleExists()) return;
+            var psi = new ProcessStartInfo
+            {
+                FileName = "netsh",
+                Arguments = $"advfirewall firewall add rule name=\"{FirewallRuleName}\" " +
+                            "dir=in action=allow protocol=UDP localport=5353 profile=any enable=yes",
+                UseShellExecute = true,   // required for Verb=runas
+                Verb = "runas",           // elevate (UAC)
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden,
+            };
+            Process.Start(psi)?.WaitForExit(15_000);
+            LogService.Info("mDNS firewall rule add attempted");
+        }
+        catch (Exception ex)
+        {
+            LogService.Warn("Could not add mDNS firewall rule (discovery may find nothing)", new { error = ex.Message });
+        }
+    }
 
-    public bool IsConnected => _client is not null;
+    private static bool MdnsRuleExists()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "netsh",
+                Arguments = $"advfirewall firewall show rule name=\"{FirewallRuleName}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                CreateNoWindow = true,
+            };
+            using var p = Process.Start(psi);
+            if (p is null) return false;
+            var output = p.StandardOutput.ReadToEnd();
+            p.WaitForExit(5_000);
+            // netsh exits 1 + "No rules match the specified criteria." when the rule is absent.
+            return p.ExitCode == 0 && !output.Contains("No rules match", StringComparison.OrdinalIgnoreCase);
+        }
+        catch { return false; }
+    }
 
-    /// <summary>mDNS discovery of Cast receivers. NOTE: same libmicrodns-vs-Tailscale caveat may apply
-    /// as the libvlc path — see chromecast-tailscale-mdns. Zeroconf-based here, so verify separately.</summary>
+    // Cast control port; the eureka_info HTTP endpoint sits on port-1 (8008).
+    private const int CastPort = 8009;
+
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(2) };
+
+    /// <summary>
+    /// Discovers Cast receivers by running standard mDNS and a unicast subnet scan in parallel, then
+    /// merging by host. mDNS is the correct primary; the scan is the fallback for networks that filter
+    /// multicast (VPN tunnels, guest/enterprise Wi-Fi, some consumer APs) where mDNS finds nothing even
+    /// though the device answers unicast fine. Either source yields a directly-connectable receiver.
+    /// </summary>
     public async Task<IReadOnlyList<ChromecastReceiver>> FindDevicesAsync(TimeSpan timeout)
     {
-        var locator = new ChromecastLocator();
-        var devices = await locator.FindReceiversAsync(timeout);
-        return devices.ToList();
+        var lists = await Task.WhenAll(FindViaMdnsAsync(timeout), FindViaScanAsync());
+        var byHost = new Dictionary<string, ChromecastReceiver>(StringComparer.OrdinalIgnoreCase);
+        foreach (var r in lists.SelectMany(x => x))
+            if (r.DeviceUri is not null)
+                byHost[r.DeviceUri.Host] = r;   // dedupe across sources
+        return byHost.Values.ToList();
     }
 
-    /// <summary>Connects, launches the media receiver, and loads the stream. Returns the initial status
-    /// (carries the receiver-detected track list for HLS once playback starts).</summary>
-    public async Task<MediaStatus?> CastAsync(
-        ChromecastReceiver device, string url, string contentType, StreamType streamType,
-        Track[]? tracks = null, int[]? activeTrackIds = null, string? title = null)
+    private static async Task<IReadOnlyList<ChromecastReceiver>> FindViaMdnsAsync(TimeSpan timeout)
     {
-        await DisconnectAsync();
-        _client = new ChromecastClient();
-        await _client.ConnectChromecast(device);
-        await _client.LaunchApplicationAsync(DefaultMediaReceiver);
+        try { return (await new ChromecastLocator().FindReceiversAsync(timeout)).ToList(); }
+        catch (Exception ex) { LogService.Warn("mDNS cast discovery failed", new { error = ex.Message }); return []; }
+    }
 
-        var media = new Media
+    // Scans the host's own /24 for the Cast port and names each hit via its eureka_info endpoint.
+    // ponytail: /24 only — widen to the interface's real mask if devices ever sit outside the host's /24.
+    private static async Task<IReadOnlyList<ChromecastReceiver>> FindViaScanAsync()
+    {
+        var local = LocalLanIPv4();
+        if (local is null) return [];
+        var prefix = local[..(local.LastIndexOf('.') + 1)];
+        var found = new ConcurrentBag<ChromecastReceiver>();
+        await Task.WhenAll(Enumerable.Range(1, 254).Select(async i =>
         {
-            ContentUrl = url,
-            ContentType = contentType,
-            StreamType = streamType,
-            Tracks = tracks,
-            Metadata = title is null ? null : new MediaMetadata { Title = title },
-        };
-        return await _client.MediaChannel.LoadAsync(media, true, activeTrackIds);
+            var ip = prefix + i;
+            if (!await PortOpenAsync(ip, CastPort, 400)) return;
+            found.Add(new ChromecastReceiver
+            {
+                DeviceUri = new Uri($"https://{ip}"),
+                Port = CastPort,
+                Name = await EurekaNameAsync(ip) ?? ip,
+            });
+        }));
+        return found.ToList();
     }
 
-    /// <summary>Switches the active audio/subtitle track(s) on the running cast — no reload.</summary>
-    public Task<MediaStatus?> SetActiveTracksAsync(int[] activeTrackIds)
-        => _client?.MediaChannel.EditTracksAsync(activeTrackIds) ?? NullStatus();
-
-    public Task<MediaStatus?> PlayAsync() => _client?.MediaChannel.PlayAsync() ?? NullStatus();
-    public Task<MediaStatus?> PauseAsync() => _client?.MediaChannel.PauseAsync() ?? NullStatus();
-    public Task<MediaStatus?> SeekAsync(double seconds) => _client?.MediaChannel.SeekAsync(seconds) ?? NullStatus();
-    public Task<MediaStatus?> GetStatusAsync() => _client?.MediaChannel.GetMediaStatusAsync() ?? NullStatus();
-
-    private static Task<MediaStatus?> NullStatus() => Task.FromResult<MediaStatus?>(null);
-
-    public async Task DisconnectAsync()
+    private static async Task<bool> PortOpenAsync(string ip, int port, int timeoutMs)
     {
-        if (_client is null) return;
-        try { await _client.DisconnectAsync(); }
-        catch (Exception e) { LogService.Warn("Cast disconnect failed", new { error = e.Message }); }
-        _client = null;
+        using var c = new TcpClient();
+        try
+        {
+            var connect = c.ConnectAsync(ip, port);
+            if (await Task.WhenAny(connect, Task.Delay(timeoutMs)) != connect) return false;
+            await connect;            // observe result/exception
+            return c.Connected;
+        }
+        catch { return false; }
     }
 
-    public async ValueTask DisposeAsync() => await DisconnectAsync();
+    private static async Task<string?> EurekaNameAsync(string ip)
+    {
+        try
+        {
+            var json = await Http.GetStringAsync($"http://{ip}:8008/setup/eureka_info");
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.TryGetProperty("name", out var n) ? n.GetString() : null;
+        }
+        catch { return null; }
+    }
+
+    // IPv4 of the interface that actually has a default gateway — the real LAN, skipping VPN tunnels
+    // (Tailscale et al. have no IPv4 gateway) so the scan runs on the subnet the device is on.
+    internal static string? LocalLanIPv4() =>
+        (from ni in NetworkInterface.GetAllNetworkInterfaces()
+         where ni.OperationalStatus == OperationalStatus.Up
+         let p = ni.GetIPProperties()
+         where p.GatewayAddresses.Any(g => g.Address.AddressFamily == AddressFamily.InterNetwork)
+         from ua in p.UnicastAddresses
+         where ua.Address.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ua.Address)
+         select ua.Address.ToString()).FirstOrDefault();
 }

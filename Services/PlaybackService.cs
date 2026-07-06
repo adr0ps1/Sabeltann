@@ -28,6 +28,8 @@ public class PlaybackService : IDisposable
     private RendererDiscoverer? _rendererDiscoverer;
     private readonly List<RendererItem> _renderers = [];
     private RendererItem? _activeRenderer;
+    private string? _castIp;      // Chromecast IP when casting via libvlc's own chromecast output
+    private string? _castName;
 
     private static readonly MediaPlayer.LibVLCVideoLockCb LockCb = OnLock;
     private static readonly MediaPlayer.LibVLCVideoUnlockCb UnlockCb = OnUnlock;
@@ -101,6 +103,14 @@ public class PlaybackService : IDisposable
         // leaves these at -1 and switches live instead.
         if (_selAudioTrackId >= 0) _currentMedia.AddOption($":audio-track-id={_selAudioTrackId}");
         if (_selSubTrackId >= 0) _currentMedia.AddOption($":sub-track-id={_selSubTrackId}");
+        // Casting: route output to the Chromecast via libvlc's own chromecast module (by IP, so no mDNS
+        // needed). libvlc connects, launches the receiver and transcodes as needed — handles HEVC too.
+        if (_castIp is not null)
+        {
+            _currentMedia.AddOption($":sout=#chromecast{{ip={_castIp},port=8009}}");
+            _currentMedia.AddOption(":sout-keep");
+            _currentMedia.AddOption(":demux-filter=demux_chromecast");
+        }
 
         if (!_mediaPlayer.Play(_currentMedia))
         {
@@ -170,8 +180,18 @@ public class PlaybackService : IDisposable
         Play(url);
     }
 
-    public bool IsCasting => _activeRenderer is not null;
-    public string? CastTargetName => _activeRenderer?.Name;
+    public bool IsCasting => _activeRenderer is not null || _castIp is not null;
+    public string? CastTargetName => _castName ?? _activeRenderer?.Name;
+
+    /// <summary>Casts the current stream to the Chromecast at <paramref name="ip"/> using libvlc's own
+    /// chromecast output — transcodes as needed (handles HEVC), runs its own HTTP server, no mDNS.
+    /// The IP comes from the unicast device scan. Restarts the current stream to apply the sout.</summary>
+    public void CastToIp(string ip, string deviceName)
+    {
+        _castIp = ip;
+        _castName = deviceName;
+        RestartCurrent();
+    }
 
     /// <summary>Cast-capable renderers found so far (Chromecasts on the LAN). Names only.</summary>
     public IReadOnlyList<string> CastTargets => _renderers.Select(r => r.Name).ToList();
@@ -187,8 +207,6 @@ public class PlaybackService : IDisposable
     public void StartCastDiscovery()
     {
         if (_rendererDiscoverer is not null) return;
-        var modules = _libVlc.RendererList.Select(r => r.Name).ToArray();
-        LogService.Info("Cast discovery: renderer modules", new { modules });
         var desc = _libVlc.RendererList.FirstOrDefault();
         if (string.IsNullOrEmpty(desc.Name))
         {
@@ -198,13 +216,11 @@ public class PlaybackService : IDisposable
         _rendererDiscoverer = new RendererDiscoverer(_libVlc, desc.Name);
         _rendererDiscoverer.ItemAdded += OnRendererAdded;
         _rendererDiscoverer.ItemDeleted += OnRendererDeleted;
-        var ok = _rendererDiscoverer.Start();
-        LogService.Info("Cast discovery: started", new { module = desc.Name, ok });
+        _rendererDiscoverer.Start();
     }
 
     private void OnRendererAdded(object? sender, RendererDiscovererItemAddedEventArgs e)
     {
-        LogService.Info("Cast discovery: item added", new { e.RendererItem.Name, e.RendererItem.CanRenderVideo, e.RendererItem.CanRenderAudio });
         _renderers.Add(e.RendererItem);
         CastTargetsChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -226,12 +242,18 @@ public class PlaybackService : IDisposable
         if (url is not null) Play(url);
     }
 
-    public void StopCasting() => CastTo(-1);
+    public void StopCasting()
+    {
+        if (_castIp is not null) { _castIp = null; _castName = null; RestartCurrent(); return; }
+        CastTo(-1);
+    }
 
     /// <summary>Clears the cast target without restarting playback — for when playback stops entirely.</summary>
     public void ClearRenderer()
     {
         _activeRenderer = null;
+        _castIp = null;
+        _castName = null;
         _mediaPlayer.SetRenderer(null);
     }
 
@@ -267,9 +289,6 @@ public class PlaybackService : IDisposable
 
     /// <summary>Bytes read from the source for the current media. Stays ~0 for a stream that connects but delivers nothing — the liveness signal while casting, where no local frames decode.</summary>
     public long InputBytes => GetStats()?.ReadBytes ?? 0;
-
-    /// <summary>Current player state name (Opening/Buffering/Playing/Error/Ended…) — diagnostic.</summary>
-    public string PlayerState => _mediaPlayer.State.ToString();
 
     public void Dispose()
     {
