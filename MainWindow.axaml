@@ -80,6 +80,22 @@
             </Style>
         </Style>
 
+        <!-- Nav tab: .active is a one-way projection of the current mode, never user-toggled —
+             so exactly one Live/Movies/Series tab is ever highlighted. -->
+        <Style Selector="Button.NavTab">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource Sub}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style Selector="^.active /template/ ContentPresenter">
+                <Setter Property="Background" Value="{StaticResource AccentSoft}"/>
+                <Setter Property="TextElement.Foreground" Value="{StaticResource Accent}"/>
+            </Style>
+        </Style>
+
         <!-- Vertical divider -->
         <Style Selector="Border.Divider">
             <Setter Property="Width" Value="1"/>
@@ -254,9 +270,9 @@
                     <Grid IsVisible="{Binding ShowLiveBar}"
                           ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto" VerticalAlignment="Center">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2">
-                            <ToggleButton Classes="Tab" IsChecked="True" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
-                            <ToggleButton Classes="Tab" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
-                            <ToggleButton Classes="Tab" Content="⊞ Series" Command="{Binding SwitchToSeriesCommand}"/>
+                            <Button Classes="NavTab" Classes.active="{Binding IsLiveTv}" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
+                            <Button Classes="NavTab" Classes.active="{Binding IsMovies}" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
+                            <Button Classes="NavTab" Classes.active="{Binding IsSeries}" Content="⊞ Series" Command="{Binding SwitchToSeriesCommand}"/>
                         </StackPanel>
                         <Border Grid.Column="1" Classes="Divider"/>
                         <ComboBox Grid.Column="2" ItemsSource="{Binding Categories}"
@@ -282,9 +298,9 @@
                     <Grid IsVisible="{Binding ShowMoviesBar}"
                           ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto" VerticalAlignment="Center">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2">
-                            <ToggleButton Classes="Tab" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
-                            <ToggleButton Classes="Tab" IsChecked="True" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
-                            <ToggleButton Classes="Tab" Content="⊞ Series" Command="{Binding SwitchToSeriesCommand}"/>
+                            <Button Classes="NavTab" Classes.active="{Binding IsLiveTv}" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
+                            <Button Classes="NavTab" Classes.active="{Binding IsMovies}" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
+                            <Button Classes="NavTab" Classes.active="{Binding IsSeries}" Content="⊞ Series" Command="{Binding SwitchToSeriesCommand}"/>
                         </StackPanel>
                         <Border Grid.Column="1" Classes="Divider"/>
                         <ComboBox Grid.Column="2" ItemsSource="{Binding VodBrowser.Categories}"
@@ -308,9 +324,9 @@
                     <Grid IsVisible="{Binding ShowSeriesBar}"
                           ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto" VerticalAlignment="Center">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2">
-                            <ToggleButton Classes="Tab" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
-                            <ToggleButton Classes="Tab" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
-                            <ToggleButton Classes="Tab" IsChecked="True" Content="⊞ Series" Command="{Binding SwitchToSeriesCommand}"/>
+                            <Button Classes="NavTab" Classes.active="{Binding IsLiveTv}" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
+                            <Button Classes="NavTab" Classes.active="{Binding IsMovies}" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
+                            <Button Classes="NavTab" Classes.active="{Binding IsSeries}" Content="⊞ Series" Command="{Binding SwitchToSeriesCommand}"/>
                         </StackPanel>
                         <Border Grid.Column="1" Classes="Divider"/>
                         <ComboBox Grid.Column="2" ItemsSource="{Binding SeriesBrowser.Categories}"
