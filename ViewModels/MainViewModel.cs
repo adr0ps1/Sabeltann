@@ -9,6 +9,8 @@ using Sabeltann.Models;
 using Sabeltann.Services;
 using Sabeltann;
 using Sabeltann.Views;
+using Sharpcaster.Models;
+using Sharpcaster.Models.Media;
 
 namespace Sabeltann.ViewModels;
 
@@ -21,6 +23,10 @@ public enum ContentMode
     Series,
     MovieDetail
 }
+
+/// <summary>Which cast pipeline is currently active. Native = Google Cast (smooth track switch);
+/// Libvlc = the transcode-renderer fallback for non-Chromecast-native streams.</summary>
+public enum CastMode { None, Native, Libvlc }
 
 public partial class MainViewModel : ObservableObject
 {
@@ -520,7 +526,41 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string? _castTargetName;
 
-    public IReadOnlyList<string> CastTargets => _player?.CastTargets ?? [];
+    private CastService? _cast;
+    private CastMode _castMode = CastMode.None;
+    private IReadOnlyList<ChromecastReceiver> _castReceivers = [];
+    private DispatcherTimer? _castStatusTimer;
+    private double _castCurrentSec;
+
+    // Native receivers when discovered, else the libvlc renderer names as a fallback source.
+    public IReadOnlyList<string> CastTargets =>
+        _castReceivers.Count > 0 ? _castReceivers.Select(r => r.Name).ToList() : (_player?.CastTargets ?? []);
+
+    /// <summary>Wire in the native Cast sender and kick off device discovery.</summary>
+    public void SetCastService(CastService cast)
+    {
+        _cast = cast;
+        _ = RefreshCastDevicesAsync();
+    }
+
+    private async Task RefreshCastDevicesAsync()
+    {
+        if (_cast is null) return;
+        try
+        {
+            _castReceivers = await _cast.FindDevicesAsync(TimeSpan.FromSeconds(5));
+            LogService.Info("Native cast discovery", new { count = _castReceivers.Count });
+            Dispatcher.UIThread.Post(() => OnPropertyChanged(nameof(CastTargets)));
+        }
+        catch (Exception ex)
+        {
+            LogService.Warn("Native cast discovery failed", new { error = ex.Message });
+        }
+    }
+
+    private static bool IsHls(string? url) =>
+        url is not null && (url.Contains(".m3u8", StringComparison.OrdinalIgnoreCase) ||
+                            url.Contains("/m3u8", StringComparison.OrdinalIgnoreCase));
 
     [ObservableProperty]
     private double _updateDownloadProgress;
@@ -842,6 +882,13 @@ public partial class MainViewModel : ObservableObject
     private void SelectSubtitle(int id)
     {
         if (_player is null) return;
+        if (_castMode == CastMode.Native && _cast is not null)
+        {
+            CurrentSubtitleTrack = id;
+            _ = _cast.SetActiveTracksAsync(ActiveCastTrackIds()); // live switch, no reload
+            ShowSubtitlePopup = false;
+            return;
+        }
         if (IsCasting)
         {
             if (_isCurrentVod) _resumeToMs = _player.TimeMs;   // resume where we are after the cast rebuild
@@ -858,6 +905,7 @@ public partial class MainViewModel : ObservableObject
 
     public void RefreshAudioTracks()
     {
+        if (_castMode == CastMode.Native) return; // tracks come from the cast status poll
         if (_player is null || !IsPlaying) return;
         AudioTrackItems.Clear();
         foreach (var t in _player.GetAudioTracks())
@@ -869,6 +917,12 @@ public partial class MainViewModel : ObservableObject
     private void SelectAudio(int id)
     {
         if (_player is null) return;
+        if (_castMode == CastMode.Native && _cast is not null)
+        {
+            CurrentAudioTrack = id;
+            _ = _cast.SetActiveTracksAsync(ActiveCastTrackIds()); // live switch, no reload
+            return;
+        }
         if (IsCasting)
         {
             if (_isCurrentVod) _resumeToMs = _player.TimeMs;
@@ -883,15 +937,121 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void CastTo(int index)
+    private async Task CastTo(int index)
     {
         if (_player is null || _currentPlayingUrl is null) return;
-        // Resume the VOD on the cast device; live restarts at the live edge.
+
+        // Native cast for Chromecast-playable (HLS) streams — the TV fetches the URL itself, so
+        // audio/subtitle tracks switch live with no pipeline rebuild.
+        if (_cast is not null && index >= 0 && index < _castReceivers.Count && IsHls(_currentPlayingUrl))
+        {
+            var receiver = _castReceivers[index];
+            var url = _currentPlayingUrl;
+            if (_isCurrentVod) _resumeToMs = _player.TimeMs;
+            _player.Stop(); // TV plays it, not us
+            IsPlaying = false; IsPaused = false;
+            ShowConnectionOverlay = true; ShowBufferingOverlay = true; ConnectionState = "Casting…";
+            try
+            {
+                var status = await _cast.CastAsync(receiver, url, "application/x-mpegurl",
+                    _isCurrentVod ? StreamType.Buffered : StreamType.Live, title: CurrentPlayingTitle);
+                _castMode = CastMode.Native;
+                IsCasting = true;
+                CastTargetName = receiver.Name;
+                PopulateCastTracks(status);
+                StartCastStatusPolling();
+                LogService.Info("Native cast started", new { device = receiver.Name, url });
+            }
+            catch (Exception ex)
+            {
+                LogService.Error("Native cast failed", new { error = ex.Message });
+                StatusText = $"Cast failed: {ex.Message}";
+                _castMode = CastMode.None;
+                ShowConnectionOverlay = false; ShowBufferingOverlay = false;
+            }
+            return;
+        }
+
+        // Fallback: libvlc renderer cast. Map the chosen device name back to a libvlc renderer.
+        var libvlcIndex = index;
+        if (_castReceivers.Count > 0 && index >= 0 && index < _castReceivers.Count)
+        {
+            var name = _castReceivers[index].Name;
+            libvlcIndex = _player.CastTargets.ToList().FindIndex(n => string.Equals(n, name, StringComparison.OrdinalIgnoreCase));
+            if (libvlcIndex < 0)
+            {
+                StatusText = "This stream can't be cast to that device (unsupported format).";
+                return;
+            }
+        }
         if (_isCurrentVod) _resumeToMs = _player.TimeMs;
-        _player.CastTo(index);
+        _player.CastTo(libvlcIndex);
+        _castMode = CastMode.Libvlc;
         IsCasting = _player.IsCasting;
         CastTargetName = _player.CastTargetName;
         BeginCastWindow();
+    }
+
+    private void StartCastStatusPolling()
+    {
+        _castStatusTimer ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        _castStatusTimer.Tick -= OnCastStatusTick;
+        _castStatusTimer.Tick += OnCastStatusTick;
+        _castStatusTimer.Start();
+    }
+
+    private async void OnCastStatusTick(object? sender, EventArgs e)
+    {
+        if (_cast is null || _castMode != CastMode.Native) { _castStatusTimer?.Stop(); return; }
+        try
+        {
+            var status = await _cast.GetStatusAsync();
+            if (status is null) return;
+            _castCurrentSec = status.CurrentTime;
+            if (status.PlayerState == PlayerStateType.Playing)
+            {
+                ShowConnectionOverlay = false; ShowBufferingOverlay = false;
+                IsPlaying = true; IsPaused = false; _playbackConfirmed = true; _awaitingPlayback = false;
+            }
+            else if (status.PlayerState == PlayerStateType.Paused)
+            {
+                IsPlaying = false; IsPaused = true;
+            }
+            // HLS track list appears once the receiver parses the manifest.
+            if (AudioTrackItems.Count == 0 && SubtitleTrackItems.Count <= 1)
+                PopulateCastTracks(status);
+        }
+        catch (Exception ex)
+        {
+            LogService.Warn("Cast status poll failed", new { error = ex.Message });
+        }
+    }
+
+    private void PopulateCastTracks(MediaStatus? status)
+    {
+        var tracks = status?.Media?.Tracks;
+        if (tracks is null || tracks.Length == 0) return;
+        AudioTrackItems.Clear();
+        SubtitleTrackItems.Clear();
+        SubtitleTrackItems.Add(new SubtitleTrackItem(-1, "Off"));
+        foreach (var t in tracks)
+        {
+            var name = t.Name ?? t.Language ?? $"Track {t.TrackId}";
+            if (t.Type == TrackType.AUDIO) AudioTrackItems.Add(new SubtitleTrackItem(t.TrackId, name));
+            else if (t.Type == TrackType.TEXT) SubtitleTrackItems.Add(new SubtitleTrackItem(t.TrackId, name));
+        }
+        var active = status!.ActiveTrackIds ?? [];
+        CurrentAudioTrack = AudioTrackItems.Select(a => a.Id).FirstOrDefault(id => active.Contains(id), -1);
+        CurrentSubtitleTrack = active.FirstOrDefault(id => SubtitleTrackItems.Any(s => s.Id == id && id >= 0), -1);
+    }
+
+    // Combined active track ids the receiver should show (chosen audio + subtitle, negatives dropped).
+    private int[] ActiveCastTrackIds()
+    {
+        var ids = new List<int>();
+        if (CurrentAudioTrack >= 0) ids.Add(CurrentAudioTrack);
+        if (CurrentSubtitleTrack >= 0) ids.Add(CurrentSubtitleTrack);
+        return [.. ids];
     }
 
     /// <summary>A cast (re)start restarts the stream, so give it a fresh watchdog/confirmation window —
@@ -907,11 +1067,28 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void StopCasting()
+    private async Task StopCasting()
     {
         if (_player is null) return;
+        if (_castMode == CastMode.Native && _cast is not null)
+        {
+            _castStatusTimer?.Stop();
+            if (_isCurrentVod) _resumeToMs = (long)(_castCurrentSec * 1000);
+            await _cast.DisconnectAsync();
+            _castMode = CastMode.None;
+            IsCasting = false;
+            CastTargetName = null;
+            // Resume locally where the cast left off.
+            if (_currentPlayingUrl is not null)
+            {
+                ShowConnectionOverlay = true; ShowBufferingOverlay = true; ConnectionState = "Connecting...";
+                _player.Play(_currentPlayingUrl);
+            }
+            return;
+        }
         if (_isCurrentVod && _currentPlayingUrl is not null) _resumeToMs = _player.TimeMs;
         _player.StopCasting();
+        _castMode = CastMode.None;
         IsCasting = false;
         CastTargetName = null;
     }
@@ -920,7 +1097,16 @@ public partial class MainViewModel : ObservableObject
     private void EndCasting()
     {
         if (!IsCasting) return;
-        _player?.ClearRenderer();
+        if (_castMode == CastMode.Native)
+        {
+            _castStatusTimer?.Stop();
+            _ = _cast?.DisconnectAsync();
+        }
+        else
+        {
+            _player?.ClearRenderer();
+        }
+        _castMode = CastMode.None;
         IsCasting = false;
         CastTargetName = null;
     }
@@ -1251,6 +1437,12 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void TogglePlayPause()
     {
+        if (_castMode == CastMode.Native && _cast is not null)
+        {
+            if (IsPlaying) { _ = _cast.PauseAsync(); IsPaused = true; IsPlaying = false; }
+            else { _ = _cast.PlayAsync(); IsPlaying = true; IsPaused = false; }
+            return;
+        }
         if (_player is null) return;
         try
         {
@@ -1281,12 +1473,22 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void Rewind()
     {
+        if (_castMode == CastMode.Native && _cast is not null)
+        {
+            _ = _cast.SeekAsync(Math.Max(0, _castCurrentSec - 10));
+            return;
+        }
         _player?.Seek(-10000);
     }
 
     [RelayCommand]
     private void Forward()
     {
+        if (_castMode == CastMode.Native && _cast is not null)
+        {
+            _ = _cast.SeekAsync(_castCurrentSec + 10);
+            return;
+        }
         _player?.Seek(10000);
     }
 
