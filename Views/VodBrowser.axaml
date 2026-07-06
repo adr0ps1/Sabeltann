@@ -22,7 +22,7 @@
                             <Button Background="{StaticResource Surface}" BorderThickness="1" BorderBrush="{StaticResource Line}"
                                     CornerRadius="10" Padding="0" Margin="0,0,10,4" Width="120"
                                     EffectiveViewportChanged="OnPosterViewport"
-                                    Command="{Binding #Root.DataContext.ResumeMovieCommand}"
+                                    Command="{Binding #Root.DataContext.PlayMovieCommand}"
                                     CommandParameter="{Binding .}">
                                 <Button.ContextMenu>
                                     <ContextMenu>
