@@ -43,6 +43,8 @@ public class SettingsData
     public XtreamSettings? LastXtream { get; set; }
     public List<string> FavoriteUrls { get; set; } = [];
     public string? LastChannelUrl { get; set; }
+    /// <summary>Last-opened section (live/movies/series) so login lands there directly.</summary>
+    public string? LastSection { get; set; }
     public string? LastCategoryName { get; set; }
     public int DefaultVolume { get; set; } = 100;
     public bool AutoLoadLastSession { get; set; } = true;

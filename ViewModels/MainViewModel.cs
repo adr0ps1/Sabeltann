@@ -145,9 +145,24 @@ public partial class MainViewModel : ObservableObject
 
     // Morphing-toolbar segmented tabs. Movies/Series need their async browser init,
     // not a bare Mode set — reuse the existing browser entrypoints.
-    [RelayCommand] private void SwitchToLive() => ShowLiveChannels();
-    [RelayCommand] private Task SwitchToMovies() => ShowMoviesBrowserAsync();
-    [RelayCommand] private Task SwitchToSeries() => ShowSeriesBrowserAsync();
+    [RelayCommand] private void SwitchToLive() { SaveSection("live"); ShowLiveChannels(); }
+    [RelayCommand] private Task SwitchToMovies() { SaveSection("movies"); return ShowMoviesBrowserAsync(); }
+    [RelayCommand] private Task SwitchToSeries() { SaveSection("series"); return ShowSeriesBrowserAsync(); }
+
+    private void SaveSection(string section) => _settingsData = MergeAndSave(s => s.LastSection = section);
+
+    // Land straight in the last-used section after connecting — the old content-picker screen was
+    // redundant since the top tabs switch sections anyway.
+    private async Task AutoLaunchAsync()
+    {
+        await ShowPlaylistContentAsync();
+        switch (_settingsData.LastSection)
+        {
+            case "movies": await ShowMoviesBrowserAsync(); break;
+            case "series": await ShowSeriesBrowserAsync(); break;
+            default: ShowLiveChannels(); break;
+        }
+    }
 
     public void ShowLiveChannels()
     {
@@ -1004,8 +1019,8 @@ public partial class MainViewModel : ObservableObject
             _seriesChannels = [];
             IsConnected = true;
             ConnectionLabel = $"{playlist.Channels.Count:N0} channels";
-            Mode = ContentMode.Picker;
             MergeAndSave(s => { s.LastSourceType = "url"; s.LastSourceUrl = url; });
+            await AutoLaunchAsync();
         }
         catch (Exception ex)
         {
@@ -1046,8 +1061,8 @@ public partial class MainViewModel : ObservableObject
             _seriesChannels = [];
             IsConnected = true;
             ConnectionLabel = $"{playlist.Channels.Count:N0} channels";
-            Mode = ContentMode.Picker;
             MergeAndSave(s => { s.LastSourceType = "file"; s.LastSourceFile = path; });
+            await AutoLaunchAsync();
         }
         catch (Exception ex)
         {
@@ -1066,7 +1081,6 @@ public partial class MainViewModel : ObservableObject
             _pendingXtreamInfo = info;
             _activeXtreamInfo = info;
             OnPropertyChanged(nameof(CanUseTimeline));
-            Mode = ContentMode.Picker;
 
             MergeAndSave(s =>
             {
@@ -1079,6 +1093,7 @@ public partial class MainViewModel : ObservableObject
                 };
             });
             LogService.Info("Xtream authentication successful");
+            await AutoLaunchAsync();
         }
         catch (Exception ex)
         {
@@ -1114,7 +1129,7 @@ public partial class MainViewModel : ObservableObject
     private void GoBackToPicker()
     {
         LogService.Info("GoBackToPicker called", new { mode = Mode.ToString(), isPlaying = IsPlaying, isPaused = IsPaused });
-        Mode = ContentMode.Picker;
+        Mode = ContentMode.Welcome;
         IsBrowsing = false;
         FilteredChannels.Clear();
         Categories.Clear();
@@ -1138,7 +1153,7 @@ public partial class MainViewModel : ObservableObject
         }
         else
         {
-            Mode = ContentMode.Picker;
+            Mode = ContentMode.Welcome;
             IsBrowsing = false;
             FilteredChannels.Clear();
             Categories.Clear();

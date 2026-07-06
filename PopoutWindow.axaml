@@ -2,8 +2,66 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Sabeltann.PopoutWindow"
         Title="Sabeltann — Pop-out"
-        Width="480" Height="270" MinWidth="240" MinHeight="150"
-        Topmost="True" Background="#0B0C0F">
-    <!-- Shares MainViewModel's VideoBitmap; frames are pushed via InvalidateVideo() from MainWindow. -->
-    <Image x:Name="PopoutImage" Source="{Binding VideoBitmap}" Stretch="Uniform"/>
+        Width="480" Height="300" MinWidth="260" MinHeight="180"
+        Topmost="True" Background="#0B0C0F"
+        WindowDecorations="None">
+
+    <Window.Styles>
+        <Style Selector="Button.PopBtn">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Width" Value="34"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Foreground" Value="{StaticResource Text}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="#22FFFFFF"/>
+            </Style>
+        </Style>
+        <Style Selector="Button.CloseBtn:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource Danger}"/>
+            <Setter Property="TextElement.Foreground" Value="#FFFFFF"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Drag strip (moves the window) + in-window close button -->
+        <Grid Grid.Row="0" x:Name="DragStrip" Height="28" Background="#14161B"
+              ColumnDefinitions="*,Auto" PointerPressed="OnDragStrip">
+            <TextBlock Grid.Column="0" Text="Pop-out" Foreground="{StaticResource Muted}" FontSize="11"
+                       VerticalAlignment="Center" Margin="10,0"/>
+            <Button Grid.Column="1" Classes="PopBtn CloseBtn" Content="✕" FontSize="12"
+                    Click="OnClosePopout" ToolTip.Tip="Return video to main window"/>
+        </Grid>
+
+        <!-- Shared VideoBitmap; frames pushed via InvalidateVideo() from MainWindow -->
+        <Image Grid.Row="1" x:Name="PopoutImage" Source="{Binding VideoBitmap}" Stretch="Uniform"/>
+
+        <!-- Media controls (drive the same player as the main window) -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center"
+                    Background="#14161B" Spacing="2">
+            <Button Classes="PopBtn" Content="⏪" Command="{Binding RewindCommand}" ToolTip.Tip="Rewind 10s"/>
+            <Button Classes="PopBtn" Content="{Binding PlayPauseSymbol}" Command="{Binding TogglePlayPauseCommand}"
+                    ToolTip.Tip="Play / Pause"/>
+            <Button Classes="PopBtn" Content="⏹" Command="{Binding StopPlaybackCommand}" ToolTip.Tip="Stop"/>
+            <Button Classes="PopBtn" Content="⏩" Command="{Binding ForwardCommand}" ToolTip.Tip="Forward 10s"/>
+        </StackPanel>
+
+        <!-- Resize grips (WindowDecorations=None removes native resize borders) -->
+        <Grid Grid.Row="0" Grid.RowSpan="3" ZIndex="100">
+            <Border HorizontalAlignment="Left" VerticalAlignment="Stretch" Width="5" Background="Transparent"
+                    Cursor="SizeWestEast" Tag="West" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Right" VerticalAlignment="Stretch" Width="5" Background="Transparent"
+                    Cursor="SizeWestEast" Tag="East" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="5" Background="Transparent"
+                    Cursor="SizeNorthSouth" Tag="South" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="10" Height="10" Background="Transparent"
+                    Cursor="BottomRightCorner" Tag="SouthEast" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="10" Height="10" Background="Transparent"
+                    Cursor="BottomLeftCorner" Tag="SouthWest" PointerPressed="OnResizePressed"/>
+        </Grid>
+    </Grid>
 </Window>
