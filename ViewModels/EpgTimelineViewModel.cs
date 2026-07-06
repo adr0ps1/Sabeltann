@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Data.Converters;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sabeltann.Models;
@@ -39,6 +40,14 @@ public partial class EpgTimelineViewModel : ObservableObject
     private const int MaxRows = 300;
 
     private readonly EpgService _epg = new();
+    private readonly DispatcherTimer _clock;
+
+    public EpgTimelineViewModel()
+    {
+        // Advance the now-line so it stays accurate to the minute while the timeline is open.
+        _clock = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
+        _clock.Tick += (_, _) => UpdateNowLine();
+    }
 
     /// <summary>Positions the now-line at its pixel offset inside the timeline canvas.</summary>
     public static readonly FuncValueConverter<double, Thickness> LeftMargin = new(px => new Thickness(px, 0, 0, 0));
@@ -79,6 +88,18 @@ public partial class EpgTimelineViewModel : ObservableObject
         Status = HasData
             ? $"{Rows.Count} channels with guide data"
             : "No EPG data available for this source.";
+
+        if (HasData) _clock.Start();
+    }
+
+    /// <summary>Stop the now-line clock when the timeline is hidden.</summary>
+    public void StopClock() => _clock.Stop();
+
+    private void UpdateNowLine()
+    {
+        if (TotalWidth <= 0) return;
+        var left = (DateTime.UtcNow - _origin).TotalMinutes * PxPerMinute;
+        NowLineLeft = Math.Clamp(left, 0, TotalWidth);
     }
 
     private void Build(Dictionary<string, List<Programme>> guide, IReadOnlyList<ChannelListItemViewModel> channels)

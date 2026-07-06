@@ -665,7 +665,7 @@ public partial class MainViewModel : ObservableObject
     {
         DebugStats = new DebugStatsViewModel(null);
         MovieDetail.BackRequested += () => Mode = _detailReturnMode;
-        EpgTimeline.PlayChannelRequested += ch => { IsTimeline = false; SelectedChannel = ch; };
+        EpgTimeline.PlayChannelRequested += ch => { IsTimeline = false; EpgTimeline.StopClock(); SelectedChannel = ch; };
 
         _updateService.UpdateReady += version =>
         {
@@ -694,6 +694,8 @@ public partial class MainViewModel : ObservableObject
         if (_activeXtreamInfo is null) { IsTimeline = false; return; }
         if (IsTimeline)
             await EpgTimeline.LoadAsync(_activeXtreamInfo, _liveChannels);
+        else
+            EpgTimeline.StopClock();
     }
 
     partial void OnSelectedCategoryChanged(CategoryViewModel? value)

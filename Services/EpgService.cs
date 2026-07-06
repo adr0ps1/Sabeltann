@@ -1,5 +1,7 @@
-using System.Diagnostics;
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using System.Xml.Linq;
 using Sabeltann.Models;
 
@@ -16,24 +18,62 @@ public sealed class EpgService
 {
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(30) };
 
+    private static readonly string CacheDir = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sabeltann", "epgcache");
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(3);
+
     static EpgService()
     {
 #if DEBUG
-        SelfCheck();
+        SelfCheck(); // throws (not a modal assert) so a parser regression crashes fast, never hangs the UI
 #endif
     }
 
     public async Task<Dictionary<string, List<Programme>>> FetchAsync(string xmltvUrl, CancellationToken ct = default)
     {
+        var cacheKey = CacheKey(xmltvUrl);
+        if (TryReadCache(cacheKey) is { } cached)
+            return cached;
+
         try
         {
             await using var stream = await Http.GetStreamAsync(xmltvUrl, ct);
-            return Parse(stream);
+            var guide = Parse(stream);
+            WriteCache(cacheKey, guide);
+            return guide;
         }
         catch (Exception ex)
         {
             LogService.Warn("EPG fetch failed", new { error = ex.Message });
             return [];
+        }
+    }
+
+    private static string CacheKey(string url)
+        => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(url)))[..12].ToLowerInvariant();
+
+    private static Dictionary<string, List<Programme>>? TryReadCache(string key)
+    {
+        try
+        {
+            var path = Path.Combine(CacheDir, $"{key}.json");
+            if (!File.Exists(path) || DateTime.UtcNow - File.GetLastWriteTimeUtc(path) > CacheTtl)
+                return null;
+            return JsonSerializer.Deserialize<Dictionary<string, List<Programme>>>(File.ReadAllText(path));
+        }
+        catch { return null; }
+    }
+
+    private static void WriteCache(string key, Dictionary<string, List<Programme>> guide)
+    {
+        try
+        {
+            Directory.CreateDirectory(CacheDir);
+            File.WriteAllText(Path.Combine(CacheDir, $"{key}.json"), JsonSerializer.Serialize(guide));
+        }
+        catch (Exception ex)
+        {
+            LogService.Warn("EPG cache write failed", new { error = ex.Message });
         }
     }
 
@@ -59,8 +99,9 @@ public sealed class EpgService
                 map[channel] = list = [];
             list.Add(new Programme(channel, start.Value, stop.Value, title, desc));
         }
-        foreach (var list in map.Values)
-            list.Sort((a, b) => a.StartUtc.CompareTo(b.StartUtc));
+        // Stable order by start so equal-start programmes keep document order.
+        foreach (var key in map.Keys.ToList())
+            map[key] = map[key].OrderBy(p => p.StartUtc).ToList();
         return map;
     }
 
@@ -90,17 +131,22 @@ public sealed class EpgService
               <programme start="20260705180000 +0100" stop="20260705190000 +0100" channel="a">
                 <title>News</title><desc>Headlines</desc>
               </programme>
-              <programme start="20260705170000 +0000" stop="20260705173000 +0000" channel="a">
+              <programme start="20260705160000 +0000" stop="20260705163000 +0000" channel="a">
                 <title>Weather</title>
               </programme>
               <programme start="bad" stop="also-bad" channel="a"><title>Skip me</title></programme>
             </tv>
             """;
         var map = Parse(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(sample)));
-        Debug.Assert(map.Count == 1, "one channel");
-        Debug.Assert(map["a"].Count == 2, "two valid programmes, malformed one skipped");
-        Debug.Assert(map["a"][0].Title == "Weather", "sorted by start (17:00 UTC before 17:00+01:00=18:00)");
-        Debug.Assert(ParseXmltvTime("20260705180000 +0100") == new DateTime(2026, 7, 5, 17, 0, 0, DateTimeKind.Utc),
-            "offset applied to reach UTC");
+        Check(map.Count == 1, "expected one channel");
+        Check(map["a"].Count == 2, "expected two valid programmes (malformed one skipped)");
+        Check(map["a"][0].Title == "Weather", "expected sort by start: 16:00Z before 18:00+01:00=17:00Z");
+        Check(ParseXmltvTime("20260705180000 +0100") == new DateTime(2026, 7, 5, 17, 0, 0, DateTimeKind.Utc),
+            "expected +0100 offset applied to reach UTC");
+    }
+
+    private static void Check(bool condition, string message)
+    {
+        if (!condition) throw new InvalidOperationException($"EpgService self-check failed: {message}");
     }
 }
