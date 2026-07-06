@@ -389,6 +389,7 @@ public partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsMovieDetail))]
     [NotifyPropertyChangedFor(nameof(IsVodContent))]
     [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
+    [NotifyPropertyChangedFor(nameof(ShowTimeline))]
     [NotifyPropertyChangedFor(nameof(IsCategoryBarVisible))]
     [NotifyPropertyChangedFor(nameof(ShowBackButton))]
     [NotifyPropertyChangedFor(nameof(ShowCategoryBar))]
@@ -407,7 +408,9 @@ public partial class MainViewModel : ObservableObject
     public bool IsSeries => Mode == ContentMode.Series;
     public bool IsMovieDetail => Mode == ContentMode.MovieDetail;
     public bool IsVodContent => Mode is ContentMode.Movies or ContentMode.Series;
-    public bool ShowChannelGrid => Mode == ContentMode.LiveTv && IsBrowsing;
+    public bool ShowChannelGrid => Mode == ContentMode.LiveTv && IsBrowsing && !IsTimeline;
+    public bool ShowTimeline => Mode == ContentMode.LiveTv && IsBrowsing && IsTimeline;
+    public bool CanUseTimeline => _activeXtreamInfo is not null;
     public bool IsCategoryBarVisible => Mode == ContentMode.LiveTv;
     public bool ShowBackButton => Mode is not ContentMode.Welcome and not ContentMode.Picker;
     public bool ShowCategoryBar => Mode is ContentMode.Welcome or ContentMode.Picker or ContentMode.LiveTv;
@@ -425,7 +428,13 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
+    [NotifyPropertyChangedFor(nameof(ShowTimeline))]
     private bool _isBrowsing;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
+    [NotifyPropertyChangedFor(nameof(ShowTimeline))]
+    private bool _isTimeline;
 
     [ObservableProperty]
     private int _channelCount;
@@ -464,7 +473,10 @@ public partial class MainViewModel : ObservableObject
 
     public VodBrowserViewModel VodBrowser { get; } = new();
     public SeriesBrowserViewModel SeriesBrowser { get; } = new();
+    public EpgTimelineViewModel EpgTimeline { get; } = new();
     public MovieDetailViewModel MovieDetail { get; } = new(new OMDbService(null));
+
+    private XtreamConnectionInfo? _activeXtreamInfo;
 
     private XtreamConnectionInfo? _pendingXtreamInfo;
     private M3UPlaylist? _pendingPlaylist;
@@ -653,6 +665,7 @@ public partial class MainViewModel : ObservableObject
     {
         DebugStats = new DebugStatsViewModel(null);
         MovieDetail.BackRequested += () => Mode = _detailReturnMode;
+        EpgTimeline.PlayChannelRequested += ch => { IsTimeline = false; EpgTimeline.StopClock(); SelectedChannel = ch; };
 
         _updateService.UpdateReady += version =>
         {
@@ -669,6 +682,20 @@ public partial class MainViewModel : ObservableObject
         };
         _updateCheckTimer.AutoReset = true;
         _updateCheckTimer.Start();
+    }
+
+    /// <summary>
+    /// Load the guide when the timeline is switched on. The toggle button's IsChecked two-way binding
+    /// already flipped <see cref="IsTimeline"/> before this runs, so we only react to the new state.
+    /// </summary>
+    [RelayCommand]
+    private async Task ToggleTimeline()
+    {
+        if (_activeXtreamInfo is null) { IsTimeline = false; return; }
+        if (IsTimeline)
+            await EpgTimeline.LoadAsync(_activeXtreamInfo, _liveChannels);
+        else
+            EpgTimeline.StopClock();
     }
 
     partial void OnSelectedCategoryChanged(CategoryViewModel? value)
@@ -1037,6 +1064,8 @@ public partial class MainViewModel : ObservableObject
             StatusText = "Authenticating...";
             await _xtream.ValidateAsync(info);
             _pendingXtreamInfo = info;
+            _activeXtreamInfo = info;
+            OnPropertyChanged(nameof(CanUseTimeline));
             Mode = ContentMode.Picker;
 
             MergeAndSave(s =>

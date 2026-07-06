@@ -1,0 +1,120 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sabeltann.ViewModels"
+             x:Name="TimelineRoot"
+             x:Class="Sabeltann.Views.EpgTimeline">
+    <Grid Background="{StaticResource Bg}" RowDefinitions="Auto,*">
+
+        <!-- Time ruler (frozen vertically, scrolls horizontally with the body) -->
+        <Grid Grid.Row="0" ColumnDefinitions="160,*" Height="26" Background="{StaticResource Surface}">
+            <TextBlock Grid.Column="0" Text="Channel" Foreground="{StaticResource Muted}" FontSize="11"
+                       VerticalAlignment="Center" Margin="12,0"/>
+            <ScrollViewer Grid.Column="1" x:Name="RulerScroll" HorizontalScrollBarVisibility="Hidden"
+                          VerticalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding HourMarkers}" Width="{Binding TotalWidth}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><Canvas Height="26"/></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.Styles>
+                        <Style Selector="ContentPresenter">
+                            <Setter Property="Canvas.Left" Value="{Binding Left}"/>
+                        </Style>
+                    </ItemsControl.Styles>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:EpgHourMarker}">
+                            <Border BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" Height="26">
+                                <TextBlock Text="{Binding Label}" Foreground="{StaticResource Sub}" FontSize="11"
+                                           Margin="6,0,0,0" VerticalAlignment="Center"/>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Body: frozen channel names + scrollable timeline -->
+        <Grid Grid.Row="1" ColumnDefinitions="160,*">
+            <!-- Channel names (scroll vertically in sync with the timeline) -->
+            <ScrollViewer Grid.Column="0" x:Name="NameScroll" HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="Hidden">
+                <ItemsControl ItemsSource="{Binding Rows}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:EpgRowViewModel}">
+                            <Border Height="54" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,1"
+                                    Background="{StaticResource Surface}" Padding="12,0">
+                                <TextBlock Text="{Binding Name}" Foreground="{StaticResource Text}" FontSize="12"
+                                           FontWeight="SemiBold" VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis"/>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Timeline blocks + now-line -->
+            <ScrollViewer Grid.Column="1" x:Name="BodyScroll"
+                          HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <Grid Width="{Binding TotalWidth}">
+                    <ItemsControl ItemsSource="{Binding Rows}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:EpgRowViewModel}">
+                                <ItemsControl ItemsSource="{Binding Programmes}" Height="54">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate><Canvas Height="54"/></ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.Styles>
+                                        <Style Selector="ContentPresenter">
+                                            <Setter Property="Canvas.Left" Value="{Binding Left}"/>
+                                        </Style>
+                                        <Style Selector="Button.epgblock">
+                                            <Setter Property="Background" Value="{StaticResource Surface2}"/>
+                                            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                        </Style>
+                                        <!-- Currently-airing programme -->
+                                        <Style Selector="Button.epgblock.now">
+                                            <Setter Property="Background" Value="{StaticResource AccentSoft}"/>
+                                            <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+                                        </Style>
+                                    </ItemsControl.Styles>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:EpgProgrammeViewModel}">
+                                            <Button Classes="epgblock" Classes.now="{Binding IsNow}"
+                                                    Width="{Binding Width}" Height="50" Padding="0" Margin="0,2"
+                                                    HorizontalContentAlignment="Stretch"
+                                                    BorderThickness="1" CornerRadius="5"
+                                                    Command="{Binding #TimelineRoot.DataContext.PlayProgrammeCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip.Tip="{Binding Description}">
+                                                <StackPanel Margin="6,3" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Title}" Foreground="{StaticResource Text}"
+                                                               FontSize="11" FontWeight="SemiBold"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding TimeRange}" Foreground="{StaticResource Muted}"
+                                                               FontSize="10" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Current-time indicator across all rows -->
+                    <Rectangle Width="2" Fill="{StaticResource Accent}" HorizontalAlignment="Left"
+                               VerticalAlignment="Stretch" IsHitTestVisible="False"
+                               Margin="{Binding NowLineLeft, Converter={x:Static vm:EpgTimelineViewModel.LeftMargin}}"/>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Fallback + loading -->
+        <StackPanel Grid.Row="1" IsVisible="{Binding !HasData}" HorizontalAlignment="Center"
+                    VerticalAlignment="Center" Spacing="8">
+            <TextBlock Text="{Binding Status}" Foreground="{StaticResource Muted}" FontSize="14"
+                       HorizontalAlignment="Center"/>
+        </StackPanel>
+        <ProgressBar Grid.Row="1" IsIndeterminate="True" IsVisible="{Binding IsLoading}"
+                     VerticalAlignment="Top" Height="3" Foreground="{StaticResource Accent}"/>
+    </Grid>
+</UserControl>

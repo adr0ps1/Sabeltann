@@ -265,6 +265,9 @@
                                   VerticalAlignment="Center"/>
                         <ToggleButton Grid.Column="3" IsChecked="{Binding ShowFavoritesOnly}" Classes="Tab"
                                       Content="★" Margin="4,0" ToolTip.Tip="Favorites only"/>
+                        <ToggleButton Grid.Column="4" IsChecked="{Binding IsTimeline}" Classes="Tab"
+                                      Content="🗓 Guide" Margin="4,0" Command="{Binding ToggleTimelineCommand}"
+                                      IsVisible="{Binding CanUseTimeline}" ToolTip.Tip="EPG timeline (TV guide)"/>
                         <TextBox Grid.Column="5" Text="{Binding SearchText}" PlaceholderText="⌕ Search channels…"
                                  Background="{StaticResource InputBg}" Foreground="{StaticResource Text}"
                                  BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8"
@@ -430,6 +433,11 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
+
+                <!-- EPG timeline for Live TV (toggled with the channel grid) -->
+                <Border IsVisible="{Binding ShowTimeline}" Background="{StaticResource Bg}">
+                    <views:EpgTimeline DataContext="{Binding EpgTimeline}"/>
+                </Border>
 
                 <Border x:Name="VideoBorder" Background="#0B0C0F" IsVisible="{Binding ShowVideo}" ZIndex="1">
                     <Grid>
