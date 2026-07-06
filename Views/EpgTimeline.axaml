@@ -66,14 +66,22 @@
                                         <Style Selector="ContentPresenter">
                                             <Setter Property="Canvas.Left" Value="{Binding Left}"/>
                                         </Style>
+                                        <Style Selector="Button.epgblock">
+                                            <Setter Property="Background" Value="{StaticResource Surface2}"/>
+                                            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+                                        </Style>
+                                        <!-- Currently-airing programme -->
+                                        <Style Selector="Button.epgblock.now">
+                                            <Setter Property="Background" Value="{StaticResource AccentSoft}"/>
+                                            <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+                                        </Style>
                                     </ItemsControl.Styles>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="{x:Type vm:EpgProgrammeViewModel}">
-                                            <Button Width="{Binding Width}" Height="50" Padding="0" Margin="0,2"
+                                            <Button Classes="epgblock" Classes.now="{Binding IsNow}"
+                                                    Width="{Binding Width}" Height="50" Padding="0" Margin="0,2"
                                                     HorizontalContentAlignment="Stretch"
-                                                    Background="{StaticResource Surface2}"
-                                                    BorderBrush="{StaticResource Line}" BorderThickness="1"
-                                                    CornerRadius="5"
+                                                    BorderThickness="1" CornerRadius="5"
                                                     Command="{Binding #TimelineRoot.DataContext.PlayProgrammeCommand}"
                                                     CommandParameter="{Binding}"
                                                     ToolTip.Tip="{Binding Description}">
