@@ -15,6 +15,7 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _vm;
     private readonly PlaybackService _player;
+    private readonly CastService _cast = new();
     private readonly DispatcherTimer _transportAutoHide;
     private readonly DispatcherTimer _volumeHideTimer;
     private bool _isFullscreen;
@@ -28,6 +29,7 @@ public partial class MainWindow : Window
         _player = new PlaybackService();
         _vm = new MainViewModel();
         _vm.SetPlayer(_player);
+        _vm.SetCastService(_cast);
         _player.FrameRendered += () => { VideoImage?.InvalidateVisual(); _popout?.InvalidateVideo(); };
         _vm.ToggleFullscreenRequested += ToggleFullscreen;
         _vm.PropertyChanged += OnVmPropertyChanged;
@@ -461,6 +463,7 @@ public partial class MainWindow : Window
         _popout?.Close();
         _vm.SaveVodProgress();
         _vm.DebugStats.Stop();
+        _ = _cast.DisposeAsync();
         _player.Dispose();
         ImageService.Shutdown();
         _vm.GetUpdateService().ApplyPendingOnExit(restart: false);
