@@ -58,6 +58,7 @@ public partial class MainWindow : Window
 
         LoadPirateIcon();
         _vm.LoadLastSession();
+        RestoreWindowSize();
 
         _vm.PropertyChanged += (_, e) =>
         {
@@ -475,8 +476,23 @@ public partial class MainWindow : Window
         }
     }
 
+    // Restore the last windowed size; ignore junk/too-small saved values. Size only — position is
+    // left to default centering so the window can't be restored off-screen.
+    private void RestoreWindowSize()
+    {
+        var s = _vm.GetSettings();
+        if (s.WindowWidth >= 400 && s.WindowHeight >= 300)
+        {
+            Width = s.WindowWidth;
+            Height = s.WindowHeight;
+        }
+    }
+
     protected override void OnClosed(EventArgs e)
     {
+        // Only persist a real windowed size — not a maximized/fullscreen/minimized frame.
+        if (WindowState == WindowState.Normal)
+            _vm.SaveWindowSize(ClientSize.Width, ClientSize.Height);
         _popout?.Close();
         _vm.SaveVodProgress();
         _vm.DebugStats.Stop();

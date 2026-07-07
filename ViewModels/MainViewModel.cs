@@ -1016,6 +1016,9 @@ public partial class MainViewModel : ObservableObject
         });
     }
 
+    public void SaveWindowSize(double width, double height) =>
+        _settingsData = MergeAndSave(s => { s.WindowWidth = width; s.WindowHeight = height; });
+
     private SettingsData MergeAndSave(Action<SettingsData> update)
     {
         var s = _settings.Load();

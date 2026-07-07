@@ -54,6 +54,8 @@ public class SettingsData
     public bool CheckForUpdatesEnabled { get; set; } = true;
     public bool IncludePrerelease { get; set; } = false;
     public DateTime? LastUpdateCheck { get; set; }
+    public double WindowWidth { get; set; }
+    public double WindowHeight { get; set; }
     public Dictionary<string, VodProgressEntry> VodProgress { get; set; } = [];
 }
 
