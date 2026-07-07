@@ -117,7 +117,6 @@ public static class ChannelClassifier
     {
         if (string.IsNullOrEmpty(group)) return false;
         if (DefinitelySeries.Contains(group)) return true;
-        // "contains" check for broader matching
         return group.Contains("series") ||
                group.Contains("reality") ||
                group.Contains("tv show");

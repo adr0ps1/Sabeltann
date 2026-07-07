@@ -14,7 +14,8 @@ public record OMDbResult(
     string? Actors,
     string? Director,
     string? PosterUrl,
-    string? Language
+    string? Language,
+    string? Released = null
 );
 
 public sealed class OMDbService
@@ -43,6 +44,17 @@ public sealed class OMDbService
 
     /// <summary>Updates the key in place so existing holders pick it up (no instance churn).</summary>
     public void SetApiKey(string? apiKey) => _apiKey = apiKey;
+
+    // In-memory memo of cache reads so sorting a whole grid by rating doesn't re-stat the
+    // disk cache for every title on each re-sort. Populated on read and on WriteCache.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, OMDbResult?> MemCache = new();
+
+    /// <summary>
+    /// Returns already-cached OMDb data for a title without ever hitting the network — used by
+    /// rating/date sorting, where titles the user hasn't opened yet simply have no data and sink.
+    /// </summary>
+    public OMDbResult? TryGetCached(string title, string? year)
+        => MemCache.GetOrAdd(ComputeCacheKey(title, year), TryReadCache);
 
     public async Task<OMDbResult?> FetchAsync(string title, string? year, CancellationToken ct = default)
     {
@@ -78,6 +90,7 @@ public sealed class OMDbService
             string? director = GetStringOrNull(root, "Director");
             string? poster = GetStringOrNull(root, "Poster");
             string? language = GetStringOrNull(root, "Language");
+            string? released = GetStringOrNull(root, "Released");
 
             string? rottenTomatoes = null;
             if (root.TryGetProperty("Ratings", out var ratingsEl) &&
@@ -104,7 +117,8 @@ public sealed class OMDbService
                 Actors: NormalizeNa(actors),
                 Director: NormalizeNa(director),
                 PosterUrl: NormalizeNa(poster),
-                Language: NormalizeNa(language)
+                Language: NormalizeNa(language),
+                Released: NormalizeNa(released)
             );
 
             WriteCache(cacheKey, result);
@@ -135,7 +149,9 @@ public sealed class OMDbService
             var path = Path.Combine(CacheDir, $"{cacheKey}.json");
             if (!File.Exists(path))
                 return null;
-            if (File.GetLastWriteTimeUtc(path) < DateTime.UtcNow.AddHours(-24))
+            // Long TTL: ratings/release dates barely change, and a short window would re-burn the
+            // 1000/day OMDb quota every time a grid is re-sorted.
+            if (File.GetLastWriteTimeUtc(path) < DateTime.UtcNow.AddDays(-30))
                 return null;
             var json = File.ReadAllText(path);
             return JsonSerializer.Deserialize<OMDbResult>(json, JsonOpts);
@@ -154,6 +170,7 @@ public sealed class OMDbService
             var path = Path.Combine(CacheDir, $"{cacheKey}.json");
             var json = JsonSerializer.Serialize(result, JsonOpts);
             File.WriteAllText(path, json);
+            MemCache[cacheKey] = result; // keep the sort memo fresh after a lazy fetch
         }
         catch (Exception ex)
         {
@@ -166,4 +183,71 @@ public sealed class OMDbService
 
     private static string? NormalizeNa(string? value)
         => value is null || value.Equals("N/A", StringComparison.OrdinalIgnoreCase) ? null : value;
+
+    // ---- Sort-key parsing (shared by the Movies/Series rating & date sorts) ----
+
+    /// <summary>IMDb 0-10 score as a double, or null if absent/unparsable.</summary>
+    public static double? ParseImdb(string? imdbRating)
+        => double.TryParse(imdbRating, System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : null;
+
+    /// <summary>Rotten Tomatoes "85%" as 0-100, or null.</summary>
+    public static double? ParseRottenTomatoes(string? rt)
+        => rt is not null && rt.EndsWith('%') && int.TryParse(rt[..^1], out var v) ? v : null;
+
+    /// <summary>Combined 0-5 star score: average of whichever of IMDb / RT is present; null if neither.</summary>
+    public static double? CombinedStars(OMDbResult? r)
+    {
+        double sum = 0; int n = 0;
+        if (ParseImdb(r?.ImdbRating) is double i) { sum += i / 10 * 5; n++; }
+        if (ParseRottenTomatoes(r?.RottenTomatoes) is double rt) { sum += rt / 100 * 5; n++; }
+        return n > 0 ? sum / n : null;
+    }
+
+    /// <summary>OMDb "13 Jul 2018" release string as a date, or null.</summary>
+    public static DateTime? ParseReleased(string? released)
+        => DateTime.TryParse(released, System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None, out var d) ? d : null;
+}
+
+/// <summary>
+/// Rating/date sort shared by the Movies and Series browsers. Titles with a sort key (a cached
+/// OMDb rating, or a year for date sort) come first, ordered descending; everything without a key
+/// keeps its original order at the bottom — so an un-fetched grid degrades to provider order
+/// instead of burning the OMDb quota.
+/// </summary>
+public static class VodSorting
+{
+    public const string Default = "Default";
+    public static readonly string[] Options = { Default, "IMDb", "Rotten Tomatoes", "Combined ★", "Release date" };
+
+    public static IEnumerable<T> Apply<T>(IEnumerable<T> items, string? sort, OMDbService omdb,
+        Func<T, string> name, Func<T, string?> year)
+    {
+        if (string.IsNullOrEmpty(sort) || sort == Default) return items;
+
+        Func<T, double?> key = sort switch
+        {
+            "IMDb" => t => OMDbService.ParseImdb(omdb.TryGetCached(name(t), year(t))?.ImdbRating),
+            "Rotten Tomatoes" => t => OMDbService.ParseRottenTomatoes(omdb.TryGetCached(name(t), year(t))?.RottenTomatoes),
+            "Combined ★" => t => OMDbService.CombinedStars(omdb.TryGetCached(name(t), year(t))),
+            "Release date" => t => ReleaseKey(omdb, name(t), year(t)),
+            _ => _ => null,
+        };
+
+        var keyed = items.Select(t => (item: t, k: key(t))).ToList();
+        return keyed.Where(x => x.k is not null).OrderByDescending(x => x.k!.Value).Select(x => x.item)
+            .Concat(keyed.Where(x => x.k is null).Select(x => x.item));
+    }
+
+    // Prefer the cached OMDb release date; fall back to the provider year (free, so date sort
+    // doesn't sink titles just because OMDb hasn't been fetched). Encoded as ticks for ordering.
+    private static double? ReleaseKey(OMDbService omdb, string name, string? year)
+    {
+        if (OMDbService.ParseReleased(omdb.TryGetCached(name, year)?.Released) is DateTime d)
+            return d.Ticks;
+        if (int.TryParse(year, out var y) && y > 1800)
+            return new DateTime(y, 1, 1).Ticks;
+        return null;
+    }
 }

@@ -9,7 +9,7 @@
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
         x:Class="Sabeltann.MainWindow"
         Title="Sabeltann - IPTV Player"
-        Width="960" Height="560"
+        Width="960" Height="680"
         WindowStartupLocation="CenterScreen"
         WindowDecorations="None"
         Background="Transparent"
@@ -75,6 +75,22 @@
             <Setter Property="FontSize" Value="12.5"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Style Selector="^:checked /template/ ContentPresenter">
+                <Setter Property="Background" Value="{StaticResource AccentSoft}"/>
+                <Setter Property="TextElement.Foreground" Value="{StaticResource Accent}"/>
+            </Style>
+        </Style>
+
+        <!-- Nav tab: .active is a one-way projection of the current mode, never user-toggled —
+             so exactly one Live/Movies/Series tab is ever highlighted. -->
+        <Style Selector="Button.NavTab">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource Sub}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style Selector="^.active /template/ ContentPresenter">
                 <Setter Property="Background" Value="{StaticResource AccentSoft}"/>
                 <Setter Property="TextElement.Foreground" Value="{StaticResource Accent}"/>
             </Style>
@@ -254,9 +270,9 @@
                     <Grid IsVisible="{Binding ShowLiveBar}"
                           ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto" VerticalAlignment="Center">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2">
-                            <ToggleButton Classes="Tab" IsChecked="True" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
-                            <ToggleButton Classes="Tab" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
-                            <ToggleButton Classes="Tab" Content="⊞ Series" Command="{Binding SwitchToSeriesCommand}"/>
+                            <Button Classes="NavTab" Classes.active="{Binding IsLiveTv}" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
+                            <Button Classes="NavTab" Classes.active="{Binding IsMovies}" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
+                            <Button Classes="NavTab" Classes.active="{Binding IsSeries}" Content="⊞ Series" Command="{Binding SwitchToSeriesCommand}"/>
                         </StackPanel>
                         <Border Grid.Column="1" Classes="Divider"/>
                         <ComboBox Grid.Column="2" ItemsSource="{Binding Categories}"
@@ -265,6 +281,9 @@
                                   VerticalAlignment="Center"/>
                         <ToggleButton Grid.Column="3" IsChecked="{Binding ShowFavoritesOnly}" Classes="Tab"
                                       Content="★" Margin="4,0" ToolTip.Tip="Favorites only"/>
+                        <ToggleButton Grid.Column="4" IsChecked="{Binding IsTimeline}" Classes="Tab"
+                                      Content="🗓 Guide" Margin="4,0" Command="{Binding ToggleTimelineCommand}"
+                                      IsVisible="{Binding CanUseTimeline}" ToolTip.Tip="EPG timeline (TV guide)"/>
                         <TextBox Grid.Column="5" Text="{Binding SearchText}" PlaceholderText="⌕ Search channels…"
                                  Background="{StaticResource InputBg}" Foreground="{StaticResource Text}"
                                  BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8"
@@ -277,48 +296,57 @@
 
                     <!-- Movies -->
                     <Grid IsVisible="{Binding ShowMoviesBar}"
-                          ColumnDefinitions="Auto,Auto,Auto,*,Auto" VerticalAlignment="Center">
+                          ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*" VerticalAlignment="Center">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2">
-                            <ToggleButton Classes="Tab" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
-                            <ToggleButton Classes="Tab" IsChecked="True" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
-                            <ToggleButton Classes="Tab" Content="⊞ Series" Command="{Binding SwitchToSeriesCommand}"/>
+                            <Button Classes="NavTab" Classes.active="{Binding IsLiveTv}" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
+                            <Button Classes="NavTab" Classes.active="{Binding IsMovies}" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
+                            <Button Classes="NavTab" Classes.active="{Binding IsSeries}" Content="⊞ Series" Command="{Binding SwitchToSeriesCommand}"/>
                         </StackPanel>
                         <Border Grid.Column="1" Classes="Divider"/>
-                        <ComboBox Grid.Column="2" ItemsSource="{Binding VodBrowser.Categories}"
+                        <TextBlock Grid.Column="2" Text="Category:" Foreground="{StaticResource Muted}" FontSize="12"
+                                   VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <ComboBox Grid.Column="3" ItemsSource="{Binding VodBrowser.Categories}"
                                   SelectedItem="{Binding VodBrowser.SelectedCategory}"
-                                  MinWidth="150" MaxWidth="230" FontSize="12" VerticalAlignment="Center"/>
-                        <TextBox Grid.Column="3" Text="{Binding VodBrowser.SearchText}" PlaceholderText="⌕ Search movies…"
+                                  MinWidth="140" MaxWidth="220" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="4" Text="Sort by:" Foreground="{StaticResource Muted}" FontSize="12"
+                                   VerticalAlignment="Center" Margin="12,0,6,0"/>
+                        <ComboBox Grid.Column="5" ItemsSource="{Binding VodBrowser.SortOptions}"
+                                  SelectedItem="{Binding VodBrowser.SelectedSort}"
+                                  MinWidth="120" FontSize="12" VerticalAlignment="Center"
+                                  ToolTip.Tip="Ratings need OMDb; unrated titles sink"/>
+                        <TextBox Grid.Column="6" Text="{Binding VodBrowser.SearchText}" PlaceholderText="⌕ Search movies…"
                                  Background="{StaticResource InputBg}" Foreground="{StaticResource Text}"
                                  BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8"
-                                 FontSize="12" Padding="8,5" Margin="8,0" VerticalAlignment="Center"/>
-                        <Border Grid.Column="4" Classes="CountPill">
-                            <TextBlock Text="{Binding VodBrowser.StatusText}"
-                                       Foreground="{StaticResource Sub}" FontFamily="Consolas" FontSize="11"/>
-                        </Border>
+                                 FontSize="12" Padding="8,5" Margin="12,0,0,0" VerticalAlignment="Center"/>
                     </Grid>
 
                     <!-- Series -->
                     <Grid IsVisible="{Binding ShowSeriesBar}"
-                          ColumnDefinitions="Auto,Auto,Auto,*,Auto" VerticalAlignment="Center">
+                          ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*" VerticalAlignment="Center">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2">
-                            <ToggleButton Classes="Tab" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
-                            <ToggleButton Classes="Tab" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
-                            <ToggleButton Classes="Tab" IsChecked="True" Content="⊞ Series" Command="{Binding SwitchToSeriesCommand}"/>
+                            <Button Classes="NavTab" Classes.active="{Binding IsLiveTv}" Content="▦ Live TV" Command="{Binding SwitchToLiveCommand}"/>
+                            <Button Classes="NavTab" Classes.active="{Binding IsMovies}" Content="▷ Movies" Command="{Binding SwitchToMoviesCommand}"/>
+                            <Button Classes="NavTab" Classes.active="{Binding IsSeries}" Content="⊞ Series" Command="{Binding SwitchToSeriesCommand}"/>
                         </StackPanel>
                         <Border Grid.Column="1" Classes="Divider"/>
-                        <ComboBox Grid.Column="2" ItemsSource="{Binding SeriesBrowser.Categories}"
+                        <TextBlock Grid.Column="2" Text="Category:" Foreground="{StaticResource Muted}" FontSize="12"
+                                   VerticalAlignment="Center" Margin="0,0,6,0" IsVisible="{Binding SeriesBrowser.ShowShows}"/>
+                        <ComboBox Grid.Column="3" ItemsSource="{Binding SeriesBrowser.Categories}"
                                   SelectedItem="{Binding SeriesBrowser.SelectedCategory}"
-                                  MinWidth="150" MaxWidth="230" FontSize="12" VerticalAlignment="Center"
+                                  MinWidth="140" MaxWidth="220" FontSize="12" VerticalAlignment="Center"
                                   IsVisible="{Binding SeriesBrowser.ShowShows}"/>
-                        <TextBox Grid.Column="3" Text="{Binding SeriesBrowser.SearchText}" PlaceholderText="⌕ Search shows…"
+                        <TextBlock Grid.Column="4" Text="Sort by:" Foreground="{StaticResource Muted}" FontSize="12"
+                                   VerticalAlignment="Center" Margin="12,0,6,0" IsVisible="{Binding SeriesBrowser.ShowShows}"/>
+                        <ComboBox Grid.Column="5" ItemsSource="{Binding SeriesBrowser.SortOptions}"
+                                  SelectedItem="{Binding SeriesBrowser.SelectedSort}"
+                                  MinWidth="120" FontSize="12" VerticalAlignment="Center"
+                                  IsVisible="{Binding SeriesBrowser.ShowShows}"
+                                  ToolTip.Tip="Ratings need OMDb; unrated titles sink"/>
+                        <TextBox Grid.Column="6" Text="{Binding SeriesBrowser.SearchText}" PlaceholderText="⌕ Search shows…"
                                  Background="{StaticResource InputBg}" Foreground="{StaticResource Text}"
                                  BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8"
-                                 FontSize="12" Padding="8,5" Margin="8,0" VerticalAlignment="Center"
+                                 FontSize="12" Padding="8,5" Margin="12,0,0,0" VerticalAlignment="Center"
                                  IsVisible="{Binding SeriesBrowser.ShowShows}"/>
-                        <Border Grid.Column="4" Classes="CountPill">
-                            <TextBlock Text="{Binding SeriesBrowser.StatusText}"
-                                       Foreground="{StaticResource Sub}" FontFamily="Consolas" FontSize="11"/>
-                        </Border>
                     </Grid>
 
                     <!-- Movie/Series detail -->
@@ -422,8 +450,25 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
+                <!-- EPG timeline for Live TV (toggled with the channel grid) -->
+                <Border IsVisible="{Binding ShowTimeline}" Background="{StaticResource Bg}">
+                    <views:EpgTimeline DataContext="{Binding EpgTimeline}"/>
+                </Border>
+
                 <Border x:Name="VideoBorder" Background="#0B0C0F" IsVisible="{Binding ShowVideo}" ZIndex="1">
-                    <Image x:Name="VideoImage" Source="{Binding VideoBitmap}" Stretch="Uniform" />
+                    <Grid>
+                        <Image x:Name="VideoImage" Source="{Binding VideoBitmap}" Stretch="Uniform" />
+                        <!-- Shown while the video is detached into the pop-out window. -->
+                        <StackPanel x:Name="PopoutPlaceholder" IsVisible="False"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+                            <TextBlock Text="🗗" FontSize="44" Foreground="{StaticResource Sub}"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="Playing in pop-out window" Foreground="{StaticResource Text}"
+                                       FontSize="16" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Close the pop-out (or press Esc) to return it here"
+                                       Foreground="{StaticResource Muted}" FontSize="12" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
                 </Border>
 
                 <views:ConnectionPage x:Name="ConnectionPage" IsVisible="{Binding IsWelcome}"/>
@@ -522,7 +567,7 @@
 
                         <Button Grid.Column="6" Classes="TransportBtn" Focusable="False"
                                 ToolTip.Tip="Audio track / language" Click="OnAudioClick">
-                            <TextBlock Text="🔊" Foreground="{StaticResource Info}" FontSize="15"
+                            <TextBlock Text="🎧" Foreground="{StaticResource Info}" FontSize="15"
                                        VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
 
@@ -547,7 +592,7 @@
                         </ToggleButton>
 
                         <Button Grid.Column="10" Classes="TransportBtn" Focusable="False"
-                                Click="OnPopoutClick" ToolTip.Tip="Pop-out player — hide bars (Esc to exit)">
+                                Click="OnPopoutClick" ToolTip.Tip="Pop-out player — detach into a floating window (Esc to return)">
                             <TextBlock Text="🗗" Foreground="{StaticResource Info}" FontSize="16"
                                        VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
@@ -601,6 +646,22 @@
                         <Grid ColumnDefinitions="90,*">
                             <TextBlock Grid.Column="0" Text="Input bitrate" Foreground="{StaticResource Muted}" FontSize="11"/>
                             <TextBlock Grid.Column="1" Text="{Binding InputBitrate}" Foreground="{StaticResource Text}" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="90,*">
+                            <TextBlock Grid.Column="0" Text="Demux bitrate" Foreground="{StaticResource Muted}" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding DemuxBitrate}" Foreground="{StaticResource Text}" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="90,*">
+                            <TextBlock Grid.Column="0" Text="Position" Foreground="{StaticResource Muted}" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Position}" Foreground="{StaticResource Text}" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="90,*">
+                            <TextBlock Grid.Column="0" Text="Duration" Foreground="{StaticResource Muted}" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Duration}" Foreground="{StaticResource Text}" FontSize="11" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="90,*">
+                            <TextBlock Grid.Column="0" Text="Volume" Foreground="{StaticResource Muted}" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Volume}" Foreground="{StaticResource Text}" FontSize="11" HorizontalAlignment="Right"/>
                         </Grid>
                         <Grid ColumnDefinitions="90,*">
                             <TextBlock Grid.Column="0" Text="Frames" Foreground="{StaticResource Muted}" FontSize="11"/>

@@ -9,6 +9,7 @@ using Sabeltann.Models;
 using Sabeltann.Services;
 using Sabeltann;
 using Sabeltann.Views;
+using Sharpcaster.Models;
 
 namespace Sabeltann.ViewModels;
 
@@ -21,6 +22,9 @@ public enum ContentMode
     Series,
     MovieDetail
 }
+
+/// <summary>Whether a cast is active. Libvlc = casting via libvlc's chromecast output (by IP).</summary>
+public enum CastMode { None, Libvlc }
 
 public partial class MainViewModel : ObservableObject
 {
@@ -145,9 +149,24 @@ public partial class MainViewModel : ObservableObject
 
     // Morphing-toolbar segmented tabs. Movies/Series need their async browser init,
     // not a bare Mode set — reuse the existing browser entrypoints.
-    [RelayCommand] private void SwitchToLive() => ShowLiveChannels();
-    [RelayCommand] private Task SwitchToMovies() => ShowMoviesBrowserAsync();
-    [RelayCommand] private Task SwitchToSeries() => ShowSeriesBrowserAsync();
+    [RelayCommand] private void SwitchToLive() { SaveSection("live"); ShowLiveChannels(); }
+    [RelayCommand] private Task SwitchToMovies() { SaveSection("movies"); return ShowMoviesBrowserAsync(); }
+    [RelayCommand] private Task SwitchToSeries() { SaveSection("series"); return ShowSeriesBrowserAsync(); }
+
+    private void SaveSection(string section) => _settingsData = MergeAndSave(s => s.LastSection = section);
+
+    // Land straight in the last-used section after connecting — the old content-picker screen was
+    // redundant since the top tabs switch sections anyway.
+    private async Task AutoLaunchAsync()
+    {
+        await ShowPlaylistContentAsync();
+        switch (_settingsData.LastSection)
+        {
+            case "movies": await ShowMoviesBrowserAsync(); break;
+            case "series": await ShowSeriesBrowserAsync(); break;
+            default: ShowLiveChannels(); break;
+        }
+    }
 
     public void ShowLiveChannels()
     {
@@ -389,6 +408,7 @@ public partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsMovieDetail))]
     [NotifyPropertyChangedFor(nameof(IsVodContent))]
     [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
+    [NotifyPropertyChangedFor(nameof(ShowTimeline))]
     [NotifyPropertyChangedFor(nameof(IsCategoryBarVisible))]
     [NotifyPropertyChangedFor(nameof(ShowBackButton))]
     [NotifyPropertyChangedFor(nameof(ShowCategoryBar))]
@@ -407,7 +427,9 @@ public partial class MainViewModel : ObservableObject
     public bool IsSeries => Mode == ContentMode.Series;
     public bool IsMovieDetail => Mode == ContentMode.MovieDetail;
     public bool IsVodContent => Mode is ContentMode.Movies or ContentMode.Series;
-    public bool ShowChannelGrid => Mode == ContentMode.LiveTv && IsBrowsing;
+    public bool ShowChannelGrid => Mode == ContentMode.LiveTv && IsBrowsing && !IsTimeline;
+    public bool ShowTimeline => Mode == ContentMode.LiveTv && IsBrowsing && IsTimeline;
+    public bool CanUseTimeline => _activeXtreamInfo is not null;
     public bool IsCategoryBarVisible => Mode == ContentMode.LiveTv;
     public bool ShowBackButton => Mode is not ContentMode.Welcome and not ContentMode.Picker;
     public bool ShowCategoryBar => Mode is ContentMode.Welcome or ContentMode.Picker or ContentMode.LiveTv;
@@ -425,7 +447,13 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
+    [NotifyPropertyChangedFor(nameof(ShowTimeline))]
     private bool _isBrowsing;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
+    [NotifyPropertyChangedFor(nameof(ShowTimeline))]
+    private bool _isTimeline;
 
     [ObservableProperty]
     private int _channelCount;
@@ -464,7 +492,10 @@ public partial class MainViewModel : ObservableObject
 
     public VodBrowserViewModel VodBrowser { get; } = new();
     public SeriesBrowserViewModel SeriesBrowser { get; } = new();
+    public EpgTimelineViewModel EpgTimeline { get; } = new();
     public MovieDetailViewModel MovieDetail { get; } = new(new OMDbService(null));
+
+    private XtreamConnectionInfo? _activeXtreamInfo;
 
     private XtreamConnectionInfo? _pendingXtreamInfo;
     private M3UPlaylist? _pendingPlaylist;
@@ -493,7 +524,40 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string? _castTargetName;
 
-    public IReadOnlyList<string> CastTargets => _player?.CastTargets ?? [];
+    private CastService? _cast;
+    private CastMode _castMode = CastMode.None;
+    private IReadOnlyList<ChromecastReceiver> _castReceivers = [];
+
+    // Native receivers when discovered, else the libvlc renderer names as a fallback source.
+    public IReadOnlyList<string> CastTargets =>
+        _castReceivers.Count > 0 ? _castReceivers.Select(r => r.Name).ToList() : (_player?.CastTargets ?? []);
+
+    /// <summary>Wire in the Cast device discovery and kick it off.</summary>
+    public void SetCastService(CastService cast)
+    {
+        _cast = cast;
+        _ = RefreshCastDevicesAsync();
+    }
+
+    /// <summary>Re-run native device discovery — called each time the cast menu opens, since the
+    /// SharpCaster scan is one-shot (unlike libvlc's continuous discoverer). Without this a first
+    /// empty scan would stay empty until app restart.</summary>
+    public void RescanCastDevices() => _ = RefreshCastDevicesAsync();
+
+    private async Task RefreshCastDevicesAsync()
+    {
+        if (_cast is null) return;
+        try
+        {
+            _castReceivers = await _cast.FindDevicesAsync(TimeSpan.FromSeconds(5));
+            LogService.Info("Native cast discovery", new { count = _castReceivers.Count });
+            Dispatcher.UIThread.Post(() => OnPropertyChanged(nameof(CastTargets)));
+        }
+        catch (Exception ex)
+        {
+            LogService.Warn("Native cast discovery failed", new { error = ex.Message });
+        }
+    }
 
     [ObservableProperty]
     private double _updateDownloadProgress;
@@ -592,16 +656,12 @@ public partial class MainViewModel : ObservableObject
                 if (len > 0) VodDuration = len;
                 VodPosition = _player.TimeMs;
             }
-            // Confirm playback once real data flows — a decoded frame locally, or bytes read while
-            // casting (no local frames then). This is the single point that clears the loading bar,
-            // so the overlay stays visible from selection until playback truly starts, for both modes.
+            // Confirm playback once it's really up — a decoded frame locally; while casting, output goes
+            // to the TV (libvlc's chromecast sout drives it), so trust the player being in the Playing
+            // state. Single point that clears the loading bar for both local and cast.
             if (!_playbackConfirmed && _player is not null && (IsPlaying || IsPaused))
             {
-                // DIAG: log what libvlc reports while a cast is starting up, so we can see whether
-                // InputBytes/Time actually advance during casting. Remove once the signal is chosen.
-                if (IsCasting)
-                    LogService.Info("Cast progress", new { _player.PlayerState, _player.InputBytes, _player.TimeMs, _player.Length, _player.IsPlaying });
-                bool started = IsCasting ? _player.InputBytes > 100_000 : _player.FramesDecoded > _playStartFrames;
+                bool started = _castMode == CastMode.Libvlc ? _player.IsPlaying : _player.FramesDecoded > _playStartFrames;
                 if (started)
                 {
                     _playbackConfirmed = true;
@@ -611,35 +671,25 @@ public partial class MainViewModel : ObservableObject
                     ConnectionProgress = 0;
                 }
             }
-            // Watchdog: dead streams often fire Playing (connection opened) but never decode
-            // a single video frame, so event-based signals can't catch them. Surface the failure
-            // ourselves if the stream shows no progress within the timeout.
-            if (_playbackRequested && (DateTime.UtcNow - _awaitingSince).TotalSeconds > PlaybackTimeoutSeconds)
+            // Watchdog: dead streams often fire Playing (connection opened) but never decode a single
+            // video frame, so event-based signals can't catch them. Skip it while casting — the stream
+            // decodes on the TV, so there is no reliable *local* liveness signal (input stats don't grow
+            // the usual way through the chromecast sout); a false "dead" here would kill a healthy cast.
+            if (_castMode != CastMode.Libvlc
+                && _playbackRequested && (DateTime.UtcNow - _awaitingSince).TotalSeconds > PlaybackTimeoutSeconds)
             {
                 _playbackRequested = false;
-                // Casting decodes on the Chromecast, so local frames never advance even for good streams —
-                // key off bytes read from the source instead. ponytail: ~100KB in 15s = nothing real arrived;
-                // bump the threshold if a very slow source ever false-trips.
-                // DIAG: while casting, don't kill — just log what libvlc reports at the deadline, so we
-                // can see whether the cast was actually progressing when our watchdog would have fired.
-                if (IsCasting)
+                bool dead = _player is null || _player.FramesDecoded <= _playStartFrames;
+                if (dead)
                 {
-                    LogService.Warn("Cast watchdog deadline (not killing — diag)", new { _player?.PlayerState, _player?.InputBytes, _player?.TimeMs, _player?.Length });
-                }
-                else
-                {
-                    bool dead = _player is null || _player.FramesDecoded <= _playStartFrames;
-                    if (dead)
-                    {
-                        LogService.Warn("Playback watchdog: stream unavailable", new { casting = IsCasting });
-                        _player?.Stop();
-                        EndCasting();
-                        _awaitingPlayback = false;
-                        ConnectionState = "Stream unavailable";
-                        ShowConnectionOverlay = false;
-                        ShowBufferingOverlay = true;
-                        IsPlaying = false;
-                    }
+                    LogService.Warn("Playback watchdog: stream unavailable", new { casting = IsCasting });
+                    _player?.Stop();
+                    EndCasting();
+                    _awaitingPlayback = false;
+                    ConnectionState = "Stream unavailable";
+                    ShowConnectionOverlay = false;
+                    ShowBufferingOverlay = true;
+                    IsPlaying = false;
                 }
             }
             if (_player?.VideoBitmap is not null)
@@ -653,6 +703,7 @@ public partial class MainViewModel : ObservableObject
     {
         DebugStats = new DebugStatsViewModel(null);
         MovieDetail.BackRequested += () => Mode = _detailReturnMode;
+        EpgTimeline.PlayChannelRequested += ch => { IsTimeline = false; EpgTimeline.StopClock(); SelectedChannel = ch; };
 
         _updateService.UpdateReady += version =>
         {
@@ -669,6 +720,20 @@ public partial class MainViewModel : ObservableObject
         };
         _updateCheckTimer.AutoReset = true;
         _updateCheckTimer.Start();
+    }
+
+    /// <summary>
+    /// Load the guide when the timeline is switched on. The toggle button's IsChecked two-way binding
+    /// already flipped <see cref="IsTimeline"/> before this runs, so we only react to the new state.
+    /// </summary>
+    [RelayCommand]
+    private async Task ToggleTimeline()
+    {
+        if (_activeXtreamInfo is null) { IsTimeline = false; return; }
+        if (IsTimeline)
+            await EpgTimeline.LoadAsync(_activeXtreamInfo, _liveChannels);
+        else
+            EpgTimeline.StopClock();
     }
 
     partial void OnSelectedCategoryChanged(CategoryViewModel? value)
@@ -844,12 +909,23 @@ public partial class MainViewModel : ObservableObject
     private void CastTo(int index)
     {
         if (_player is null || _currentPlayingUrl is null) return;
-        // Resume the VOD on the cast device; live restarts at the live edge.
+        if (index < 0 || index >= _castReceivers.Count) return;
+
+        // Cast via libvlc's own chromecast output, addressed by the device's IP (from the unicast scan,
+        // so no mDNS needed). libvlc connects, launches the receiver and transcodes as needed — plays
+        // any codec, incl. HEVC. Track switching restarts the stream (SetCastAudio/SubtitleTrack).
+        var receiver = _castReceivers[index];
+        var ip = receiver.DeviceUri?.Host;
+        if (string.IsNullOrEmpty(ip)) { StatusText = "Can't cast to that device."; return; }
+
         if (_isCurrentVod) _resumeToMs = _player.TimeMs;
-        _player.CastTo(index);
-        IsCasting = _player.IsCasting;
-        CastTargetName = _player.CastTargetName;
+        ShowConnectionOverlay = true; ShowBufferingOverlay = true; ConnectionState = "Casting…";
+        _player.CastToIp(ip, receiver.Name);
+        _castMode = CastMode.Libvlc;
+        IsCasting = true;
+        CastTargetName = receiver.Name;
         BeginCastWindow();
+        LogService.Info("Cast started", new { device = receiver.Name, ip });
     }
 
     /// <summary>A cast (re)start restarts the stream, so give it a fresh watchdog/confirmation window —
@@ -869,7 +945,8 @@ public partial class MainViewModel : ObservableObject
     {
         if (_player is null) return;
         if (_isCurrentVod && _currentPlayingUrl is not null) _resumeToMs = _player.TimeMs;
-        _player.StopCasting();
+        _player.StopCasting();   // drops the chromecast sout and restarts local playback
+        _castMode = CastMode.None;
         IsCasting = false;
         CastTargetName = null;
     }
@@ -879,6 +956,7 @@ public partial class MainViewModel : ObservableObject
     {
         if (!IsCasting) return;
         _player?.ClearRenderer();
+        _castMode = CastMode.None;
         IsCasting = false;
         CastTargetName = null;
     }
@@ -977,8 +1055,8 @@ public partial class MainViewModel : ObservableObject
             _seriesChannels = [];
             IsConnected = true;
             ConnectionLabel = $"{playlist.Channels.Count:N0} channels";
-            Mode = ContentMode.Picker;
             MergeAndSave(s => { s.LastSourceType = "url"; s.LastSourceUrl = url; });
+            await AutoLaunchAsync();
         }
         catch (Exception ex)
         {
@@ -1019,8 +1097,8 @@ public partial class MainViewModel : ObservableObject
             _seriesChannels = [];
             IsConnected = true;
             ConnectionLabel = $"{playlist.Channels.Count:N0} channels";
-            Mode = ContentMode.Picker;
             MergeAndSave(s => { s.LastSourceType = "file"; s.LastSourceFile = path; });
+            await AutoLaunchAsync();
         }
         catch (Exception ex)
         {
@@ -1037,7 +1115,8 @@ public partial class MainViewModel : ObservableObject
             StatusText = "Authenticating...";
             await _xtream.ValidateAsync(info);
             _pendingXtreamInfo = info;
-            Mode = ContentMode.Picker;
+            _activeXtreamInfo = info;
+            OnPropertyChanged(nameof(CanUseTimeline));
 
             MergeAndSave(s =>
             {
@@ -1050,6 +1129,7 @@ public partial class MainViewModel : ObservableObject
                 };
             });
             LogService.Info("Xtream authentication successful");
+            await AutoLaunchAsync();
         }
         catch (Exception ex)
         {
@@ -1085,7 +1165,7 @@ public partial class MainViewModel : ObservableObject
     private void GoBackToPicker()
     {
         LogService.Info("GoBackToPicker called", new { mode = Mode.ToString(), isPlaying = IsPlaying, isPaused = IsPaused });
-        Mode = ContentMode.Picker;
+        Mode = ContentMode.Welcome;
         IsBrowsing = false;
         FilteredChannels.Clear();
         Categories.Clear();
@@ -1109,7 +1189,7 @@ public partial class MainViewModel : ObservableObject
         }
         else
         {
-            Mode = ContentMode.Picker;
+            Mode = ContentMode.Welcome;
             IsBrowsing = false;
             FilteredChannels.Clear();
             Categories.Clear();
@@ -1143,6 +1223,7 @@ public partial class MainViewModel : ObservableObject
         if (Mode == ContentMode.LiveTv)
         {
             IsBrowsing = true;
+            ApplyFilters();   // grid was hidden through the play/cast episode; repopulate so it isn't empty
             StatusText = "Browsing channels";
         }
         else
@@ -1235,16 +1316,10 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Rewind()
-    {
-        _player?.Seek(-10000);
-    }
+    private void Rewind() => _player?.Seek(-10000);
 
     [RelayCommand]
-    private void Forward()
-    {
-        _player?.Seek(10000);
-    }
+    private void Forward() => _player?.Seek(10000);
 
     [RelayCommand]
     private void ToggleMute()

@@ -1,0 +1,82 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Sabeltann.ViewModels"
+        x:Class="Sabeltann.PopoutWindow"
+        Title="Sabeltann — Pop-out"
+        Width="480" Height="300" MinWidth="260" MinHeight="170"
+        Topmost="True" Background="#0B0C0F"
+        WindowDecorations="None">
+
+    <Window.Styles>
+        <!-- Same transport-button look as the main window's media bar -->
+        <Style Selector="Button.TransportBtn">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Margin" Value="1"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="#22FFFFFF"/>
+            </Style>
+        </Style>
+        <Style Selector="Button.CloseBtn:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource Danger}"/>
+            <Setter Property="TextElement.Foreground" Value="#FFFFFF"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid>
+        <!-- Shared VideoBitmap; frames pushed via InvalidateVideo() from MainWindow -->
+        <Image x:Name="PopoutImage" Source="{Binding VideoBitmap}" Stretch="Uniform" ZIndex="0"/>
+
+        <!-- Invisible top strip: drag the window from the top even with no visible bar -->
+        <Border VerticalAlignment="Top" Height="44" Background="Transparent" ZIndex="1"
+                PointerPressed="OnDragStrip"/>
+
+        <!-- Chrome: shown on mouse movement, auto-hides. Holds the ✕ and the media controls. -->
+        <Grid x:Name="Chrome" ZIndex="5" IsVisible="False" IsHitTestVisible="True">
+            <Button Classes="TransportBtn CloseBtn" Content="✕" FontSize="13"
+                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="6"
+                    Click="OnClosePopout" ToolTip.Tip="Return video to main window"/>
+
+            <Border VerticalAlignment="Bottom" Background="#CC101216" Padding="4,3">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="2">
+                    <Button Classes="TransportBtn" ToolTip.Tip="Rewind 10s" Command="{Binding RewindCommand}">
+                        <TextBlock Text="⏪" Foreground="{StaticResource Info}" FontSize="16"/>
+                    </Button>
+                    <Button Classes="TransportBtn" ToolTip.Tip="Play / Pause" Command="{Binding TogglePlayPauseCommand}">
+                        <TextBlock Text="{Binding PlayPauseSymbol}" Foreground="{StaticResource Accent}" FontSize="18"/>
+                    </Button>
+                    <Button Classes="TransportBtn" ToolTip.Tip="Stop" Command="{Binding StopPlaybackCommand}">
+                        <TextBlock Text="⏹" Foreground="{StaticResource Info}" FontSize="16"/>
+                    </Button>
+                    <Button Classes="TransportBtn" ToolTip.Tip="Forward 10s" Command="{Binding ForwardCommand}">
+                        <TextBlock Text="⏩" Foreground="{StaticResource Info}" FontSize="16"/>
+                    </Button>
+                    <Button Classes="TransportBtn" ToolTip.Tip="Mute (M)" Command="{Binding ToggleMuteCommand}">
+                        <TextBlock Text="{Binding IsMuted, Converter={x:Static vm:MainViewModel.MuteIcon}}"
+                                   Foreground="{StaticResource Sub}" FontSize="16"/>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Resize grips (WindowDecorations=None removes native resize borders) -->
+        <Grid ZIndex="100">
+            <Border HorizontalAlignment="Left" VerticalAlignment="Stretch" Width="5" Background="Transparent"
+                    Cursor="SizeWestEast" Tag="West" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Right" VerticalAlignment="Stretch" Width="5" Background="Transparent"
+                    Cursor="SizeWestEast" Tag="East" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="5" Background="Transparent"
+                    Cursor="SizeNorthSouth" Tag="South" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="12" Height="12" Background="Transparent"
+                    Cursor="BottomRightCorner" Tag="SouthEast" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="12" Height="12" Background="Transparent"
+                    Cursor="BottomLeftCorner" Tag="SouthWest" PointerPressed="OnResizePressed"/>
+        </Grid>
+    </Grid>
+</Window>

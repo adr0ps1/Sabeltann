@@ -4,10 +4,12 @@
              x:Name="Root"
              x:Class="Sabeltann.Views.VodBrowser">
     <!-- Filters (category / search / count) live in the app's morphing toolbar. -->
-    <Grid Background="{StaticResource Bg}" RowDefinitions="Auto,*,Auto">
+    <Grid Background="{StaticResource Bg}" RowDefinitions="*,Auto">
 
-        <!-- Continue Watching strip -->
-        <StackPanel Grid.Row="0" Margin="16,10,16,0" Spacing="6"
+      <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Disabled">
+       <StackPanel>
+        <!-- Continue Watching strip (scrolls with the grid, not pinned) -->
+        <StackPanel Margin="16,10,16,0" Spacing="6"
                     IsVisible="{Binding ShowContinueWatching}">
             <TextBlock Text="Continue Watching" Foreground="{StaticResource Text}" FontSize="13" FontWeight="SemiBold"/>
             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
@@ -22,7 +24,7 @@
                             <Button Background="{StaticResource Surface}" BorderThickness="1" BorderBrush="{StaticResource Line}"
                                     CornerRadius="10" Padding="0" Margin="0,0,10,4" Width="120"
                                     EffectiveViewportChanged="OnPosterViewport"
-                                    Command="{Binding #Root.DataContext.ResumeMovieCommand}"
+                                    Command="{Binding #Root.DataContext.PlayMovieCommand}"
                                     CommandParameter="{Binding .}">
                                 <Button.ContextMenu>
                                     <ContextMenu>
@@ -55,8 +57,7 @@
             </ScrollViewer>
         </StackPanel>
 
-        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
-            <WrapPanel Margin="16,12">
+        <WrapPanel Margin="16,12">
                 <ItemsControl ItemsSource="{Binding Movies}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -91,11 +92,12 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </WrapPanel>
-        </ScrollViewer>
+        </WrapPanel>
+       </StackPanel>
+      </ScrollViewer>
 
         <!-- Loading overlay -->
-        <Border Grid.Row="1" IsVisible="{Binding IsLoading}" Background="#CC14161B"
+        <Border Grid.Row="0" IsVisible="{Binding IsLoading}" Background="#CC14161B"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
                 <TextBlock Text="{Binding StatusText}" Foreground="{StaticResource Text}" FontSize="14"
@@ -105,7 +107,7 @@
             </StackPanel>
         </Border>
 
-        <TextBlock Grid.Row="2" Text="Press Escape to go back" Foreground="{StaticResource Muted}" FontSize="11"
+        <TextBlock Grid.Row="1" Text="Press Escape to go back" Foreground="{StaticResource Muted}" FontSize="11"
                    HorizontalAlignment="Center" Margin="0,8"/>
     </Grid>
 </UserControl>

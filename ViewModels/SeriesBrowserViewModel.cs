@@ -84,6 +84,13 @@ public partial class SeriesBrowserViewModel : ObservableObject
     [ObservableProperty]
     private string _searchText = "";
 
+    public IReadOnlyList<string> SortOptions => VodSorting.Options;
+
+    [ObservableProperty]
+    private string _selectedSort = VodSorting.Default;
+
+    private List<SeriesShowViewModel> _allXtreamShows = [];
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowShows))]
     [NotifyPropertyChangedFor(nameof(ShowEpisodes))]
@@ -110,6 +117,15 @@ public partial class SeriesBrowserViewModel : ObservableObject
     partial void OnSearchTextChanged(string value)
     {
         if (!IsShowingEpisodes)
+            RebuildShows();
+    }
+
+    partial void OnSelectedSortChanged(string value)
+    {
+        if (IsShowingEpisodes) return;
+        if (_xtreamInfo is not null)
+            PopulateXtreamShows();
+        else
             RebuildShows();
     }
 
@@ -163,11 +179,11 @@ public partial class SeriesBrowserViewModel : ObservableObject
         if (query.Length > 0)
             grouped = grouped.Where(x => x.ShowName!.Contains(query, StringComparison.OrdinalIgnoreCase));
 
-        var shows = grouped
-            .GroupBy(x => x.ShowName!, StringComparer.OrdinalIgnoreCase)
-            .OrderBy(g => g.Key)
-            .Take(500)
-            .ToList();
+        var byShow = grouped.GroupBy(x => x.ShowName!, StringComparer.OrdinalIgnoreCase);
+        var ordered = SelectedSort == VodSorting.Default
+            ? byShow.OrderBy(g => g.Key)
+            : VodSorting.Apply(byShow, SelectedSort, _omdb, g => g.Key, _ => null);
+        var shows = ordered.Take(500).ToList();
 
         Shows.Clear();
         foreach (var g in shows)
@@ -202,20 +218,15 @@ public partial class SeriesBrowserViewModel : ObservableObject
         try
         {
             var series = await _xtream.GetSeriesAsync(info);
-            foreach (var s in series)
+            _allXtreamShows = series.Select(s => new SeriesShowViewModel
             {
-                var show = new SeriesShowViewModel
-                {
-                    Name = s.Name,
-                    Year = s.Year,
-                    SeriesId = s.SeriesId,
-                    Cover = s.Cover,
-                    Omdb = _omdb
-                };
-                show.BeginLoadCover();
-                Shows.Add(show);
-            }
-            StatusText = $"{Shows.Count} series loaded";
+                Name = s.Name,
+                Year = s.Year,
+                SeriesId = s.SeriesId,
+                Cover = s.Cover,
+                Omdb = _omdb
+            }).ToList();
+            PopulateXtreamShows();
         }
         catch (Exception ex)
         {
@@ -223,6 +234,20 @@ public partial class SeriesBrowserViewModel : ObservableObject
             StatusText = $"Error: {ex.Message}";
         }
         finally { IsLoading = false; }
+    }
+
+    // Refill the Xtream show grid from the cached list applying the current sort. Covers load only
+    // for the shows actually placed, so re-sorting doesn't re-fetch every poster.
+    private void PopulateXtreamShows()
+    {
+        var ordered = VodSorting.Apply(_allXtreamShows, SelectedSort, _omdb, s => s.Name, s => s.Year);
+        Shows.Clear();
+        foreach (var show in ordered)
+        {
+            show.BeginLoadCover();
+            Shows.Add(show);
+        }
+        StatusText = $"{Shows.Count} series loaded";
     }
 
     [RelayCommand]
