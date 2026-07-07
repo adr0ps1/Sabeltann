@@ -153,6 +153,10 @@ public partial class MainWindow : Window
         // Morph the toolbar: quick fade-in whenever the active sub-bar swaps.
         if (e.PropertyName is nameof(MainViewModel.Mode) or nameof(MainViewModel.ShowVideo))
             AnimateToolbarMorph();
+
+        // While fullscreen, starting/stopping video flips immersive chrome — re-evaluate. (#83)
+        if (e.PropertyName == nameof(MainViewModel.ShowVideo) && _isFullscreen)
+            UpdateChrome();
     }
 
     private void AnimateToolbarMorph()
@@ -187,14 +191,16 @@ public partial class MainWindow : Window
         PopoutPlaceholder.IsVisible = popped;
     }
 
-    /// <summary>Title bar + morphing toolbar are hidden when fullscreen is active.</summary>
+    /// <summary>In fullscreen the title bar is always hidden, but the morphing toolbar (which carries the
+    /// category/filter bar) stays visible while browsing — it's only hidden for immersive video. (#83)</summary>
     private void UpdateChrome()
     {
-        var hide = _isFullscreen;
-        TitleBar.IsVisible = !hide;
-        Toolbar.IsVisible = !hide;
-        MainGrid.RowDefinitions[0].Height = new GridLength(hide ? 0 : 40);
-        MainGrid.RowDefinitions[1].Height = new GridLength(hide ? 0 : 54);
+        var hideTitle = _isFullscreen;
+        var hideToolbar = _isFullscreen && _vm.ShowVideo;
+        TitleBar.IsVisible = !hideTitle;
+        Toolbar.IsVisible = !hideToolbar;
+        MainGrid.RowDefinitions[0].Height = new GridLength(hideTitle ? 0 : 40);
+        MainGrid.RowDefinitions[1].Height = new GridLength(hideToolbar ? 0 : 54);
     }
 
     private void OnTitleBarPressed(object? sender, PointerPressedEventArgs e)
