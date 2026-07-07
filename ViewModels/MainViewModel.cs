@@ -1223,6 +1223,7 @@ public partial class MainViewModel : ObservableObject
         if (Mode == ContentMode.LiveTv)
         {
             IsBrowsing = true;
+            ApplyFilters();   // grid was hidden through the play/cast episode; repopulate so it isn't empty
             StatusText = "Browsing channels";
         }
         else
