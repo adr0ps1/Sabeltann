@@ -240,14 +240,16 @@ public partial class MainWindow : Window
             _popout.Close();
             e.Handled = true;
         }
+        else if (e.Key == Key.Escape && _isFullscreen)
+        {
+            // Esc in fullscreen exits fullscreen only — playback keeps going. A second
+            // Esc (now windowed) falls through to the stop branch below. (#82)
+            ToggleFullscreen();
+            e.Handled = true;
+        }
         else if (e.Key == Key.Escape && (_vm.IsPlaying || _vm.IsPaused))
         {
             _vm.StopPlaybackCommand.Execute(null);
-            e.Handled = true;
-        }
-        else if (e.Key == Key.Escape && _isFullscreen)
-        {
-            ToggleFullscreen();
             e.Handled = true;
         }
         else if (e.Key == Key.Escape && _vm.Mode == ContentMode.Picker && !_vm.IsConnected)
