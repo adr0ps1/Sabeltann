@@ -1413,8 +1413,15 @@ public partial class MainViewModel : ObservableObject
             };
             vm.CloseRequested += () =>
             {
+                // Schedule the apply-on-exit with restart, then actually exit so Velopack applies and
+                // relaunches. Without the shutdown the app just keeps running and nothing happens. (#80)
                 if (vm.Result == UpdateDialogResult.InstallAndRestart)
+                {
                     _updateService.ApplyPendingOnExit(restart: true);
+                    if (Avalonia.Application.Current?.ApplicationLifetime is
+                        Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime d)
+                        d.Shutdown();
+                }
             };
             var dialog = new UpdateDialog { DataContext = vm };
             if (Avalonia.Application.Current?.ApplicationLifetime is

@@ -87,14 +87,23 @@ public sealed class UpdateService
         }
     }
 
+    private bool _applyScheduled;
+
     public void ApplyPendingOnExit(bool restart = false)
     {
         if (_pending is null || !_manager.IsInstalled || IsRunningAsMsix)
             return;
 
+        // "Install & Restart" schedules with restart:true, then shuts the app down — which fires
+        // OnClosed → ApplyPendingOnExit(restart:false). Guard so that second call can't downgrade
+        // the already-scheduled restart. (#80)
+        if (_applyScheduled)
+            return;
+
         try
         {
             _manager.WaitExitThenApplyUpdates(_pending, silent: true, restart: restart);
+            _applyScheduled = true;
         }
         catch (Exception ex)
         {
