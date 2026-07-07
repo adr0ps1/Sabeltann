@@ -383,7 +383,8 @@ public partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(ShowFileMenu))]
     private bool _isPlaying;
 
-    public string PlayPauseSymbol => IsPlaying ? "⏸" : "⏵";
+    // Emoji-presentation glyphs (VS16) so they render via the emoji font instead of tofu. (#86)
+    public string PlayPauseSymbol => IsPlaying ? "⏸️" : "▶️";
     public bool ShowOverlay => IsPlaying;
 
     public bool ShowVideo => IsPlaying || IsPaused;
