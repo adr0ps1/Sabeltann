@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.25](https://github.com/adr0ps1/Sabeltann/compare/v0.1.24...v0.1.25) (2026-07-07)
+
+
+### Bug Fixes
+
+* Upgrade packages (consolidates dependabot [#41](https://github.com/adr0ps1/Sabeltann/issues/41)-46, [#54](https://github.com/adr0ps1/Sabeltann/issues/54), [#55](https://github.com/adr0ps1/Sabeltann/issues/55)) ([#77](https://github.com/adr0ps1/Sabeltann/issues/77)) ([a4d13fa](https://github.com/adr0ps1/Sabeltann/commit/a4d13fa62e4559ee727f89e130dd2d1b07e23619))
+
+
+### Chores
+
+* **deps:** Bump setup-dotnet 5.3.0-&gt;5.4.0, attest-build-provenance 4.1.0-&gt;4.1.1 ([#79](https://github.com/adr0ps1/Sabeltann/issues/79)) ([e0b7b5a](https://github.com/adr0ps1/Sabeltann/commit/e0b7b5a1af2d82edb346a5bd10080a44ef5c1a4c))
+
 ## [0.1.24](https://github.com/adr0ps1/Sabeltann/compare/v0.1.23...v0.1.24) (2026-07-02)
 
 
