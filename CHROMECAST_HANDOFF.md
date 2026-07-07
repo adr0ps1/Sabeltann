@@ -212,15 +212,14 @@ New design (verified: HEVC channel plays video+audio on the LG TV; `AddOption` e
 Tradeoff vs the abandoned native path: no smooth in-cast track switching (restart on change) — but that
 never worked for these streams anyway. This actually plays them, all codecs.
 
-## KNOWN OPEN BUG (2026-07-06) — Live TV grid empty after casting
+## FIXED (2026-07-07) — Live TV grid empty after casting
 
-After casting, the Live TV channel grid shows empty until you switch to Movies/Series and back.
-Diagnosis (partial): `ShowChannelGrid => Mode==LiveTv && IsBrowsing && !IsTimeline` (MainViewModel ~430).
-Playing/casting a channel sets `IsBrowsing=false` (`OnSelectedChannelChanged` ~805) → grid hidden. The
-stop/back command sets `IsBrowsing=true` again (~1225, `if Mode==LiveTv`). Switching mode and back also
-restores it. So the cast path leaves `IsBrowsing=false` with no way back to the grid while casting.
-Likely fix: while `IsCasting`, treat the app as "browsing" (video is on the TV, not in-app) — e.g. set
-`IsBrowsing=true` on cast start, or make `ShowChannelGrid` true when casting. NOT yet fixed.
+Symptom: after casting then hitting transport Stop, the Live TV grid returned visible but empty until you
+switched to Movies/Series and back. Root cause: `StopPlayback` sets `IsBrowsing=true` (grid shown) but
+never rebuilt `FilteredChannels`; the recovery worked only because `ShowLiveChannels` calls `ApplyFilters()`.
+Fix: `StopPlayback`'s LiveTv branch now calls `ApplyFilters()` too (MainViewModel ~1226) — repopulates the
+grid (and forces the virtualized ListBox to regenerate containers). Verified on hardware: grid returns
+populated with no mode-switch dance.
 
 ## Build/test
 - `dotnet build` — clean (0 errors). Debug exe: `bin/Debug/net10.0/SabeltannDevelopment.exe`.
