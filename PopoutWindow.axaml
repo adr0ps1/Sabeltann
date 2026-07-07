@@ -65,14 +65,21 @@
             </Border>
         </Grid>
 
-        <!-- Resize grips (WindowDecorations=None removes native resize borders) -->
+        <!-- Resize grips (WindowDecorations=None removes native resize borders).
+             Corners sit above the edges (later = higher Z) so diagonal resize wins over a plain edge. -->
         <Grid ZIndex="100">
             <Border HorizontalAlignment="Left" VerticalAlignment="Stretch" Width="5" Background="Transparent"
                     Cursor="SizeWestEast" Tag="West" PointerPressed="OnResizePressed"/>
             <Border HorizontalAlignment="Right" VerticalAlignment="Stretch" Width="5" Background="Transparent"
                     Cursor="SizeWestEast" Tag="East" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="5" Background="Transparent"
+                    Cursor="SizeNorthSouth" Tag="North" PointerPressed="OnResizePressed"/>
             <Border HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="5" Background="Transparent"
                     Cursor="SizeNorthSouth" Tag="South" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Left" VerticalAlignment="Top" Width="12" Height="12" Background="Transparent"
+                    Cursor="TopLeftCorner" Tag="NorthWest" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Right" VerticalAlignment="Top" Width="12" Height="12" Background="Transparent"
+                    Cursor="TopRightCorner" Tag="NorthEast" PointerPressed="OnResizePressed"/>
             <Border HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="12" Height="12" Background="Transparent"
                     Cursor="BottomRightCorner" Tag="SouthEast" PointerPressed="OnResizePressed"/>
             <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="12" Height="12" Background="Transparent"
