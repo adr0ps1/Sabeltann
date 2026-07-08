@@ -727,6 +727,16 @@ public partial class MainViewModel : ObservableObject
     {
         DebugStats = new DebugStatsViewModel(null);
         MovieDetail.BackRequested += () => Mode = _detailReturnMode;
+
+        // If the relay/upstream dies mid-recording, stop cleanly and switch the player back to the
+        // direct stream so playback doesn't hang on the dead relay. (#84)
+        _recordProxy.Failed += (_, msg) => Dispatcher.UIThread.Post(() =>
+        {
+            if (!IsRecording) return;
+            StopRecordingInternal();
+            if (_currentPlayingUrl is not null) _player?.Play(_currentPlayingUrl);
+            ShowToastMessage(msg);
+        });
         EpgTimeline.PlayChannelRequested += ch => { IsTimeline = false; EpgTimeline.StopClock(); SelectedChannel = ch; };
 
         _updateService.UpdateReady += version =>
@@ -826,6 +836,12 @@ public partial class MainViewModel : ObservableObject
         {
             if (value is not null && _player is not null && !string.IsNullOrEmpty(value.Url))
             {
+                // Switching channels ends any recording (it recorded the previous stream). (#84)
+                if (IsRecording)
+                {
+                    StopRecordingInternal();
+                    ShowToastMessage("Recording saved (channel changed)", copyText: _recordProxy.CurrentFile);
+                }
                 IsBrowsing = false;
                 SaveVodProgress();
                 _isCurrentVod = false;
@@ -1443,18 +1459,87 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty] private string? _toastMessage;
     [ObservableProperty] private bool _showToast;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ToastCanCopy))]
+    private string? _toastCopyText;
     private int _toastToken;
 
-    /// <summary>Show a small transient toast that auto-hides. (#94)</summary>
-    public async void ShowToastMessage(string message)
+    /// <summary>When set, clicking the toast copies this text (e.g. a recording path). (#84)</summary>
+    public bool ToastCanCopy => !string.IsNullOrEmpty(ToastCopyText);
+
+    /// <summary>Show a small transient toast that auto-hides. Pass <paramref name="copyText"/> to make
+    /// it clickable-to-copy. (#94, #84)</summary>
+    public async void ShowToastMessage(string message, string? copyText = null)
     {
         ToastMessage = message;
+        ToastCopyText = copyText;
         ShowToast = true;
         var token = ++_toastToken;
-        await Task.Delay(4000);
+        await Task.Delay(copyText is null ? 4000 : 7000);
         if (token == _toastToken)
             ShowToast = false;
     }
+
+    // Recording via the loopback relay: video keeps playing (the player just reads the relay URL) while
+    // the stream is teed to a file, on one connection. Live only (VOD isn't a live byte feed). (#84)
+    private readonly RecordProxyService _recordProxy = new();
+    [ObservableProperty] private bool _isRecording;
+    [ObservableProperty] private string _recordingElapsed = "0:00";
+    private DispatcherTimer? _recordTimer;
+    private DateTime _recordStarted;
+
+    [RelayCommand]
+    private void ToggleRecord()
+    {
+        if (_player is null || string.IsNullOrEmpty(_currentPlayingUrl))
+        {
+            ShowToastMessage("Start playing a live channel first, then record.");
+            return;
+        }
+        if (IsRecording)
+        {
+            var file = _recordProxy.CurrentFile;
+            StopRecordingInternal();
+            _player.Play(_currentPlayingUrl);   // switch the player back to the direct stream
+            ShowToastMessage("Recording saved — click to copy path", copyText: file);
+            return;
+        }
+        if (_isCurrentVod)
+        {
+            ShowToastMessage("Recording is for live TV, not on-demand.");
+            return;
+        }
+        var localUrl = _recordProxy.Start(_currentPlayingUrl);
+        if (localUrl is null)
+        {
+            ShowToastMessage("Couldn't start recording.");
+            return;
+        }
+        _player.Play(localUrl);   // player now reads the relay → video keeps showing, relay tees to file
+        IsRecording = true;
+        _recordStarted = DateTime.UtcNow;
+        RecordingElapsed = "0:00";
+        _recordTimer ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _recordTimer.Tick -= OnRecordTick;
+        _recordTimer.Tick += OnRecordTick;
+        _recordTimer.Start();
+        ShowToastMessage("● Recording started");
+    }
+
+    private void StopRecordingInternal()
+    {
+        _recordProxy.Stop();
+        IsRecording = false;
+        _recordTimer?.Stop();
+    }
+
+    private void OnRecordTick(object? sender, EventArgs e)
+    {
+        var t = DateTime.UtcNow - _recordStarted;
+        RecordingElapsed = $"{(int)t.TotalMinutes}:{t.Seconds:D2}";
+    }
+
+    public void DisposeRecording() => _recordProxy.Dispose();
 
     private void ShowUpdateDialog(string newVersion)
     {
