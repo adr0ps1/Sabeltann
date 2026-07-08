@@ -52,10 +52,10 @@ public sealed class UpdateService
 
     public event Action<string>? UpdateReady;
 
-    public async Task CheckAndDownloadAsync(IProgress<double>? progress = null)
+    public async Task<UpdateCheckResult> CheckAndDownloadAsync(IProgress<double>? progress = null)
     {
         if (!_manager.IsInstalled || IsRunningAsMsix)
-            return;
+            return UpdateCheckResult.NotSupported;
 
         try
         {
@@ -64,7 +64,7 @@ public sealed class UpdateService
 
             var update = await _manager.CheckForUpdatesAsync().ConfigureAwait(false);
             if (update is null)
-                return;
+                return UpdateCheckResult.UpToDate;
 
             ReleaseNotes = update.TargetFullRelease.NotesMarkdown;
 
@@ -80,10 +80,12 @@ public sealed class UpdateService
             IsUpdateAvailable = true;
             UpdateReady?.Invoke(update.TargetFullRelease.Version.ToString());
             LogService.Info("Update downloaded, will install on exit");
+            return UpdateCheckResult.UpdateReady;
         }
         catch (Exception ex)
         {
             LogService.Warn("Update check failed", new { type = ex.GetType().Name, message = ex.Message });
+            return UpdateCheckResult.Failed;
         }
     }
 
@@ -111,3 +113,6 @@ public sealed class UpdateService
         }
     }
 }
+
+/// <summary>Outcome of a manual/automatic update check, so callers can give the right feedback. (#94)</summary>
+public enum UpdateCheckResult { UpdateReady, UpToDate, NotSupported, Failed }
