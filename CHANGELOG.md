@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.1.26](https://github.com/adr0ps1/Sabeltann/compare/v0.1.25...v0.1.26) (2026-07-08)
+
+
+### Features
+
+* Persist and restore windowed size across sessions ([#91](https://github.com/adr0ps1/Sabeltann/issues/91)) ([b195463](https://github.com/adr0ps1/Sabeltann/commit/b195463d76155deecaf19af221cb56fa5300436f))
+
+
+### Bug Fixes
+
+* Six player/popout/fullscreen/update bugs ([#80](https://github.com/adr0ps1/Sabeltann/issues/80)–[#86](https://github.com/adr0ps1/Sabeltann/issues/86)) ([#92](https://github.com/adr0ps1/Sabeltann/issues/92)) ([a39828c](https://github.com/adr0ps1/Sabeltann/commit/a39828cbba327a3038c204bd0817e0adc247f125))
+
+
+### Chores
+
+* **ci:** Remove winget-pkgs publish job ([#87](https://github.com/adr0ps1/Sabeltann/issues/87)) ([b910903](https://github.com/adr0ps1/Sabeltann/commit/b9109034400c8d85115f0932b1518246670071b7))
+* Drop unused Svg.Skia dependency and stale handoff doc ([#89](https://github.com/adr0ps1/Sabeltann/issues/89)) ([67e8261](https://github.com/adr0ps1/Sabeltann/commit/67e82614ada83f8799d56e1816c0898eaaaeca45))
+
 ## [0.1.25](https://github.com/adr0ps1/Sabeltann/compare/v0.1.24...v0.1.25) (2026-07-07)
 
 
