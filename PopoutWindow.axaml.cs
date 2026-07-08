@@ -56,6 +56,16 @@ public partial class PopoutWindow : Window
 
     private void OnClosePopout(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => Close();
 
+    // Click the center pause overlay (only visible while paused) to resume.
+    private void OnPauseOverlayPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (DataContext is ViewModels.MainViewModel vm && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            vm.TogglePlayPauseCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
+
     private void OnResizePressed(object? sender, PointerPressedEventArgs e)
     {
         if (sender is Control c && c.Tag is string edgeName &&

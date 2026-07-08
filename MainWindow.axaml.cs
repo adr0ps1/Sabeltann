@@ -187,6 +187,7 @@ public partial class MainWindow : Window
     private void ApplyPopoutState()
     {
         var popped = _popout is not null;
+        _vm.IsPoppedOut = popped;
         VideoImage.IsVisible = !popped;
         PopoutPlaceholder.IsVisible = popped;
     }
@@ -207,6 +208,14 @@ public partial class MainWindow : Window
     {
         if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             BeginMoveDrag(e);
+    }
+
+    // Click the center pause overlay (only visible while paused) to resume playback.
+    private void OnPauseOverlayPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+        _vm.TogglePlayPauseCommand.Execute(null);
+        e.Handled = true;
     }
 
     private void OnMinimize(object? sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;

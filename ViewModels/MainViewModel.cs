@@ -28,8 +28,25 @@ public enum CastMode { None, Libvlc }
 
 public partial class MainViewModel : ObservableObject
 {
-    public static readonly FuncValueConverter<bool, string> MuteIcon = new(
-        muted => muted ? "🔇" : "🔊");
+    // Transport icons as vector geometry (Material Design Icons, 24x24 viewbox) instead of
+    // emoji/symbol text glyphs, which font-fall-back to tofu ("yellow square") or hamburger
+    // shapes depending on the installed font. PathIcon fills these with its Foreground brush.
+    public static readonly Geometry PlayGeo = Geometry.Parse("M8,5.14V19.14L19,12.14L8,5.14Z");
+    public static readonly Geometry PauseGeo = Geometry.Parse("M14,19H18V5H14M6,19H10V5H6V19Z");
+    public static readonly Geometry StopGeo = Geometry.Parse("M18,18H6V6H18V18Z");
+    public static readonly Geometry RewindGeo = Geometry.Parse("M11.5,12L20,18V6M11,18V6L2.5,12L11,18Z");
+    public static readonly Geometry ForwardGeo = Geometry.Parse("M13,6V18L21.5,12M4,18L12.5,12L4,6V18Z");
+    public static readonly Geometry VolumeHighGeo = Geometry.Parse("M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.84 14,18.7V20.77C18,19.86 21,16.28 21,12C21,7.72 18,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16C15.5,15.29 16.5,13.76 16.5,12M3,9V15H7L12,20V4L7,9H3Z");
+    public static readonly Geometry VolumeOffGeo = Geometry.Parse("M12,4L9.91,6.09L12,8.18M4.27,3L3,4.27L7.73,9H3V15H7L12,20V13.27L16.25,17.53C15.58,18.04 14.83,18.46 14,18.7V20.77C15.38,20.45 16.63,19.82 17.68,18.96L19.73,21L21,19.73L12,10.73V10.18L16.45,12.63C16.5,12.43 16.5,12.21 16.5,12C16.5,10.23 15.5,8.71 14,7.97V10.18M19,12C19,12.94 18.8,13.82 18.46,14.64L19.97,16.15C20.62,14.91 21,13.5 21,12C21,7.72 18,4.14 14,3.23V5.29C16.89,6.15 19,8.83 19,12Z");
+    public static readonly Geometry DebugGeo = Geometry.Parse("M3.5,18.49L9.5,12.48L13.5,16.48L22,6.92L20.59,5.51L13.5,13.5L9.5,9.5L2,17L3.5,18.49Z");
+    public static readonly Geometry PopoutGeo = Geometry.Parse("M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z");
+    public static readonly Geometry FullscreenGeo = Geometry.Parse("M5,5H10V7H7V10H5V5M14,5H19V10H17V7H14V5M17,14H19V19H14V17H17V14M10,17V19H5V14H7V17H10Z");
+
+    public static readonly FuncValueConverter<bool, Geometry> PlayPauseIcon = new(
+        playing => playing ? PauseGeo : PlayGeo);
+
+    public static readonly FuncValueConverter<bool, Geometry> MuteIcon = new(
+        muted => muted ? VolumeOffGeo : VolumeHighGeo);
 
     public static readonly FuncValueConverter<bool, IBrush> CastIcon = new(
         casting => casting ? new SolidColorBrush(Color.Parse("#a6e3a1")) : new SolidColorBrush(Color.Parse("#89b4fa")));
@@ -370,7 +387,6 @@ public partial class MainViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(PlayPauseSymbol))]
     [NotifyPropertyChangedFor(nameof(ShowOverlay))]
     [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
     [NotifyPropertyChangedFor(nameof(ShowVideo))]
@@ -383,14 +399,21 @@ public partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(ShowFileMenu))]
     private bool _isPlaying;
 
-    // Emoji-presentation glyphs (VS16) so they render via the emoji font instead of tofu. (#86)
-    public string PlayPauseSymbol => IsPlaying ? "⏸️" : "▶️";
     public bool ShowOverlay => IsPlaying;
 
     public bool ShowVideo => IsPlaying || IsPaused;
 
+    // The center pause overlay lives in whichever window holds the video: the main window when inline,
+    // the popout when detached. Bind main to this, popout to IsPaused. (popout bug)
+    public bool ShowPauseOverlay => IsPaused && !IsPoppedOut;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowPauseOverlay))]
+    private bool _isPoppedOut;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowVideo))]
+    [NotifyPropertyChangedFor(nameof(ShowPauseOverlay))]
     [NotifyPropertyChangedFor(nameof(ShowPlaybackBar))]
     [NotifyPropertyChangedFor(nameof(ShowLiveBar))]
     [NotifyPropertyChangedFor(nameof(ShowMoviesBar))]
