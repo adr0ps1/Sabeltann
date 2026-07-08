@@ -696,5 +696,14 @@
             <Border HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="9" Height="9" Background="Transparent"
                     Cursor="BottomRightCorner" Tag="SouthEast" PointerPressed="OnResizePressed"/>
         </Grid>
+
+        <!-- Transient toast (e.g. update-check feedback) — auto-hides. (#94) -->
+        <Border ZIndex="200" IsVisible="{Binding ShowToast}" IsHitTestVisible="False"
+                HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,52,0,0"
+                Background="{StaticResource Surface2}" BorderBrush="{StaticResource Line}" BorderThickness="1"
+                CornerRadius="10" Padding="16,10" BoxShadow="0 6 20 0 #66000000">
+            <TextBlock Text="{Binding ToastMessage}" Foreground="{StaticResource TextStrong}"
+                       FontSize="13" FontWeight="SemiBold"/>
+        </Border>
     </Panel>
 </Window>

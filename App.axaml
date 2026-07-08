@@ -24,6 +24,17 @@
         <SolidColorBrush x:Key="Info" Color="#89B4FA"/>
         <SolidColorBrush x:Key="Danger" Color="#E08A8A"/>
 
+        <!-- #93: force Fluent's popup/control chrome onto the slate palette (menus, combos, tooltips)
+             so nothing falls back to stock Fluent gray. Unused keys are harmless no-ops. -->
+        <SolidColorBrush x:Key="MenuFlyoutPresenterBackground" Color="#1B1E25"/>
+        <SolidColorBrush x:Key="MenuFlyoutPresenterBorderBrush" Color="#2C313C"/>
+        <SolidColorBrush x:Key="FlyoutPresenterBackground" Color="#1B1E25"/>
+        <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="#1B1E25"/>
+        <SolidColorBrush x:Key="ComboBoxDropdownBorderBrush" Color="#2C313C"/>
+        <SolidColorBrush x:Key="ToolTipBackground" Color="#232730"/>
+        <SolidColorBrush x:Key="ToolTipBorderBrush" Color="#2C313C"/>
+        <SolidColorBrush x:Key="ToolTipForeground" Color="#E7E9EF"/>
+
         <!-- Retint FluentTheme's accent (sliders, checkboxes, selection, focus) to amber -->
         <Color x:Key="SystemAccentColor">#E2A44E</Color>
         <Color x:Key="SystemAccentColorDark1">#C98F3E</Color>
