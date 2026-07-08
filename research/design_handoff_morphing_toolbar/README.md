@@ -129,7 +129,7 @@ Full spec under "1A · Detail" above.
 No new state required beyond the existing `MainViewModel`. Reuse: `Mode`/`ContentMode`, `IsWelcome/IsPicker/IsLiveTv/IsMovies/IsSeries/IsMovieDetail`, `ShowVideo`, `IsConnected`, `Categories/SelectedCategory`, `SearchText`, `ShowFavoritesOnly`, `ChannelCount`, `ShowDebugOverlay`, `FilteredChannels`, `VodBrowser/SeriesBrowser/MovieDetail`. Add a `Playback` view-state only if you formalize the playback toolbar (today it keys off `ShowVideo`). Decide where the removed bottom-transport commands (`TogglePlayPause`, `Stop`, `Rewind`, `Forward`, volume, seek) live — see the 2F note.
 
 ## Assets
-- `☠` is a text glyph in the prototype; the app already has `Assets/pirate.svg` and `Assets/Sabeltann.ico` — use those for the real logo mark instead of the glyph.
+- `☠` is a text glyph in the prototype; the app already has `Assets/logo.png` and `Assets/Sabeltann.ico` — use those for the real logo mark instead of the glyph.
 - Channel logos / VOD posters come from the existing `ImageService` / `LogoSrc` / `CoverSrc` / `PosterBitmap`; the striped/hue placeholders in the prototype are only fallbacks (the app already has hash-color + initial fallbacks via `HashColor`/`FirstChar`/`ImgFallback`).
 - Icons are Unicode glyphs (`← ▦ ▷ ⊞ ★ ⌕ ▶ 🔊 📺 ⛶ ☰ ✓`); swap for the project's Segoe Fluent / SVG icon set as you prefer.
 
