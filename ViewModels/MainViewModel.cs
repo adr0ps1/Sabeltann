@@ -1419,8 +1419,37 @@ public partial class MainViewModel : ObservableObject
     private async Task CheckForUpdates()
     {
         var progress = new Progress<double>(p => UpdateDownloadProgress = p);
-        await _updateService.CheckAndDownloadAsync(progress);
+        var result = await _updateService.CheckAndDownloadAsync(progress);
         UpdateDownloadProgress = 0;
+
+        // Manual check: always give feedback. (UpdateReady already opens the update dialog.) (#94)
+        switch (result)
+        {
+            case UpdateCheckResult.UpToDate:
+                ShowToastMessage($"You're on the newest version ✅  (v{_updateService.CurrentVersion})");
+                break;
+            case UpdateCheckResult.NotSupported:
+                ShowToastMessage("Updates aren't available for this build.");
+                break;
+            case UpdateCheckResult.Failed:
+                ShowToastMessage("Update check failed — try again later.");
+                break;
+        }
+    }
+
+    [ObservableProperty] private string? _toastMessage;
+    [ObservableProperty] private bool _showToast;
+    private int _toastToken;
+
+    /// <summary>Show a small transient toast that auto-hides. (#94)</summary>
+    public async void ShowToastMessage(string message)
+    {
+        ToastMessage = message;
+        ShowToast = true;
+        var token = ++_toastToken;
+        await Task.Delay(4000);
+        if (token == _toastToken)
+            ShowToast = false;
     }
 
     private void ShowUpdateDialog(string newVersion)
