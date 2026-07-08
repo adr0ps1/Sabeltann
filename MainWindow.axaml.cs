@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
@@ -505,6 +506,19 @@ public partial class MainWindow : Window
         }
     }
 
+    // Toast is clickable when it carries copyable text (e.g. a recording path). (#84)
+    private async void OnToastClick(object? sender, PointerPressedEventArgs e)
+    {
+        var text = _vm.ToastCopyText;
+        if (string.IsNullOrEmpty(text)) return;
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard is not null)
+        {
+            await clipboard.SetTextAsync(text);
+            _vm.ShowToastMessage("Copied path to clipboard ✅");
+        }
+    }
+
     protected override void OnClosed(EventArgs e)
     {
         // Only persist a real windowed size — not a maximized/fullscreen/minimized frame.
@@ -513,6 +527,7 @@ public partial class MainWindow : Window
         _popout?.Close();
         _vm.SaveVodProgress();
         _vm.DebugStats.Stop();
+        _vm.DisposeRecording();
         _player.Dispose();
         ImageService.Shutdown();
         _vm.GetUpdateService().ApplyPendingOnExit(restart: false);
