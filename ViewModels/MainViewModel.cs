@@ -1443,17 +1443,83 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty] private string? _toastMessage;
     [ObservableProperty] private bool _showToast;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ToastCanCopy))]
+    private string? _toastCopyText;
     private int _toastToken;
 
-    /// <summary>Show a small transient toast that auto-hides. (#94)</summary>
-    public async void ShowToastMessage(string message)
+    /// <summary>When set, clicking the toast copies this text (e.g. a recording path). (#84)</summary>
+    public bool ToastCanCopy => !string.IsNullOrEmpty(ToastCopyText);
+
+    /// <summary>Show a small transient toast that auto-hides. Pass <paramref name="copyText"/> to make
+    /// it clickable-to-copy. (#94, #84)</summary>
+    public async void ShowToastMessage(string message, string? copyText = null)
     {
         ToastMessage = message;
+        ToastCopyText = copyText;
         ShowToast = true;
         var token = ++_toastToken;
-        await Task.Delay(4000);
+        await Task.Delay(copyText is null ? 4000 : 7000);
         if (token == _toastToken)
             ShowToast = false;
+    }
+
+    // Recording taps the main player's single connection (see PlaybackService.StartRecording). Live only:
+    // sout muxes VOD faster than real-time, so on-demand recording is out of scope here. (#84)
+    [ObservableProperty] private bool _isRecording;
+    [ObservableProperty] private string _recordingElapsed = "0:00";
+    private DispatcherTimer? _recordTimer;
+    private DateTime _recordStarted;
+    private string? _recordPath;
+
+    public static string RecordingsFolder =>
+        System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyVideos), "Sabeltann");
+
+    [RelayCommand]
+    private void ToggleRecord()
+    {
+        if (_player is null || string.IsNullOrEmpty(_currentPlayingUrl))
+        {
+            ShowToastMessage("Start playing a live channel first, then record.");
+            return;
+        }
+        if (IsRecording)
+        {
+            _player.StopRecording();
+            IsRecording = false;
+            _recordTimer?.Stop();
+            ShowToastMessage("Recording saved — click to copy path", copyText: _recordPath);
+            return;
+        }
+        if (_isCurrentVod)
+        {
+            ShowToastMessage("Recording is for live TV, not on-demand.");
+            return;
+        }
+        try
+        {
+            System.IO.Directory.CreateDirectory(RecordingsFolder);
+            _recordPath = System.IO.Path.Combine(RecordingsFolder, $"Sabeltann_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.ts");
+            _player.StartRecording(_recordPath);
+            IsRecording = true;
+            _recordStarted = DateTime.UtcNow;
+            RecordingElapsed = "0:00";
+            _recordTimer ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _recordTimer.Tick -= OnRecordTick;
+            _recordTimer.Tick += OnRecordTick;
+            _recordTimer.Start();
+        }
+        catch (Exception ex)
+        {
+            ShowToastMessage("Couldn't start recording.");
+            LogService.Error("Recording start failed", new { error = ex.Message });
+        }
+    }
+
+    private void OnRecordTick(object? sender, EventArgs e)
+    {
+        var t = DateTime.UtcNow - _recordStarted;
+        RecordingElapsed = $"{(int)t.TotalMinutes}:{t.Seconds:D2}";
     }
 
     private void ShowUpdateDialog(string newVersion)
