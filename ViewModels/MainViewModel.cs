@@ -1443,15 +1443,23 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty] private string? _toastMessage;
     [ObservableProperty] private bool _showToast;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ToastCanCopy))]
+    private string? _toastCopyText;
     private int _toastToken;
 
-    /// <summary>Show a small transient toast that auto-hides. (#94)</summary>
-    public async void ShowToastMessage(string message)
+    /// <summary>When set, clicking the toast copies this text (e.g. a recording path). (#84)</summary>
+    public bool ToastCanCopy => !string.IsNullOrEmpty(ToastCopyText);
+
+    /// <summary>Show a small transient toast that auto-hides. Pass <paramref name="copyText"/> to make
+    /// the toast clickable-to-copy. (#94, #84)</summary>
+    public async void ShowToastMessage(string message, string? copyText = null)
     {
         ToastMessage = message;
+        ToastCopyText = copyText;
         ShowToast = true;
         var token = ++_toastToken;
-        await Task.Delay(4000);
+        await Task.Delay(copyText is null ? 4000 : 7000);   // give longer to click-to-copy
         if (token == _toastToken)
             ShowToast = false;
     }
@@ -1475,9 +1483,10 @@ public partial class MainViewModel : ObservableObject
 
         if (_recording.IsRecording)
         {
+            var file = _recording.CurrentFile;
             _recording.Stop();
             IsRecording = false;
-            ShowToastMessage($"Recording saved to {RecordingService.RecordingsFolder}");
+            ShowToastMessage($"Recording saved — click to copy path", copyText: file);
         }
         else if (_recording.Start(_currentPlayingUrl))
         {
