@@ -1415,6 +1415,10 @@ public partial class MainViewModel : ObservableObject
             SelectedCategory = Categories[0];
     }
 
+    /// <summary>Startup auto-check: runs the same check but stays silent on the no-update / not-supported
+    /// paths (only an available update surfaces, via the UpdateReady dialog). The toast is manual-only. (#94)</summary>
+    public Task CheckForUpdatesSilentAsync() => _updateService.CheckAndDownloadAsync();
+
     [RelayCommand]
     private async Task CheckForUpdates()
     {
