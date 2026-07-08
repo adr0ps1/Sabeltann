@@ -79,7 +79,7 @@ public partial class MainWindow : Window
             Topmost = false;
         };
 
-        Opened += (_, _) => _ = _vm.CheckForUpdatesCommand.ExecuteAsync(null);
+        Opened += (_, _) => _ = _vm.CheckForUpdatesSilentAsync();
 
         Opened += (_, _) => TryRoundCorners();
 
