@@ -33,6 +33,16 @@
         <!-- Shared VideoBitmap; frames pushed via InvalidateVideo() from MainWindow -->
         <Image x:Name="PopoutImage" Source="{Binding VideoBitmap}" Stretch="Uniform" ZIndex="0"/>
 
+        <!-- Pause overlay: shown here (not the main window) while detached; click anywhere to resume. -->
+        <Border IsVisible="{Binding IsPaused}" ZIndex="4" Background="#990B0C0F"
+                Cursor="Hand" PointerPressed="OnPauseOverlayPressed">
+            <Border Width="56" Height="56" CornerRadius="28" Background="{StaticResource Accent}"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <PathIcon Data="{x:Static vm:MainViewModel.PlayGeo}" Foreground="{StaticResource AccentText}"
+                          Width="22" Height="22"/>
+            </Border>
+        </Border>
+
         <!-- Invisible top strip: drag the window from the top even with no visible bar -->
         <Border VerticalAlignment="Top" Height="44" Background="Transparent" ZIndex="1"
                 PointerPressed="OnDragStrip"/>
@@ -46,33 +56,41 @@
             <Border VerticalAlignment="Bottom" Background="#CC101216" Padding="4,3">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="2">
                     <Button Classes="TransportBtn" ToolTip.Tip="Rewind 10s" Command="{Binding RewindCommand}">
-                        <TextBlock Text="⏪" Foreground="{StaticResource Info}" FontSize="16"/>
+                        <PathIcon Data="{x:Static vm:MainViewModel.RewindGeo}" Foreground="{StaticResource Info}" Width="17" Height="17"/>
                     </Button>
                     <Button Classes="TransportBtn" ToolTip.Tip="Play / Pause" Command="{Binding TogglePlayPauseCommand}">
-                        <TextBlock Text="{Binding PlayPauseSymbol}" Foreground="{StaticResource Accent}" FontSize="18"/>
+                        <PathIcon Data="{Binding IsPlaying, Converter={x:Static vm:MainViewModel.PlayPauseIcon}}"
+                                  Foreground="{StaticResource Accent}" Width="18" Height="18"/>
                     </Button>
                     <Button Classes="TransportBtn" ToolTip.Tip="Stop" Command="{Binding StopPlaybackCommand}">
-                        <TextBlock Text="⏹" Foreground="{StaticResource Info}" FontSize="16"/>
+                        <PathIcon Data="{x:Static vm:MainViewModel.StopGeo}" Foreground="{StaticResource Info}" Width="15" Height="15"/>
                     </Button>
                     <Button Classes="TransportBtn" ToolTip.Tip="Forward 10s" Command="{Binding ForwardCommand}">
-                        <TextBlock Text="⏩" Foreground="{StaticResource Info}" FontSize="16"/>
+                        <PathIcon Data="{x:Static vm:MainViewModel.ForwardGeo}" Foreground="{StaticResource Info}" Width="17" Height="17"/>
                     </Button>
                     <Button Classes="TransportBtn" ToolTip.Tip="Mute (M)" Command="{Binding ToggleMuteCommand}">
-                        <TextBlock Text="{Binding IsMuted, Converter={x:Static vm:MainViewModel.MuteIcon}}"
-                                   Foreground="{StaticResource Sub}" FontSize="16"/>
+                        <PathIcon Data="{Binding IsMuted, Converter={x:Static vm:MainViewModel.MuteIcon}}"
+                                  Foreground="{StaticResource Sub}" Width="17" Height="17"/>
                     </Button>
                 </StackPanel>
             </Border>
         </Grid>
 
-        <!-- Resize grips (WindowDecorations=None removes native resize borders) -->
+        <!-- Resize grips (WindowDecorations=None removes native resize borders).
+             Corners sit above the edges (later = higher Z) so diagonal resize wins over a plain edge. -->
         <Grid ZIndex="100">
             <Border HorizontalAlignment="Left" VerticalAlignment="Stretch" Width="5" Background="Transparent"
                     Cursor="SizeWestEast" Tag="West" PointerPressed="OnResizePressed"/>
             <Border HorizontalAlignment="Right" VerticalAlignment="Stretch" Width="5" Background="Transparent"
                     Cursor="SizeWestEast" Tag="East" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="5" Background="Transparent"
+                    Cursor="SizeNorthSouth" Tag="North" PointerPressed="OnResizePressed"/>
             <Border HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="5" Background="Transparent"
                     Cursor="SizeNorthSouth" Tag="South" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Left" VerticalAlignment="Top" Width="12" Height="12" Background="Transparent"
+                    Cursor="TopLeftCorner" Tag="NorthWest" PointerPressed="OnResizePressed"/>
+            <Border HorizontalAlignment="Right" VerticalAlignment="Top" Width="12" Height="12" Background="Transparent"
+                    Cursor="TopRightCorner" Tag="NorthEast" PointerPressed="OnResizePressed"/>
             <Border HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="12" Height="12" Background="Transparent"
                     Cursor="BottomRightCorner" Tag="SouthEast" PointerPressed="OnResizePressed"/>
             <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="12" Height="12" Background="Transparent"

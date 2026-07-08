@@ -22,6 +22,20 @@ public partial class PopoutWindow : Window
         _hideChrome.Tick += (_, _) => { Chrome.IsVisible = false; _hideChrome.Stop(); };
         PointerMoved += (_, _) => ShowChrome();
         Opened += (_, _) => ShowChrome();
+        KeyDown += OnKeyDown;
+    }
+
+    // The popout is its own focused window, so MainWindow's key handler never sees these. Route the
+    // transport shortcuts to the shared MainViewModel. (#86)
+    private void OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (DataContext is not ViewModels.MainViewModel vm) return;
+        switch (e.Key)
+        {
+            case Key.M: vm.ToggleMuteCommand.Execute(null); e.Handled = true; break;
+            case Key.Space: vm.TogglePlayPauseCommand.Execute(null); e.Handled = true; break;
+            case Key.Escape: Close(); e.Handled = true; break;
+        }
     }
 
     public void InvalidateVideo() => PopoutImage?.InvalidateVisual();
@@ -41,6 +55,16 @@ public partial class PopoutWindow : Window
     }
 
     private void OnClosePopout(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => Close();
+
+    // Click the center pause overlay (only visible while paused) to resume.
+    private void OnPauseOverlayPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (DataContext is ViewModels.MainViewModel vm && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            vm.TogglePlayPauseCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
 
     private void OnResizePressed(object? sender, PointerPressedEventArgs e)
     {

@@ -484,9 +484,9 @@
                     <views:MovieDetailView DataContext="{Binding MovieDetail}"/>
                 </Border>
 
-                <!-- Pause overlay: amber ring + play glyph -->
-                <Border x:Name="PauseOverlay" IsVisible="{Binding IsPaused}" ZIndex="10"
-                        Background="#990B0C0F">
+                <!-- Pause overlay: amber ring + play glyph. Click anywhere to resume. -->
+                <Border x:Name="PauseOverlay" IsVisible="{Binding ShowPauseOverlay}" ZIndex="10"
+                        Background="#990B0C0F" Cursor="Hand" PointerPressed="OnPauseOverlayPressed">
                     <Border Width="64" Height="64" CornerRadius="32" Background="{StaticResource Accent}"
                             HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBlock Text="▶" Foreground="{StaticResource AccentText}" FontSize="26"
@@ -526,26 +526,26 @@
 
                         <Button Grid.Column="0" Classes="TransportBtn" Focusable="False"
                                 Command="{Binding TogglePlayPauseCommand}">
-                            <TextBlock Text="{Binding PlayPauseSymbol}" Foreground="{StaticResource Text}" FontSize="18"
-                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <PathIcon Data="{Binding IsPlaying, Converter={x:Static vm:MainViewModel.PlayPauseIcon}}"
+                                      Foreground="{StaticResource Text}" Width="17" Height="17"/>
                         </Button>
 
                         <Button Grid.Column="1" Classes="TransportBtn" Focusable="False"
                                 Command="{Binding StopPlaybackCommand}">
-                            <TextBlock Text="⏹" Foreground="{StaticResource Danger}" FontSize="15"
-                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <PathIcon Data="{x:Static vm:MainViewModel.StopGeo}" Foreground="{StaticResource Danger}"
+                                      Width="15" Height="15"/>
                         </Button>
 
                         <Button Grid.Column="2" Classes="TransportBtn" Focusable="False"
                                 Command="{Binding RewindCommand}" ToolTip.Tip="Rewind 10s">
-                            <TextBlock Text="⏪" Foreground="{StaticResource Sub}" FontSize="15"
-                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <PathIcon Data="{x:Static vm:MainViewModel.RewindGeo}" Foreground="{StaticResource Sub}"
+                                      Width="17" Height="17"/>
                         </Button>
 
                         <Button Grid.Column="3" Classes="TransportBtn" Focusable="False"
                                 Command="{Binding ForwardCommand}" ToolTip.Tip="Forward 10s">
-                            <TextBlock Text="⏩" Foreground="{StaticResource Sub}" FontSize="15"
-                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <PathIcon Data="{x:Static vm:MainViewModel.ForwardGeo}" Foreground="{StaticResource Sub}"
+                                      Width="17" Height="17"/>
                         </Button>
 
                         <Grid Grid.Column="4" ColumnDefinitions="*,Auto" VerticalAlignment="Center" Margin="0,0,8,0"
@@ -560,9 +560,8 @@
                         <Button Grid.Column="5" x:Name="VolumeBtn" Classes="TransportBtn" Focusable="False"
                                 Command="{Binding ToggleMuteCommand}" ToolTip.Tip="Volume / click to mute (M)"
                                 PointerEntered="OnVolumeBtnEntered" PointerExited="OnVolumeBtnExited">
-                            <TextBlock Text="{Binding IsMuted, Converter={x:Static vm:MainViewModel.MuteIcon}}"
-                                       Foreground="{StaticResource Sub}" FontSize="16"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <PathIcon Data="{Binding IsMuted, Converter={x:Static vm:MainViewModel.MuteIcon}}"
+                                      Width="17" Height="17" Foreground="{StaticResource Sub}"/>
                         </Button>
 
                         <Button Grid.Column="6" Classes="TransportBtn" Focusable="False"
@@ -586,21 +585,20 @@
 
                         <ToggleButton Grid.Column="9" IsChecked="{Binding ShowDebugOverlay}" Classes="TransportBtn"
                                       Focusable="False" ToolTip.Tip="Debug overlay (D)">
-                            <TextBlock Text="DEBUG" Foreground="{StaticResource Accent}" FontFamily="Consolas"
-                                       FontSize="9" FontWeight="Bold" LetterSpacing="1"
-                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <PathIcon Data="{x:Static vm:MainViewModel.DebugGeo}" Foreground="{StaticResource Text}"
+                                      Width="17" Height="17"/>
                         </ToggleButton>
 
                         <Button Grid.Column="10" Classes="TransportBtn" Focusable="False"
                                 Click="OnPopoutClick" ToolTip.Tip="Pop-out player — detach into a floating window (Esc to return)">
-                            <TextBlock Text="🗗" Foreground="{StaticResource Info}" FontSize="16"
-                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <PathIcon Data="{x:Static vm:MainViewModel.PopoutGeo}" Foreground="{StaticResource Info}"
+                                      Width="17" Height="17"/>
                         </Button>
 
                         <Button Grid.Column="11" Classes="TransportBtn" Focusable="False"
                                 Command="{Binding FullscreenCommand}" ToolTip.Tip="Fullscreen (F)">
-                            <TextBlock Text="⛶" Foreground="{StaticResource Info}" FontSize="18"
-                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <PathIcon Data="{x:Static vm:MainViewModel.FullscreenGeo}" Foreground="{StaticResource Info}"
+                                      Width="18" Height="18"/>
                         </Button>
                     </Grid>
                 </Border>

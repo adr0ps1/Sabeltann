@@ -153,6 +153,10 @@ public partial class MainWindow : Window
         // Morph the toolbar: quick fade-in whenever the active sub-bar swaps.
         if (e.PropertyName is nameof(MainViewModel.Mode) or nameof(MainViewModel.ShowVideo))
             AnimateToolbarMorph();
+
+        // While fullscreen, starting/stopping video flips immersive chrome — re-evaluate. (#83)
+        if (e.PropertyName == nameof(MainViewModel.ShowVideo) && _isFullscreen)
+            UpdateChrome();
     }
 
     private void AnimateToolbarMorph()
@@ -183,24 +187,35 @@ public partial class MainWindow : Window
     private void ApplyPopoutState()
     {
         var popped = _popout is not null;
+        _vm.IsPoppedOut = popped;
         VideoImage.IsVisible = !popped;
         PopoutPlaceholder.IsVisible = popped;
     }
 
-    /// <summary>Title bar + morphing toolbar are hidden when fullscreen is active.</summary>
+    /// <summary>In fullscreen the title bar is always hidden, but the morphing toolbar (which carries the
+    /// category/filter bar) stays visible while browsing — it's only hidden for immersive video. (#83)</summary>
     private void UpdateChrome()
     {
-        var hide = _isFullscreen;
-        TitleBar.IsVisible = !hide;
-        Toolbar.IsVisible = !hide;
-        MainGrid.RowDefinitions[0].Height = new GridLength(hide ? 0 : 40);
-        MainGrid.RowDefinitions[1].Height = new GridLength(hide ? 0 : 54);
+        var hideTitle = _isFullscreen;
+        var hideToolbar = _isFullscreen && _vm.ShowVideo;
+        TitleBar.IsVisible = !hideTitle;
+        Toolbar.IsVisible = !hideToolbar;
+        MainGrid.RowDefinitions[0].Height = new GridLength(hideTitle ? 0 : 40);
+        MainGrid.RowDefinitions[1].Height = new GridLength(hideToolbar ? 0 : 54);
     }
 
     private void OnTitleBarPressed(object? sender, PointerPressedEventArgs e)
     {
         if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             BeginMoveDrag(e);
+    }
+
+    // Click the center pause overlay (only visible while paused) to resume playback.
+    private void OnPauseOverlayPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+        _vm.TogglePlayPauseCommand.Execute(null);
+        e.Handled = true;
     }
 
     private void OnMinimize(object? sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -240,14 +255,16 @@ public partial class MainWindow : Window
             _popout.Close();
             e.Handled = true;
         }
+        else if (e.Key == Key.Escape && _isFullscreen)
+        {
+            // Esc in fullscreen exits fullscreen only — playback keeps going. A second
+            // Esc (now windowed) falls through to the stop branch below. (#82)
+            ToggleFullscreen();
+            e.Handled = true;
+        }
         else if (e.Key == Key.Escape && (_vm.IsPlaying || _vm.IsPaused))
         {
             _vm.StopPlaybackCommand.Execute(null);
-            e.Handled = true;
-        }
-        else if (e.Key == Key.Escape && _isFullscreen)
-        {
-            ToggleFullscreen();
             e.Handled = true;
         }
         else if (e.Key == Key.Escape && _vm.Mode == ContentMode.Picker && !_vm.IsConnected)

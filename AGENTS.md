@@ -25,7 +25,7 @@ Debug builds produce `SabeltannDevelopment.exe` so they don't conflict with a ru
 | Views | `Views/` (ConnectionPage, ContentPicker, InputDialog, LoginWindow, SettingsWindow) |
 | Controls | `Controls/` (VideoView.cs — VLC video host) |
 | Converters | `Converters/` (BoolToColorConverter) |
-| Assets | `Assets/` (pirate.svg, Sabeltann.ico) |
+| Assets | `Assets/` (logo.png, Sabeltann.ico) |
 | Setup/WiX | `Setup/` (build.ps1, Setup.wxs, Components.wxs) |
 
 ## MVVM pattern

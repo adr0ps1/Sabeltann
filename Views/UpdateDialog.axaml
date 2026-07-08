@@ -41,7 +41,18 @@
 
         <Grid/>
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+        <!-- Installing status: shown after Install & Restart so the silent, apply-on-exit update
+             doesn't look frozen. (#80) -->
+        <StackPanel Orientation="Horizontal" Spacing="10" IsVisible="{Binding IsInstalling}">
+            <ProgressBar IsIndeterminate="True" Width="120" Height="4"
+                         Foreground="{StaticResource Accent}" Background="{StaticResource Line}"
+                         VerticalAlignment="Center"/>
+            <TextBlock Text="Installing update — the app will restart…" Foreground="{StaticResource Sub}"
+                       FontSize="12" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8"
+                    IsEnabled="{Binding !IsInstalling}">
             <Button Content="Remind Later" Command="{Binding RemindLaterCommand}"
                     Background="{StaticResource Surface2}" Foreground="{StaticResource Sub}"
                     BorderThickness="0" CornerRadius="8" Padding="12,8"/>

@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="Assets/pirate.svg" width="120" height="120" />
+<img src="Assets/logo.png" width="120" height="120" />
 
 # Sabeltann!
 
