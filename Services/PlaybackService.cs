@@ -30,6 +30,7 @@ public class PlaybackService : IDisposable
     private RendererItem? _activeRenderer;
     private string? _castIp;      // Chromecast IP when casting via libvlc's own chromecast output
     private string? _castName;
+    private string? _recordFile;  // when set, the current stream is teed to this file via sout (#84)
 
     private static readonly MediaPlayer.LibVLCVideoLockCb LockCb = OnLock;
     private static readonly MediaPlayer.LibVLCVideoUnlockCb UnlockCb = OnUnlock;
@@ -110,6 +111,15 @@ public class PlaybackService : IDisposable
             _currentMedia.AddOption($":sout=#chromecast{{ip={_castIp},port=8009}}");
             _currentMedia.AddOption(":sout-keep");
             _currentMedia.AddOption(":demux-filter=demux_chromecast");
+        }
+        // Recording: tee the SAME connection (copy-mux, no transcode) to a .ts file. Uses the one
+        // stream we're already playing — no second connection — so it works for single-stream
+        // providers and records exactly the live point we're on. (#84)
+        else if (_recordFile is not null)
+        {
+            var dst = _recordFile.Replace('\\', '/');
+            _currentMedia.AddOption($":sout=#std{{access=file,mux=ts,dst='{dst}'}}");
+            _currentMedia.AddOption(":sout-keep");
         }
 
         if (!_mediaPlayer.Play(_currentMedia))
@@ -246,6 +256,26 @@ public class PlaybackService : IDisposable
     {
         if (_castIp is not null) { _castIp = null; _castName = null; RestartCurrent(); return; }
         CastTo(-1);
+    }
+
+    public bool IsRecording => _recordFile is not null;
+    public string? RecordingFile => _recordFile;
+
+    /// <summary>Start teeing the current stream to <paramref name="file"/>. Restarts the stream to
+    /// attach the sout (a brief blip, like starting a cast). Records the one connection we're on. (#84)</summary>
+    public void StartRecording(string file)
+    {
+        if (_recordFile is not null || _castIp is not null) return;
+        _recordFile = file;
+        RestartCurrent();
+    }
+
+    /// <summary>Stop recording and resume normal playback (drops the file sout). (#84)</summary>
+    public void StopRecording()
+    {
+        if (_recordFile is null) return;
+        _recordFile = null;
+        RestartCurrent();
     }
 
     /// <summary>Clears the cast target without restarting playback — for when playback stops entirely.</summary>
