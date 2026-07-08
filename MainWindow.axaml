@@ -522,7 +522,7 @@
                         Background="#CC101216" Padding="8,6"
                         HorizontalAlignment="Stretch" VerticalAlignment="Bottom" ZIndex="10"
                         PointerEntered="OnTransportEntered" PointerExited="OnTransportExited">
-                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto,Auto,Auto" VerticalAlignment="Center">
+                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" VerticalAlignment="Center">
 
                         <Button Grid.Column="0" Classes="TransportBtn" Focusable="False"
                                 Command="{Binding TogglePlayPauseCommand}">
@@ -599,6 +599,17 @@
                                 Command="{Binding FullscreenCommand}" ToolTip.Tip="Fullscreen (F)">
                             <PathIcon Data="{x:Static vm:MainViewModel.FullscreenGeo}" Foreground="{StaticResource Info}"
                                       Width="18" Height="18"/>
+                        </Button>
+
+                        <!-- Record to file: filled red dot while recording, hollow ring when idle. (#84) -->
+                        <Button Grid.Column="12" Classes="TransportBtn" Focusable="False"
+                                Command="{Binding ToggleRecordCommand}" ToolTip.Tip="Record this stream to a file">
+                            <Panel Width="14" Height="14">
+                                <Ellipse Width="13" Height="13" Fill="{StaticResource Live}"
+                                         IsVisible="{Binding IsRecording}"/>
+                                <Ellipse Width="13" Height="13" Stroke="{StaticResource Sub}" StrokeThickness="1.5"
+                                         IsVisible="{Binding !IsRecording}"/>
+                            </Panel>
                         </Button>
                     </Grid>
                 </Border>

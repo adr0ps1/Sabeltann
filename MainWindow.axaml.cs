@@ -513,6 +513,7 @@ public partial class MainWindow : Window
         _popout?.Close();
         _vm.SaveVodProgress();
         _vm.DebugStats.Stop();
+        _vm.DisposeRecording();
         _player.Dispose();
         ImageService.Shutdown();
         _vm.GetUpdateService().ApplyPendingOnExit(restart: false);

@@ -1452,6 +1452,53 @@ public partial class MainViewModel : ObservableObject
             ShowToast = false;
     }
 
+    // Recording is a headless, isolated service — created lazily on first use so the extra libvlc
+    // instance only exists once you actually record. (#84)
+    private RecordingService? _recording;
+
+    [ObservableProperty] private bool _isRecording;
+
+    [RelayCommand]
+    private void ToggleRecord()
+    {
+        if (string.IsNullOrEmpty(_currentPlayingUrl))
+        {
+            ShowToastMessage("Start playing a channel first, then record.");
+            return;
+        }
+
+        _recording ??= CreateRecorder();
+
+        if (_recording.IsRecording)
+        {
+            _recording.Stop();
+            IsRecording = false;
+            ShowToastMessage($"Recording saved to {RecordingService.RecordingsFolder}");
+        }
+        else if (_recording.Start(_currentPlayingUrl))
+        {
+            IsRecording = true;
+            ShowToastMessage("● Recording…");
+        }
+        else
+        {
+            ShowToastMessage("Couldn't start recording.");
+        }
+    }
+
+    private RecordingService CreateRecorder()
+    {
+        var r = new RecordingService();
+        r.Failed += (_, msg) => Dispatcher.UIThread.Post(() =>
+        {
+            IsRecording = false;
+            ShowToastMessage(msg);
+        });
+        return r;
+    }
+
+    public void DisposeRecording() => _recording?.Dispose();
+
     private void ShowUpdateDialog(string newVersion)
     {
         Dispatcher.UIThread.Post(async () =>
