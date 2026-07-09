@@ -231,6 +231,7 @@
                             <MenuItem Header="Xtream Login..." Click="OnXtreamLogin"/>
                             <Separator/>
                             <MenuItem Header="Settings..." Click="OnSettings"/>
+                            <MenuItem Header="Status..." Click="OnStatus"/>
                             <Separator/>
                             <MenuItem Header="Exit" Click="OnExit"/>
                         </MenuItem>

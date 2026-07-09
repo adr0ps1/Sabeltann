@@ -1,0 +1,68 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Sabeltann.Views.StatusDialog"
+        Title="Status"
+        Width="480"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        WindowDecorations="None"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        Foreground="{StaticResource Text}">
+    <Border CornerRadius="12" Background="{StaticResource Bg}" ClipToBounds="True">
+    <Grid RowDefinitions="36,*">
+        <Grid Grid.Row="0" Background="{StaticResource TitleBar}" ColumnDefinitions="*,Auto"
+              PointerPressed="OnChromeDrag">
+            <TextBlock Grid.Column="0" Text="Status" Foreground="{StaticResource Sub}" FontSize="12"
+                       FontWeight="SemiBold" VerticalAlignment="Center" Margin="14,0"/>
+            <Button Grid.Column="1" Classes="DialogClose" Content="&#xE8BB;" Click="OnClose"/>
+        </Grid>
+        <StackPanel Grid.Row="1" Margin="20" Spacing="16">
+            <TextBlock Text="Installation" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextStrong}"/>
+
+            <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Line}" BorderThickness="1"
+                    CornerRadius="8" Padding="12">
+                <Grid ColumnDefinitions="130,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                      RowSpacing="7">
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Version"      Classes="k"/>
+                    <TextBlock Grid.Row="0" Grid.Column="1" x:Name="VersionText"  Classes="v"/>
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Installed"    Classes="k"/>
+                    <TextBlock Grid.Row="1" Grid.Column="1" x:Name="InstalledText" Classes="v"/>
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Install size" Classes="k"/>
+                    <TextBlock Grid.Row="2" Grid.Column="1" x:Name="SizeText"     Classes="v"/>
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Install path"  Classes="k"/>
+                    <TextBlock Grid.Row="3" Grid.Column="1" x:Name="PathText"     Classes="v" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Settings"      Classes="k"/>
+                    <TextBlock Grid.Row="4" Grid.Column="1" x:Name="SettingsText" Classes="v" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Logs"          Classes="k"/>
+                    <TextBlock Grid.Row="5" Grid.Column="1" x:Name="LogsText"     Classes="v" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Row="6" Grid.Column="0" Text="Runtime"       Classes="k"/>
+                    <TextBlock Grid.Row="6" Grid.Column="1" x:Name="RuntimeText"  Classes="v"/>
+                    <TextBlock Grid.Row="7" Grid.Column="0" Text="Channels"      Classes="k"/>
+                    <TextBlock Grid.Row="7" Grid.Column="1" x:Name="ChannelsText" Classes="v"/>
+                </Grid>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                <Button Content="Copy" Click="OnCopy"
+                        Background="{StaticResource Surface2}" Foreground="{StaticResource Sub}"
+                        BorderThickness="0" CornerRadius="8" Padding="12,8"/>
+                <Button Content="Close" Click="OnClose" Classes="Primary"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+    </Border>
+
+    <Window.Styles>
+        <Style Selector="TextBlock.k">
+            <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+        </Style>
+        <Style Selector="TextBlock.v">
+            <Setter Property="Foreground" Value="{StaticResource Text}"/>
+            <Setter Property="FontSize" Value="12.5"/>
+        </Style>
+    </Window.Styles>
+</Window>
