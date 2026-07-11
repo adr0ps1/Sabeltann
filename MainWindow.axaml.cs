@@ -399,6 +399,14 @@ public partial class MainWindow : Window
             _vm.ApplySettings(result);
     }
 
+    private async void OnStatus(object? sender, RoutedEventArgs e)
+    {
+        var version = _vm.GetUpdateService().CurrentVersion
+            ?? typeof(MainWindow).Assembly.GetName().Version?.ToString()
+            ?? "dev build";
+        await new Views.StatusDialog(version, _vm.ChannelCount).ShowDialog(this);
+    }
+
     private void OnExit(object? sender, RoutedEventArgs e)
     {
         Close();
