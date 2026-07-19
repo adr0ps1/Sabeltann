@@ -195,6 +195,11 @@ public partial class MainViewModel : ObservableObject
         IsPlaying = false;
         ChannelCount = _liveChannels.Count;
         Categories.Clear();
+
+        var all = new CategoryViewModel { Name = "All" };
+        all.Channels.AddRange(_liveChannels);
+        Categories.Add(all);
+
         var groups = _liveChannels
             .GroupBy(ch => ch.Group ?? "Uncategorized")
             .OrderBy(g => g.Key == "Uncategorized" ? 1 : 0)
@@ -1395,6 +1400,10 @@ public partial class MainViewModel : ObservableObject
     {
         Categories.Clear();
         FilteredChannels.Clear();
+
+        var all = new CategoryViewModel { Name = "All" };
+        all.Channels.AddRange(_liveChannels.Count > 0 ? _liveChannels : _allChannels);
+        Categories.Add(all);
 
         var groups = _allChannels
             .GroupBy(ch => ch.Group ?? "Uncategorized")

@@ -169,21 +169,20 @@ public partial class SeriesBrowserViewModel : ObservableObject
         if (cat != "All")
             pool = pool.Where(ch => (ch.Group ?? "Uncategorized").Equals(cat, StringComparison.OrdinalIgnoreCase));
 
-        const int maxEpisodes = 2000;
-        var sample = pool.Take(maxEpisodes).ToList();
-
-        var grouped = sample
+        var grouped = pool
             .Select(ch => new { Channel = ch, ShowName = ChannelGrouper.ExtractShowName(ch.Name) })
             .Where(x => x.ShowName is not null);
 
         if (query.Length > 0)
             grouped = grouped.Where(x => x.ShowName!.Contains(query, StringComparison.OrdinalIgnoreCase));
 
-        var byShow = grouped.GroupBy(x => x.ShowName!, StringComparer.OrdinalIgnoreCase);
+        var byShow = grouped.GroupBy(x => x.ShowName!, StringComparer.OrdinalIgnoreCase).ToList();
         var ordered = SelectedSort == VodSorting.Default
             ? byShow.OrderBy(g => g.Key)
             : VodSorting.Apply(byShow, SelectedSort, _omdb, g => g.Key, _ => null);
-        var shows = ordered.Take(500).ToList();
+
+        const int maxShows = 500;
+        var shows = ordered.Take(maxShows).ToList();
 
         Shows.Clear();
         foreach (var g in shows)
@@ -201,10 +200,10 @@ public partial class SeriesBrowserViewModel : ObservableObject
             Shows.Add(show);
         }
 
-        var totalEpisodes = pool.Count();
-        StatusText = totalEpisodes > maxEpisodes
-            ? $"{Shows.Count} shows ({maxEpisodes} of {totalEpisodes} episodes processed)"
-            : $"{Shows.Count} shows, {totalEpisodes} episodes";
+        var totalShows = byShow.Count;
+        StatusText = totalShows > maxShows
+            ? $"{Shows.Count} of {totalShows} shows shown"
+            : $"{Shows.Count} shows, {pool.Count()} episodes";
     }
 
     public async Task InitializeFromXtreamAsync(XtreamConnectionInfo info)
