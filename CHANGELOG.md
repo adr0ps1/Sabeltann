@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.27](https://github.com/adr0ps1/Sabeltann/compare/v0.1.26...v0.1.27) (2026-07-19)
+
+
+### Features
+
+* Installation Status dialog under File menu ([#100](https://github.com/adr0ps1/Sabeltann/issues/100)) ([#101](https://github.com/adr0ps1/Sabeltann/issues/101)) ([35a8bce](https://github.com/adr0ps1/Sabeltann/commit/35a8bce5220ea2aabaa50d1dcc1afd5283be5710))
+* Slate-palette popups + 'up to date' update toast ([#93](https://github.com/adr0ps1/Sabeltann/issues/93), [#94](https://github.com/adr0ps1/Sabeltann/issues/94)) ([#96](https://github.com/adr0ps1/Sabeltann/issues/96)) ([6176f23](https://github.com/adr0ps1/Sabeltann/commit/6176f236da91e773c5286d57bf1b61b473fa28cf))
+
+
+### Bug Fixes
+
+* "All" category truncated series/live-tv lists ([#111](https://github.com/adr0ps1/Sabeltann/issues/111)) ([56a2ff2](https://github.com/adr0ps1/Sabeltann/commit/56a2ff2433020eabec9fa480209e6ad94eab8446))
+* Vertically center skull in logo + app icon ([#90](https://github.com/adr0ps1/Sabeltann/issues/90)) ([#103](https://github.com/adr0ps1/Sabeltann/issues/103)) ([dd2b444](https://github.com/adr0ps1/Sabeltann/commit/dd2b44448a96f76b83f73a886672505cbb17ecd8))
+
 ## [0.1.26](https://github.com/adr0ps1/Sabeltann/compare/v0.1.25...v0.1.26) (2026-07-08)
 
 
