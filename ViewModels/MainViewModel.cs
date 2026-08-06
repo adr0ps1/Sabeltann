@@ -51,6 +51,10 @@ public partial class MainViewModel : ObservableObject
     public static readonly FuncValueConverter<bool, IBrush> CastIcon = new(
         casting => casting ? new SolidColorBrush(Color.Parse("#a6e3a1")) : new SolidColorBrush(Color.Parse("#89b4fa")));
 
+    // Recording: solid red dot while recording, hollow (transparent fill) when idle — Stroke stays red.
+    public static readonly FuncValueConverter<bool, IBrush> RecordFill = new(
+        recording => recording ? new SolidColorBrush(Color.Parse("#f38ba8")) : Brushes.Transparent);
+
     public static readonly FuncValueConverter<bool, IBrush> ConnDot = new(
         connected => connected ? new SolidColorBrush(Color.Parse("#a6e3a1")) : new SolidColorBrush(Color.Parse("#6c7086")));
 
@@ -318,6 +322,7 @@ public partial class MainViewModel : ObservableObject
             SaveVodProgress();           // persist the title we're leaving
             _isCurrentVod = true;
             OnPropertyChanged(nameof(IsCurrentVod));
+            OnPropertyChanged(nameof(CanRecord));
             OnPropertyChanged(nameof(CurrentPlayingTitle));
             _resumeToMs = resume ? TryGetResumeMs(url) ?? 0 : 0;
             _currentPlayingUrl = url;
@@ -395,6 +400,7 @@ public partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(ShowOverlay))]
     [NotifyPropertyChangedFor(nameof(ShowChannelGrid))]
     [NotifyPropertyChangedFor(nameof(ShowVideo))]
+    [NotifyPropertyChangedFor(nameof(CanRecord))]
     [NotifyPropertyChangedFor(nameof(ShowPlaybackBar))]
     [NotifyPropertyChangedFor(nameof(ShowLiveBar))]
     [NotifyPropertyChangedFor(nameof(ShowMoviesBar))]
@@ -418,6 +424,7 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowVideo))]
+    [NotifyPropertyChangedFor(nameof(CanRecord))]
     [NotifyPropertyChangedFor(nameof(ShowPauseOverlay))]
     [NotifyPropertyChangedFor(nameof(ShowPlaybackBar))]
     [NotifyPropertyChangedFor(nameof(ShowLiveBar))]
@@ -539,6 +546,15 @@ public partial class MainViewModel : ObservableObject
     private double _resumeToMs;
     private const double PlaybackTimeoutSeconds = 15;
 
+    private readonly RecordingService _recording = new();
+
+    /// <summary>True while ffmpeg is teeing the live stream to a file (see <see cref="RecordingService"/>).</summary>
+    [ObservableProperty]
+    private bool _isRecording;
+
+    /// <summary>Recording is Live TV only — VOD races faster than real-time through the tee.</summary>
+    public bool CanRecord => ShowVideo && !IsCurrentVod;
+
     public event Action? ToggleFullscreenRequested;
 
     [ObservableProperty]
@@ -605,10 +621,13 @@ public partial class MainViewModel : ObservableObject
     {
         _player = player;
         _player.StartCastDiscovery();
+        _recording.Failed += (_, _) => Dispatcher.UIThread.Post(RecordingFailed);
         _player.CastTargetsChanged += (_, _) =>
             Dispatcher.UIThread.Post(() => OnPropertyChanged(nameof(CastTargets)));
-        _player.Error += (_, msg) =>
+        _player.Error += (_, msg) => Dispatcher.UIThread.Post(() =>
         {
+            // EncounteredError fires on libvlc's native thread; these are UI-bound (some drive code-behind
+            // Opacity setters), so marshal to the UI thread or we crash with a cross-thread violation.
             LogService.Info("VLC Error event fired", new { msg, isPlaying = IsPlaying, isPaused = IsPaused });
             StatusText = $"Playback error: {msg}";
             ConnectionState = msg;
@@ -617,7 +636,7 @@ public partial class MainViewModel : ObservableObject
             IsPaused = false;
             ShowConnectionOverlay = false;
             ShowBufferingOverlay = true;
-        };
+        });
         _player.PlayingStarted += (_, _) => Dispatcher.UIThread.Post(() =>
         {
             // Playing fires when the connection opens, before any frame decodes — keep the loading
@@ -829,6 +848,7 @@ public partial class MainViewModel : ObservableObject
     {
         try
         {
+            StopRecordingIfActive();   // switching channels ends any in-progress recording
             if (value is not null && _player is not null && !string.IsNullOrEmpty(value.Url))
             {
                 IsBrowsing = false;
@@ -851,7 +871,7 @@ public partial class MainViewModel : ObservableObject
                 _playbackConfirmed = false;
                 _playStartFrames = _player?.FramesDecoded ?? 0;
                 _player?.ClearBitmap();
-                _player.Play(value.Url);
+                _player!.Play(value.Url);   // non-null: guarded by the enclosing if (_player is not null)
                 DebugStats.SetUrl(value.Url);
                 IsPlaying = true;
                 IsPaused = false;
@@ -879,6 +899,81 @@ public partial class MainViewModel : ObservableObject
     private void ToggleSubtitlePopup()
     {
         ShowSubtitlePopup = !ShowSubtitlePopup;
+    }
+
+    /// <summary>Start/stop recording the current Live TV stream to a file while it keeps playing.</summary>
+    [RelayCommand]
+    private async Task ToggleRecord()
+    {
+        if (_player is null) return;
+
+        if (_recording.IsRecording)
+        {
+            var saved = _recording.Stop();
+            IsRecording = false;
+            OnPropertyChanged(nameof(CanRecord));
+            var url = _currentPlayingUrl;              // reconnect the provider stream directly
+            if (url is not null) { _player.Stop(); _player.Play(url); }
+            if (saved is not null) ShowToastMessage($"Saved: {saved}");
+            return;
+        }
+
+        if (_isCurrentVod || string.IsNullOrEmpty(_currentPlayingUrl))
+        {
+            ShowToastMessage("Recording is available for Live TV.");
+            return;
+        }
+
+        // Ensure ffmpeg is present BEFORE disturbing playback (first run may download it).
+        if (!await _recording.EnsureReadyAsync(new Progress<string>(ShowToastMessage)))
+        {
+            ShowToastMessage("Recorder unavailable — ffmpeg download failed.");
+            return;
+        }
+
+        var source = _currentPlayingUrl!;
+        var name = SelectedChannel?.Name ?? "recording";
+        var listenUrl = _recording.Prepare(name);
+        _player.Stop();                 // drop the direct provider connection (one-stream providers)
+
+        // Bring ffmpeg + the loopback HTTP server up BEFORE libvlc connects to it.
+        if (!await _recording.StartAsync(source))
+        {
+            _player.Play(source);       // fall back to direct playback
+            ShowToastMessage("Recording failed to start.");
+            return;
+        }
+        _player.Play(listenUrl);        // libvlc plays our loopback relay while ffmpeg records
+        IsRecording = true;
+        OnPropertyChanged(nameof(CanRecord));
+        ShowToastMessage($"● Recording {name}");
+    }
+
+    /// <summary>Kill any in-progress recording on app exit so ffmpeg doesn't linger.</summary>
+    public void DisposeRecording() => _recording.Dispose();
+
+    /// <summary>Stop ffmpeg without restoring playback — for channel switches / full stop that re-point
+    /// the player anyway. No-op when not recording.</summary>
+    private void StopRecordingIfActive()
+    {
+        if (!_recording.IsRecording) return;
+        var saved = _recording.Stop();
+        IsRecording = false;
+        OnPropertyChanged(nameof(CanRecord));
+        if (saved is not null) ShowToastMessage($"Saved: {saved}");
+    }
+
+    /// <summary>ffmpeg died mid-recording (bad URL, provider refused the connection, codec error).
+    /// Reconnect the player directly to the source so we don't leave the picture frozen.</summary>
+    private void RecordingFailed()
+    {
+        if (!IsRecording) return;   // already stopped via the user toggle — not an actual failure
+        _recording.Stop();
+        IsRecording = false;
+        OnPropertyChanged(nameof(CanRecord));
+        var url = _currentPlayingUrl;
+        if (_player is not null && url is not null) { _player.Stop(); _player.Play(url); }
+        ShowToastMessage("Recording stopped unexpectedly — resumed direct playback.");
     }
 
     public void RefreshSubtitleTracks()
@@ -1237,6 +1332,7 @@ public partial class MainViewModel : ObservableObject
     private void StopPlayback()
     {
         LogService.Info("StopPlayback called", new { mode = Mode.ToString(), isPlaying = IsPlaying, isPaused = IsPaused });
+        StopRecordingIfActive();
         SaveVodProgress();           // persist position before we zero it below
         _player?.Stop();
         EndCasting();
