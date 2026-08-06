@@ -523,7 +523,7 @@
                         Background="#CC101216" Padding="8,6"
                         HorizontalAlignment="Stretch" VerticalAlignment="Bottom" ZIndex="10"
                         PointerEntered="OnTransportEntered" PointerExited="OnTransportExited">
-                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto,Auto,Auto" VerticalAlignment="Center">
+                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" VerticalAlignment="Center">
 
                         <Button Grid.Column="0" Classes="TransportBtn" Focusable="False"
                                 Command="{Binding TogglePlayPauseCommand}">
@@ -600,6 +600,13 @@
                                 Command="{Binding FullscreenCommand}" ToolTip.Tip="Fullscreen (F)">
                             <PathIcon Data="{x:Static vm:MainViewModel.FullscreenGeo}" Foreground="{StaticResource Info}"
                                       Width="18" Height="18"/>
+                        </Button>
+
+                        <Button Grid.Column="12" Classes="TransportBtn" Focusable="False"
+                                IsVisible="{Binding CanRecord}" Command="{Binding ToggleRecordCommand}"
+                                ToolTip.Tip="Record to file — keeps playing while it records (Live TV)">
+                            <Ellipse Width="15" Height="15" Stroke="#f38ba8" StrokeThickness="2"
+                                     Fill="{Binding IsRecording, Converter={x:Static vm:MainViewModel.RecordFill}}"/>
                         </Button>
                     </Grid>
                 </Border>

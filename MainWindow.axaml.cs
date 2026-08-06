@@ -519,6 +519,7 @@ public partial class MainWindow : Window
         if (WindowState == WindowState.Normal)
             _vm.SaveWindowSize(ClientSize.Width, ClientSize.Height);
         _popout?.Close();
+        _vm.DisposeRecording();
         _vm.SaveVodProgress();
         _vm.DebugStats.Stop();
         _player.Dispose();
