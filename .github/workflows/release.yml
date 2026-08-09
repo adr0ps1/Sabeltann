@@ -10,6 +10,20 @@ permissions:
   id-token: write
   attestations: write
 
+# Two merges to main seconds apart used to start two release-please runs that both
+# rewrote the `release-please--branches--main` branch. That produced two open release
+# PRs for the same version (#114 and #121, both "release 0.1.28"); merging the second
+# asked GitHub to create a tag that already existed, and the run failed 422.
+#
+# cancel-in-progress stays false on purpose: a running job may be several minutes into
+# packing and uploading release assets, and killing it would leave a half-populated
+# GitHub release. Queue instead. GitHub keeps only the newest pending run per group,
+# which is fine here — every run recomputes from main's HEAD, so the survivor does the
+# skipped run's work too.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release-please:
     runs-on: ubuntu-latest
