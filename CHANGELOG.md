@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.28](https://github.com/adr0ps1/Sabeltann/compare/v0.1.27...v0.1.28) (2026-08-06)
+
+
+### Features
+
+* Record live TV to file while it keeps playing ([#84](https://github.com/adr0ps1/Sabeltann/issues/84)) ([#119](https://github.com/adr0ps1/Sabeltann/issues/119)) ([df9ceb1](https://github.com/adr0ps1/Sabeltann/commit/df9ceb12c927a5eab3fc233e4a08bef7bfde3bea))
+
+
+### Chores
+
+* **deps:** Bump actions/setup-dotnet from 5.4.0 to 6.0.0 ([#112](https://github.com/adr0ps1/Sabeltann/issues/112)) ([4d03e9b](https://github.com/adr0ps1/Sabeltann/commit/4d03e9bdfe8c81f227a19872e171145f73e5e656))
+* **deps:** Bump actions/upload-artifact from 4.6.0 to 7.0.1 ([#106](https://github.com/adr0ps1/Sabeltann/issues/106)) ([f192053](https://github.com/adr0ps1/Sabeltann/commit/f1920539413fd05cbb6bb3c3bdaf2c6a043c3b30))
+
 ## [0.1.27](https://github.com/adr0ps1/Sabeltann/compare/v0.1.26...v0.1.27) (2026-07-19)
 
 
