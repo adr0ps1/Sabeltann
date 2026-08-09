@@ -4,7 +4,7 @@
 
 # Sabeltann!
 
-**IPTV player for Windows**
+**IPTV player for Windows and macOS**
 
 Built with Avalonia 12 and LibVLCSharp. Supports M3U playlists, Xtream Codes, and local files.
 
@@ -25,6 +25,20 @@ Built with Avalonia 12 and LibVLCSharp. Supports M3U playlists, Xtream Codes, an
 | Logging | JSON logs in `logs/` |
 | Auto-update | Velopack — checks GitHub Releases on launch, installs on exit |
 
+## macOS
+
+The release carries a `.pkg` installer alongside the Windows `Setup.exe`. Two caveats:
+
+- **It is not signed or notarized** (no Apple Developer ID). Gatekeeper will refuse the
+  first launch — right-click the installer and choose **Open**, or run
+  `xattr -cr /Applications/Sabeltann.app`.
+- **It is an Intel (x86-64) build**, so Apple Silicon runs it under Rosetta 2. VideoLAN
+  publishes no arm64 libvlc NuGet package
+  ([libvlc-nuget#17](https://code.videolan.org/videolan/libvlc-nuget/-/issues/17)).
+
+Recording needs `ffmpeg` on `PATH` (`brew install ffmpeg`); unlike Windows the app does
+not download one. Rounded window corners are Windows-only.
+
 ## Keyboard shortcuts
 
 `F` — fullscreen · `Esc` — exit fullscreen · `D` — debug overlay
@@ -41,6 +55,8 @@ Debug builds produce `SabeltannDevelopment.exe` so they don't conflict with a ru
 ## Release process
 
 Merging to `main` triggers [release-please](https://github.com/googleapis/release-please) to auto-version. The release workflow publishes the app, packs a [Velopack](https://velopack.io) release (`Setup.exe`, portable zip, and full/delta update packages), attests with Sigstore, and uploads everything to the GitHub release for the tag. The in-app updater reads those release assets to deliver auto-updates.
+
+A second job then does the same on `macos-latest` for `osx-x64`, producing a `.pkg`. Velopack keeps one release manifest per platform (`releases.osx.json` next to `releases.win.json`), so the in-app updater picks the right channel with no code change. It runs after the Windows job rather than beside it, because both merge assets into the same GitHub release.
 
 ## Tech stack
 

@@ -7,8 +7,19 @@ on:
     branches: [main]
 
 jobs:
+  # Both platforms build with an explicit RID: it is what selects the libvlc native
+  # package in Sabeltann.csproj, so a plain RID-less build would never exercise the
+  # macOS path. macOS is osx-x64 because VideoLAN ships no arm64 libvlc package.
   build:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: macos-latest
+            rid: osx-x64
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
@@ -16,14 +27,14 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - run: dotnet restore
+      - run: dotnet restore --runtime ${{ matrix.rid }}
 
-      - run: dotnet build --configuration Release --no-restore
+      - run: dotnet build --configuration Release --runtime ${{ matrix.rid }} --no-restore
 
       - run: dotnet test --configuration Release --no-build --verbosity normal
         continue-on-error: true
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: Sabeltann-Release
-          path: bin/Release/net10.0/
+          name: Sabeltann-Release-${{ matrix.rid }}
+          path: bin/Release/net10.0/${{ matrix.rid }}/

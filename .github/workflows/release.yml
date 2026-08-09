@@ -112,3 +112,106 @@ jobs:
           name: Sabeltann-${{ needs.release-please.outputs.tag_name }}
           path: Releases/
           compression-level: 9
+
+  # macOS .pkg installer. Velopack keeps a separate release channel per platform
+  # (releases.osx.json alongside releases.win.json), so the in-app updater picks the
+  # right one with no code change — but `vpk upload --merge` rewrites the same GitHub
+  # release, so this waits for the Windows job rather than racing it.
+  #
+  # osx-x64, not osx-arm64: VideoLAN.LibVLC.Mac ships x86_64 only (libvlc-nuget#17).
+  # Apple Silicon runs it under Rosetta 2.
+  build-macos:
+    needs: [release-please, build-release]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      - run: dotnet restore --runtime osx-x64
+
+      - name: Publish self-contained osx-x64
+        run: dotnet publish --configuration Release --runtime osx-x64 --self-contained true --output publish
+
+      - name: Install Velopack CLI (vpk)
+        run: |
+          dotnet tool install -g vpk --version 1.2.0
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
+      - name: Compute version
+        id: ver
+        run: echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+        env:
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+
+      # Velopack builds the .app bundle itself when --packDir is not already one, but
+      # then it requires an .icns. Assets/logo.png is 512x512, so 512 is the largest
+      # real size; iconutil accepts a subset of the sizes, no need to fake 1024.
+      - name: Build .icns from logo.png
+        run: |
+          mkdir -p Sabeltann.iconset
+          for s in 16 32 128 256; do
+            sips -z $s $s Assets/logo.png --out "Sabeltann.iconset/icon_${s}x${s}.png"
+            sips -z $((s * 2)) $((s * 2)) Assets/logo.png --out "Sabeltann.iconset/icon_${s}x${s}@2x.png"
+          done
+          sips -z 512 512 Assets/logo.png --out Sabeltann.iconset/icon_512x512.png
+          iconutil --convert icns Sabeltann.iconset --output Sabeltann.icns
+
+      # Best-effort, same as the Windows job: the first osx release has no prior
+      # assets in this channel to build a delta against.
+      - name: Download previous release (for delta updates)
+        continue-on-error: true
+        run: |
+          vpk download github \
+            --repoUrl https://github.com/${{ github.repository }} \
+            --token ${{ secrets.GITHUB_TOKEN }} \
+            --outputDir Releases
+
+      # Unsigned: no Apple Developer ID available, so Gatekeeper quarantines the
+      # install. See README for the right-click-Open workaround. To sign, add
+      # --signAppIdentity / --signInstallIdentity / --notaryProfile here.
+      - name: Build Velopack release
+        run: |
+          vpk pack \
+            --packId Sabeltann \
+            --packVersion ${{ steps.ver.outputs.version }} \
+            --packDir publish \
+            --mainExe Sabeltann \
+            --packTitle Sabeltann \
+            --packAuthors Sabeltann \
+            --icon Sabeltann.icns \
+            --bundleId no.sabeltann.app \
+            --outputDir Releases
+
+      - name: Attest build provenance (app binary)
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        with:
+          subject-path: publish/Sabeltann
+
+      - name: Attest build provenance (installer)
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        with:
+          subject-path: Releases/*.pkg
+
+      - name: Upload Velopack release to GitHub
+        run: |
+          vpk upload github \
+            --repoUrl https://github.com/${{ github.repository }} \
+            --token ${{ secrets.GITHUB_TOKEN }} \
+            --outputDir Releases \
+            --publish \
+            --merge \
+            --tag ${{ needs.release-please.outputs.tag_name }} \
+            --releaseName ${{ needs.release-please.outputs.tag_name }}
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: Sabeltann-${{ needs.release-please.outputs.tag_name }}-osx
+          path: Releases/
+          compression-level: 9
