@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.29](https://github.com/adr0ps1/Sabeltann/compare/v0.1.28...v0.1.29) (2026-08-09)
+
+
+### Chores
+
+* **deps:** Bump actions/checkout from 7.0.0 to 7.0.1 ([#113](https://github.com/adr0ps1/Sabeltann/issues/113)) ([509d64b](https://github.com/adr0ps1/Sabeltann/commit/509d64b1ed5fec20ee21d84bb149de1cd298af78))
+
 ## [0.1.28](https://github.com/adr0ps1/Sabeltann/compare/v0.1.27...v0.1.28) (2026-08-06)
 
 
