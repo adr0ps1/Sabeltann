@@ -4,7 +4,7 @@
 
 # Sabeltann!
 
-**IPTV player for Windows**
+**IPTV player for Windows and macOS**
 
 Built with Avalonia 12 and LibVLCSharp. Supports M3U playlists, Xtream Codes, and local files.
 
@@ -25,6 +25,51 @@ Built with Avalonia 12 and LibVLCSharp. Supports M3U playlists, Xtream Codes, an
 | Logging | JSON logs in `logs/` |
 | Auto-update | Velopack — checks GitHub Releases on launch, installs on exit |
 
+## macOS
+
+Paste this into Terminal:
+
+```bash
+curl -fL -o ~/Downloads/Sabeltann.pkg \
+  https://github.com/adr0ps1/Sabeltann/releases/latest/download/Sabeltann-osx.pkg
+open ~/Downloads/Sabeltann.pkg
+```
+
+The installer opens, you pick `/Applications` or `~/Applications`, and the app launches
+when it finishes. No warnings to click through.
+
+That is not a trick to feel clever about: macOS quarantines downloads because the
+*downloading app* tags them, and `curl` does not. Sabeltann is neither signed nor
+notarized (no Apple Developer ID), so nobody has checked this build for malware and
+macOS cannot verify who built it. The GitHub release carries Sigstore build provenance
+if you want to confirm it came from this repo's CI.
+
+<details>
+<summary>Downloading with a browser instead</summary>
+
+Safari and Chrome do apply the quarantine flag, so Gatekeeper will block the `.pkg`.
+Clear it and open:
+
+```bash
+xattr -d com.apple.quarantine ~/Downloads/Sabeltann-*.pkg
+open ~/Downloads/Sabeltann-*.pkg
+```
+
+Without Terminal: right-click the `.pkg` → **Open** → **Open**. On macOS 15 and later
+that route may be closed, in which case use System Settings → Privacy & Security →
+**Open Anyway**. If the installed app is blocked too, `xattr -cr /Applications/Sabeltann.app`.
+
+</details>
+
+**Apple Silicon** runs the app under Rosetta 2 — the build is Intel x86-64, because
+VideoLAN publishes no arm64 libvlc NuGet package
+([libvlc-nuget#17](https://code.videolan.org/videolan/libvlc-nuget/-/issues/17)). macOS
+normally offers to install Rosetta on first launch; if it does not,
+`softwareupdate --install-rosetta --agree-to-license`.
+
+**Recording** needs `ffmpeg` on `PATH` (`brew install ffmpeg`) — unlike Windows the app
+does not download one. Rounded window corners are Windows-only.
+
 ## Keyboard shortcuts
 
 `F` — fullscreen · `Esc` — exit fullscreen · `D` — debug overlay
@@ -41,6 +86,8 @@ Debug builds produce `SabeltannDevelopment.exe` so they don't conflict with a ru
 ## Release process
 
 Merging to `main` triggers [release-please](https://github.com/googleapis/release-please) to auto-version. The release workflow publishes the app, packs a [Velopack](https://velopack.io) release (`Setup.exe`, portable zip, and full/delta update packages), attests with Sigstore, and uploads everything to the GitHub release for the tag. The in-app updater reads those release assets to deliver auto-updates.
+
+A second job then does the same on `macos-latest` for `osx-x64`, producing a `.pkg`. Velopack keeps one release manifest per platform (`releases.osx.json` next to `releases.win.json`), so the in-app updater picks the right channel with no code change. It runs after the Windows job rather than beside it, because both merge assets into the same GitHub release. Finally it uploads a copy of the installer as `Sabeltann-osx.pkg` — Velopack's own filename carries the version, and the fixed name is what makes the `releases/latest/download/` URL in the install instructions permanent.
 
 ## Tech stack
 

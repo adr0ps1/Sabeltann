@@ -11,9 +11,20 @@
     <RootNamespace>Sabeltann</RootNamespace>
     <AssemblyName Condition="'$(Configuration)'=='Debug'">SabeltannDevelopment</AssemblyName>
     <AssemblyName Condition="'$(Configuration)'!='Debug'">Sabeltann</AssemblyName>
+
+    <!-- Which libvlc native package to pull. Both spellings are needed: `dotnet
+         build/publish -r <rid>` sets the singular RuntimeIdentifier, while `dotnet
+         restore -r <rid>` sets only the plural RuntimeIdentifiers — condition on the
+         singular alone and restore resolves the wrong native package. Both are empty
+         for a plain `dotnet build`, which is the Windows dev loop, hence the default. -->
+    <_TargetsOsx Condition="$(RuntimeIdentifier.StartsWith('osx')) or $(RuntimeIdentifiers.Contains('osx'))">true</_TargetsOsx>
   </PropertyGroup>
 
-  <Target Name="CopyVlcNative" AfterTargets="AfterBuild">
+  <!-- Windows only: that package's 525 dlls/plugins sit under build/x64 with no
+       .targets to copy them. The Mac package is a single 42 MB monolithic
+       libvlc.dylib (plugins linked in) and ships its own .targets that copies it, so
+       macOS needs nothing here. -->
+  <Target Name="CopyVlcNative" AfterTargets="AfterBuild" Condition="'$(_TargetsOsx)' != 'true'">
     <PropertyGroup>
       <_VlcSource>$([System.IO.Path]::Combine('$(NuGetPackageRoot)', 'videolan.libvlc.windows', '3.0.23.1', 'build', 'x64'))</_VlcSource>
     </PropertyGroup>
@@ -46,7 +57,11 @@
     <PackageReference Include="LibVLCSharp" Version="3.10.0" />
     <PackageReference Include="Sharpcaster" Version="3.0.0" />
     <PackageReference Include="Velopack" Version="1.2.0" />
-    <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.23.1" />
+    <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.23.1" Condition="'$(_TargetsOsx)' != 'true'" />
+    <!-- 3.1.3.1 is the newest published and is x86_64 only (libvlc-nuget#17), so the
+         macOS build is osx-x64 and runs under Rosetta 2 on Apple Silicon. Revisit if
+         VideoLAN ever ships an arm64 package. -->
+    <PackageReference Include="VideoLAN.LibVLC.Mac" Version="3.1.3.1" Condition="'$(_TargetsOsx)' == 'true'" />
   </ItemGroup>
 </Project>
 

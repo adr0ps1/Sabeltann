@@ -213,13 +213,17 @@ public sealed class RecordingService : IDisposable
     }
 }
 
-/// <summary>Finds ffmpeg.exe (bundled → downloaded cache → PATH) and, failing that, downloads a
-/// static build to %LocalAppData%\Sabeltann\ffmpeg. Cached after the first successful resolve.</summary>
+/// <summary>Finds ffmpeg (bundled → downloaded cache → PATH) and, failing that, downloads a
+/// static build to %LocalAppData%\Sabeltann\ffmpeg. Cached after the first successful resolve.
+/// The download is Windows-only (gyan.dev ships no macOS builds), so on macOS recording needs an
+/// ffmpeg already on PATH — `brew install ffmpeg` — and reports unavailable otherwise.</summary>
 internal static class FfmpegLocator
 {
     private const string DownloadUrl = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip";
     private static readonly SemaphoreSlim Gate = new(1, 1);
     private static string? _cached;
+
+    private static string ExeName => OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg";
 
     private static string StoreDir => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sabeltann", "ffmpeg");
@@ -232,15 +236,16 @@ internal static class FfmpegLocator
         {
             if (_cached is not null && File.Exists(_cached)) return _cached;
 
-            var bundled = Path.Combine(AppContext.BaseDirectory, "ffmpeg.exe");
+            var bundled = Path.Combine(AppContext.BaseDirectory, ExeName);
             if (File.Exists(bundled)) return _cached = bundled;
 
-            var stored = Path.Combine(StoreDir, "ffmpeg.exe");
+            var stored = Path.Combine(StoreDir, ExeName);
             if (File.Exists(stored)) return _cached = stored;
 
             var onPath = FromPath();
             if (onPath is not null) return _cached = onPath;
 
+            if (!OperatingSystem.IsWindows()) return null;
             return _cached = await DownloadAsync(stored, status);
         }
         finally { Gate.Release(); }
@@ -254,7 +259,7 @@ internal static class FfmpegLocator
         {
             try
             {
-                var f = Path.Combine(dir.Trim(), "ffmpeg.exe");
+                var f = Path.Combine(dir.Trim(), ExeName);
                 if (File.Exists(f)) return f;
             }
             catch { /* malformed PATH entry */ }

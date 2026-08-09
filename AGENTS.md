@@ -1,6 +1,10 @@
 # Sabeltann
 
-IPTV player for Windows — Avalonia 12 + LibVLCSharp, .NET 10
+IPTV player for Windows and macOS — Avalonia 12 + LibVLCSharp, .NET 10
+
+macOS is `osx-x64` only (VideoLAN publishes no arm64 libvlc package). The `_TargetsOsx`
+property in `Sabeltann.csproj` switches between `VideoLAN.LibVLC.Windows` and
+`VideoLAN.LibVLC.Mac` off the RID, so build and publish need an explicit `-r <rid>`.
 
 ## Build
 
