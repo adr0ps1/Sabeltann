@@ -210,6 +210,18 @@ jobs:
             --tag ${{ needs.release-please.outputs.tag_name }} \
             --releaseName ${{ needs.release-please.outputs.tag_name }}
 
+      # Velopack puts the version in the installer's filename, which leaves no permanent
+      # download URL. A second copy under a fixed name gives the README a stable
+      # /releases/latest/download/ link — and fetching that with curl is what keeps the
+      # install free of Gatekeeper prompts, since curl sets no quarantine flag.
+      - name: Publish stable-named installer alias
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pkg=$(ls Releases/*.pkg | head -1)
+          cp "$pkg" Sabeltann-osx.pkg
+          gh release upload ${{ needs.release-please.outputs.tag_name }} Sabeltann-osx.pkg --clobber
+
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Sabeltann-${{ needs.release-please.outputs.tag_name }}-osx
