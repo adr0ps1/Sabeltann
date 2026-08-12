@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/adr0ps1/Sabeltann/compare/v1.0.0...v1.0.1) (2026-08-12)
+
+
+### Chores
+
+* Dedupe CLAUDE.md instructions via AGENTS.md import, add shared design tokens ([37ad76c](https://github.com/adr0ps1/Sabeltann/commit/37ad76c3a3162a0d974d467fdb640483cb060bc6))
+* **deps:** Bump actions/attest-build-provenance from 4.1.1 to 4.2.2 ([#127](https://github.com/adr0ps1/Sabeltann/issues/127)) ([b45a7fb](https://github.com/adr0ps1/Sabeltann/commit/b45a7fbd425286ec6f861b5360b888fa06b7b202))
+
 ## [1.0.0](https://github.com/adr0ps1/Sabeltann/compare/v0.1.29...v1.0.0) (2026-08-09)
 
 
