@@ -1,0 +1,39 @@
+{
+  "//": "Single source of truth for Sabeltann design tokens (desktop + web).",
+  "colors": {
+    "bg": "#14161b",
+    "title": "#181a20",
+    "surface": "#1b1e25",
+    "surface2": "#232730",
+    "input": "#101216",
+    "line": "#2c313c",
+    "line2": "#20242c",
+    "text": "#e7e9ef",
+    "strong": "#ffffff",
+    "sub": "#969cab",
+    "muted": "#6c7280",
+    "accent": "#e2a44e",
+    "accenttext": "#1b1e25",
+    "accentsoft": "#22e2a44e",
+    "live": "#d05a5a",
+    "good": "#7bbf7b",
+    "info": "#89b4fa",
+    "danger": "#e08a8a",
+    "videobg": "#0b0c0f",
+    "titletext": "#cfd3dc"
+  },
+  "fonts": {
+    "mono": "\"Consolas\", ui-monospace, SFMono-Regular, monospace",
+    "body": "system-ui, -apple-system, \"Segoe UI\", sans-serif"
+  },
+  "radii": {
+    "control": 8,
+    "tile": 11,
+    "pill": 8
+  },
+  "sizes": {
+    "titlebar": 40,
+    "toolbar": 54,
+    "logo": 38
+  }
+}
